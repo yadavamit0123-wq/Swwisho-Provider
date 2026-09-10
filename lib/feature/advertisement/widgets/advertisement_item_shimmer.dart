@@ -1,8 +1,8 @@
 import 'package:demandium_provider/utils/core_export.dart';
 import 'package:get/get.dart';
 
-class BookingRequestItemShimmer extends StatelessWidget {
-  const BookingRequestItemShimmer({super.key});
+class AdvertisementItemShimmer extends StatelessWidget {
+  const AdvertisementItemShimmer({super.key});
 
   @override
   Widget build(BuildContext context) {

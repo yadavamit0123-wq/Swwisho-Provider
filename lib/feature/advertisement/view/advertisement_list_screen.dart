@@ -154,7 +154,7 @@ class _AdvertisementListState extends State<AdvertisementList> {
 
     return GetBuilder<AdvertisementController>(builder: (advertisementController){
       return advertisementController.advertisementDataList == null ?
-      const BookingRequestItemShimmer(): advertisementController.advertisementDataList!.isEmpty ?
+      const AdvertisementItemShimmer(): advertisementController.advertisementDataList!.isEmpty ?
       Center(
         child: SizedBox(height: Get.height * 0.7,
           child: NoDataScreen(

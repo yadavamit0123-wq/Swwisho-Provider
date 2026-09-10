@@ -466,6 +466,7 @@ export 'package:demandium_provider/feature/suggest_service/controller/suggest_se
 export 'package:demandium_provider/feature/suggest_service/model/suggest_service_model.dart';
 export 'package:demandium_provider/feature/suggest_service/repository/suggest_service_repo.dart';
 export 'package:demandium_provider/feature/suggest_service/view/suggest_service_screen.dart';
+export 'package:demandium_provider/feature/suggest_service/view/suggested_service_list_screen.dart';
 export 'package:demandium_provider/feature/suggest_service/widgets/admin_feedback.dart';
 export 'package:demandium_provider/feature/suggest_service/widgets/suggest_service_input_field.dart';
 export 'package:demandium_provider/feature/suggest_service/widgets/suggest_service_item_view.dart';
