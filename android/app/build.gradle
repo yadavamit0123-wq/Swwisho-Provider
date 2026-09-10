@@ -54,8 +54,8 @@ android {
         applicationId "com.pt.swwishoprovider"
         minSdkVersion 24
         targetSdk = 36
-        versionCode 29
-        versionName '1.0.3'
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
         multiDexEnabled true
 
     }
