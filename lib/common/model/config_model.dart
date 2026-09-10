@@ -61,6 +61,7 @@ class ConfigContent {
   int? bookingOtpVerification;
   int? bookingImageVerification;
   int? sendOtpTimer;
+  int? serviceAtProviderPlace;
 
   double? minimumWithdrawAmount;
   double? maximumWithdrawAmount;
@@ -107,6 +108,7 @@ class ConfigContent {
     this.bookingOtpVerification,
     this.bookingImageVerification,
     this.sendOtpTimer,
+    this.serviceAtProviderPlace,
     this.minimumWithdrawAmount,
     this.maximumWithdrawAmount,
     this.defaultLocation,
@@ -154,6 +156,7 @@ class ConfigContent {
     bookingImageVerification = int.tryParse(json['booking_image_verification']?.toString() ?? '');
     sendOtpTimer = int.tryParse(json['send_otp_timer']?.toString() ?? '') ??
         int.tryParse(json['otp_resend_time']?.toString() ?? '');
+    serviceAtProviderPlace = int.tryParse(json['service_at_provider_place']?.toString() ?? '');
 
     minimumWithdrawAmount = double.tryParse(json['minimum_withdraw_amount']?.toString() ?? '');
     maximumWithdrawAmount = double.tryParse(json['maximum_withdraw_amount']?.toString() ?? '');
@@ -217,6 +220,7 @@ class ConfigContent {
     data['booking_otp_verification'] = bookingOtpVerification;
     data['booking_image_verification'] = bookingImageVerification;
     data['send_otp_timer'] = sendOtpTimer;
+    data['service_at_provider_place'] = serviceAtProviderPlace;
     data['minimum_withdraw_amount'] = minimumWithdrawAmount;
     data['maximum_withdraw_amount'] = maximumWithdrawAmount;
     if (defaultLocation != null) {
