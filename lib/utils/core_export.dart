@@ -38,6 +38,7 @@ export 'package:path_provider/path_provider.dart';
 export 'package:open_file/open_file.dart';
 export 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 export 'package:demandium_provider/api/api_client.dart';
+export 'package:demandium_provider/api/api_checker.dart';
 export 'package:demandium_provider/utils/app_constants.dart';
 export 'package:demandium_provider/utils/dimensions.dart';
 export 'package:demandium_provider/utils/styles.dart';
