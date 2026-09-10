@@ -83,6 +83,7 @@ export 'package:demandium_provider/common/widgets/custom_image.dart';
 export 'package:demandium_provider/common/widgets/custom_image_list_screen.dart';
 export 'package:demandium_provider/common/widgets/custom_inkwell.dart';
 export 'package:demandium_provider/common/widgets/custom_pop_scope_widget.dart';
+export 'package:demandium_provider/common/widgets/custom_text_field.dart';
 export 'package:demandium_provider/common/widgets/custom_text_field_widget.dart';
 export 'package:demandium_provider/common/widgets/custom_text_form_field.dart';
 export 'package:demandium_provider/common/widgets/custom_tooltip_widget.dart';
