@@ -26,6 +26,7 @@ import 'package:demandium_provider/feature/location/repository/location_repo.dar
 import 'package:demandium_provider/feature/html/repository/html_repo.dart';
 import 'package:demandium_provider/feature/service_details/repo/service_details_repo.dart';
 import 'package:demandium_provider/feature/settings/business/repo/business_settings_repo.dart';
+import 'package:demandium_provider/feature/settings/notification/repository/notification_setup_repo.dart';
 import 'package:demandium_provider/feature/suggest_service/repository/suggest_service_repo.dart';
 import 'package:demandium_provider/feature/profile/view/bank_information/repo/bank_info_repo.dart';
 
@@ -56,6 +57,7 @@ import 'package:demandium_provider/feature/location/controller/location_controll
 import 'package:demandium_provider/feature/html/controller/webview_controller.dart';
 import 'package:demandium_provider/feature/service_details/controller/service_details_controller.dart';
 import 'package:demandium_provider/feature/settings/business/controller/business_setting_controller.dart';
+import 'package:demandium_provider/feature/settings/notification/controller/notification_setup_controller.dart';
 import 'package:demandium_provider/feature/suggest_service/controller/suggest_service_controller.dart';
 
 Future<Map<String, Map<String, String>>> init() async {
@@ -87,6 +89,7 @@ Future<Map<String, Map<String, String>>> init() async {
   Get.lazyPut(() => HtmlRepository(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => ServiceDetailsRepo(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => BusinessSettingRepo(apiClient: Get.find()), fenix: true);
+  Get.lazyPut(() => NotificationSetupRepo(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => SuggestServiceRepo(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => BankInfoRepo(apiClient: Get.find()), fenix: true);
 
@@ -117,6 +120,7 @@ Future<Map<String, Map<String, String>>> init() async {
   Get.lazyPut(() => HtmlViewController(htmlRepository: Get.find()), fenix: true);
   Get.lazyPut(() => ServiceDetailsController(serviceDetailsRepo: Get.find()), fenix: true);
   Get.lazyPut(() => BusinessSettingController(businessSettingRepo: Get.find()), fenix: true);
+  Get.lazyPut(() => NotificationSetupController(notificationSetupRepo: Get.find()), fenix: true);
   Get.lazyPut(() => SuggestServiceController(suggestServiceRepo: Get.find()), fenix: true);
 
   Map<String, Map<String, String>> languages = {};

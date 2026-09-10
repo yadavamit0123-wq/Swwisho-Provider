@@ -24,6 +24,7 @@ export 'package:url_launcher/url_launcher_string.dart';
 export 'package:pin_code_fields/pin_code_fields.dart';
 export 'package:shimmer_animation/shimmer_animation.dart';
 export 'package:scroll_to_index/scroll_to_index.dart';
+export 'package:flutter_switch/flutter_switch.dart';
 export 'package:country_code_picker/country_code_picker.dart';
 export 'package:dotted_border/dotted_border.dart';
 export 'package:chewie/chewie.dart';
@@ -429,6 +430,7 @@ export 'package:demandium_provider/feature/settings/business/widget/custom_check
 export 'package:demandium_provider/feature/settings/business/widget/service_availability_setup.dart';
 export 'package:demandium_provider/feature/settings/business/widget/time_picker_widget.dart';
 export 'package:demandium_provider/feature/settings/notification/controller/notification_setup_controller.dart';
+export 'package:demandium_provider/feature/settings/notification/repository/notification_setup_repo.dart';
 export 'package:demandium_provider/feature/settings/notification/model/notification_setup.dart';
 export 'package:demandium_provider/feature/settings/notification/model/notification_setup_body.dart';
 export 'package:demandium_provider/feature/settings/notification/view/notification_settings_screen.dart';

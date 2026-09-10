@@ -95,6 +95,8 @@ class AppConstants {
   static const String updateBusinessBookingSettings = '/api/v1/provider/business-settings/booking/update';
   static const String getServiceAvailabilitySettings = '/api/v1/provider/business-settings/availability';
   static const String updateServiceAvailabilitySettings = '/api/v1/provider/business-settings/availability/update';
+  static const String getNotificationSetupList = '/api/v1/provider/business-settings/notification-setup';
+  static const String updateNotificationSetup = '/api/v1/provider/business-settings/notification-setup/update';
   static const String addNewServicemanUri = '/api/v1/provider/serviceman';
   static const String servicemanListUri = '/api/v1/provider/serviceman';
   static const String servicemanDetailsUri = '/api/v1/provider/serviceman/details';
