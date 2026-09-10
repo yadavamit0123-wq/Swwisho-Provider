@@ -62,6 +62,9 @@ class PaymentMethodDialog extends StatelessWidget {
                   }
                   else if(dashboardController.paymentMethodIndex == -1){
                     showCustomSnackBar("select_payment_method".tr);
+                  }
+                  else if(amount < AppConstants.minimumWalletRecharge){
+                    showCustomSnackBar('minimum_wallet_recharge_error'.tr);
                   }else{
                     String hostname = html.window.location.hostname!;
                     String protocol = html.window.location.protocol;
@@ -88,7 +91,11 @@ class PaymentMethodDialog extends StatelessWidget {
                     print('access_token = ${base64Url.encode(utf8.encode(providerID))}');
                     Get.back();
 
-                    Get.to(()=> PaymentScreen(url:url, fromPage: "dashboard",));
+                    DigitalPaymentHelper.launch(
+                      paymentGateway: paymentMethod.gateway ?? '',
+                      paymentUrl: url,
+                      fromPage: 'dashboard',
+                    );
 
                   }
 

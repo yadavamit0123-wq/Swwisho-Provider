@@ -65,7 +65,7 @@ class WalletCashCard extends StatelessWidget {
                           tailLength: 14, tailBaseWidth: 20,
                           content: Padding( padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                             child:  Text(
-                                'Recharge your wallet up to 3000 to accept bookings.'.tr,
+                                'minimum_wallet_recharge_hint'.tr,
                                 style: robotoRegular.copyWith(color: Colors.white,)
                             ),
                           ),
@@ -149,8 +149,8 @@ class WalletCashCard extends StatelessWidget {
 
                                       if (amountText.isEmpty) {
                                         showCustomSnackBar("Please enter amount".tr,type: ToasterMessageType.info);
-                                      }else if(int.parse(amountText) < 1500){
-                                        showCustomSnackBar("Deposit should not be less than ₹1500".tr,type: ToasterMessageType.info);
+                                      }else if((double.tryParse(amountText) ?? 0) < AppConstants.minimumWalletRecharge){
+                                        showCustomSnackBar('minimum_wallet_recharge_error'.tr,type: ToasterMessageType.info);
                                       } else {
                                         Navigator.pop(ctx);
 
@@ -220,7 +220,7 @@ class WalletCashCard extends StatelessWidget {
             SizedBox(height: 12),
             // Message
             Text(
-              "Recharge amount cannot be less than 3000.",
+              "minimum_wallet_recharge_error".tr,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,

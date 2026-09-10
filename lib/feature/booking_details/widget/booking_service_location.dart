@@ -1,4 +1,5 @@
 import 'package:demandium_provider/feature/booking_details/widget/update_service_location_widget.dart';
+import 'package:demandium_provider/helper/booking_contact_helper.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:demandium_provider/utils/core_export.dart';
@@ -103,13 +104,15 @@ class BookingServiceLocation extends StatelessWidget {
 
                 Row(spacing: Dimensions.paddingSizeDefault ,children: [
                   Expanded(child: Text(
-                    serviceLocation == "customer"
+                    !BookingContactHelper.canShowContactDetails(bookingDetails) && serviceLocation == "customer"
+                        ? 'accept_booking_to_view_contact_details'.tr
+                        : serviceLocation == "customer"
                         ? bookingDetails.serviceAddress?.address ?? bookingDetails.subBooking?.serviceAddress?.address ?? 'address_not_found'.tr
                         : Get.find<UserProfileController>().providerModel?.content?.providerInfo?.companyAddress ?? 'address_not_found'.tr,
                     maxLines: 4, overflow: TextOverflow.ellipsis,
                   )),
 
-                  if(serviceLocation == "customer" )InkWell(
+                  if(serviceLocation == "customer" && BookingContactHelper.canShowContactDetails(bookingDetails))InkWell(
                     onTap: () async {
                       _checkPermission(() async {
                         if(bookingDetails.serviceAddress!= null  || bookingDetails.subBooking?.serviceAddress != null){

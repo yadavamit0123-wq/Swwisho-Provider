@@ -104,14 +104,24 @@ class ChangeStatusDropdownButton extends StatelessWidget {
 
           ])
               : dropdownStatus == "ongoing" && bookingDetails.bookingStatus == 'accepted'?
-              // : dropdownStatus == "completed" ?
-              // : dropdownStatus == "completed" && Get.find<SplashController>().configModel.content?.bookingOtpVerification == 1?
-              // : dropdownStatus == "completed" && !bookingDetailsController.showPhotoEvidenceField && Get.find<SplashController>().configModel.content?.bookingOtpVerification == 0?
-              // : dropdownStatus == "completed" && bookingDetailsController.showPhotoEvidenceField && Get.find<SplashController>().configModel.content?.bookingOtpVerification == 1?
           CustomButton(btnTxt: "request_for_otp".tr, onPressed: () {
+            bookingDetailsController.setOtp('');
             bookingDetailsController.sendBookingOTPNotification(bookingId, shouldUpdate: false);
-            showCustomBottomSheet(child: OtpVerificationBottomSheet(bookingId: bookingId, isSubBooking: isSubBooking ));
-
+            showCustomBottomSheet(child: OtpVerificationBottomSheet(
+              bookingId: bookingId,
+              isSubBooking: isSubBooking,
+              targetStatus: 'ongoing',
+            ));
+          },) :
+              dropdownStatus == "completed" && bookingDetails.bookingStatus == 'ongoing'?
+          CustomButton(btnTxt: "request_for_otp".tr, onPressed: () {
+            bookingDetailsController.setOtp('');
+            bookingDetailsController.sendBookingOTPNotification(bookingId, shouldUpdate: false);
+            showCustomBottomSheet(child: OtpVerificationBottomSheet(
+              bookingId: bookingId,
+              isSubBooking: isSubBooking,
+              targetStatus: 'completed',
+            ));
           },) :
           Row( children: [
             Expanded(

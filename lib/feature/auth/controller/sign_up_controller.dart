@@ -110,7 +110,10 @@ class SignUpController extends GetxController {
       var config = Get.find<SplashController>().configModel.content;
       if(response.body['content'] != null){
         resetAllValue();
-        Get.to(PaymentScreen(url: response.body['content'], fromPage: "signUp"));
+        DigitalPaymentHelper.launchFromUrl(
+          paymentUrl: response.body['content'],
+          fromPage: 'signUp',
+        );
       }
       else if(config?.emailVerification == 1 || config?.phoneVerification == 1){
 

@@ -5,7 +5,13 @@ import 'package:get/get.dart';
 class OtpVerificationBottomSheet extends StatefulWidget {
   final String? bookingId;
   final bool isSubBooking;
-  const OtpVerificationBottomSheet({super.key, this.bookingId, required this.isSubBooking});
+  final String targetStatus;
+  const OtpVerificationBottomSheet({
+    super.key,
+    this.bookingId,
+    required this.isSubBooking,
+    this.targetStatus = 'ongoing',
+  });
 
   @override
   State<OtpVerificationBottomSheet> createState() => _OtpVerificationBottomSheetState();
@@ -96,8 +102,12 @@ class _OtpVerificationBottomSheetState extends State<OtpVerificationBottomSheet>
               margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
               onPressed: (bookingDetailsController.otp.length != 6) ? null : () async {
                 bookingDetailsController.resetWrongOtpValue();
-               await bookingDetailsController.changeBookingStatus( widget.bookingId ?? "", bookingStatus :"ongoing" ,isBack: true, isSubBooking: widget.isSubBooking);
-               // await bookingDetailsController.changeBookingStatus( widget.bookingId ?? "", bookingStatus :"completed" ,isBack: true, isSubBooking: widget.isSubBooking);
+               await bookingDetailsController.changeBookingStatus(
+                 widget.bookingId ?? "",
+                 bookingStatus: widget.targetStatus == 'completed' ? 'ongoing' : 'accepted',
+                 isBack: true,
+                 isSubBooking: widget.isSubBooking,
+               );
                },
             ),
 

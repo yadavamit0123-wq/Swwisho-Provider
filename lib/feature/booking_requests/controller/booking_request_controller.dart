@@ -1,3 +1,4 @@
+import 'package:demandium_provider/helper/booking_sound_service.dart';
 import 'package:get/get.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 
@@ -88,6 +89,12 @@ class BookingRequestController extends GetxController with GetSingleTickerProvid
         }
       }
       _pageSize = response.body['content']['bookings']['last_page'];
+
+      if (requestType.toLowerCase() == 'pending') {
+        BookingSoundService.onPendingListUpdated(
+          _bookingRequestList?.map((booking) => booking.id ?? '').where((id) => id.isNotEmpty).toList() ?? [],
+        );
+      }
     }
     else{
      ApiChecker.checkApi(response);

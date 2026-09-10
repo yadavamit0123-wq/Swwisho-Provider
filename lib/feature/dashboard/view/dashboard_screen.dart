@@ -24,7 +24,7 @@ class _DashBoardScreenState extends State<DashBoardScreen>{
   }
 
   void checkWallet(double balance, BuildContext context) {
-    if (balance < 1500) {
+    if (balance < AppConstants.minimumWalletRecharge) {
       Future.delayed(Duration.zero, () {
         Get.dialog(
           Dialog(

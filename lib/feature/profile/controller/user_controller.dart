@@ -197,7 +197,7 @@ class UserProfileController extends GetxController implements GetxService{
         companyPhoneController!.text = ValidationHelper.getValidPhone(_providerModel?.content?.providerInfo?.companyPhone ?? "") != "" ? ValidationHelper.getValidPhone(_providerModel?.content?.providerInfo?.companyPhone??"" ) : _providerModel?.content?.providerInfo?.companyPhone ?? "";
 
         companyEmailController!.text = _providerModel?.content?.providerInfo?.companyEmail??"";
-        panImageUrl = (_providerModel?.content?.providerInfo?.panImage != null || _providerModel?.content?.providerInfo?.panImage != '')? 'https://test.swwisho.com/storage/app/public/provider/document/${_providerModel?.content?.providerInfo?.panImage}' : null;
+        panImageUrl = (_providerModel?.content?.providerInfo?.panImage != null || _providerModel?.content?.providerInfo?.panImage != '')? '${AppConstants.baseUrl}/storage/app/public/provider/document/${_providerModel?.content?.providerInfo?.panImage}' : null;
         panNumberController!.text = _providerModel?.content?.providerInfo?.panNumber??"";
         personalNameController!.text = _providerModel?.content?.providerInfo?.contactPersonName??"";
         personalPhoneController!.text = ValidationHelper.getValidPhone(_providerModel?.content?.providerInfo?.contactPersonPhone ?? "") != "" ? ValidationHelper.getValidPhone(_providerModel?.content?.providerInfo?.contactPersonPhone??"" ) : _providerModel?.content?.providerInfo?.contactPersonPhone ?? "";

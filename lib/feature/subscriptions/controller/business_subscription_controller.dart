@@ -183,7 +183,10 @@ class  BusinessSubscriptionController extends GetxController implements GetxServ
     else if(response.statusCode == 200 && response.body['content'] !=null) {
       Get.back();
       Get.back();
-      Get.to(()=> PaymentScreen(url: response.body['content'], fromPage: "business_plan"));
+      DigitalPaymentHelper.launchFromUrl(
+        paymentUrl: response.body['content'],
+        fromPage: 'business_plan',
+      );
     }else{
       ApiChecker.checkApi(response);
     }

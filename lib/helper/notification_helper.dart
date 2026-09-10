@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'dart:math';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:demandium_provider/common/widgets/demo_reset_dialog_widget.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
-import '../utils/app_audios.dart';
+import 'package:demandium_provider/helper/booking_sound_service.dart';
 
 
 class NotificationHelper {
@@ -48,10 +47,7 @@ class NotificationHelper {
           }
           else if(notificationBody.notificationType=='booking' && notificationBody.bookingId != null && notificationBody.bookingId != ''){
             debugPrint('0 ----------------> ${notificationBody.toJson()}');
-            if (notificationBody.notificationType == 'booking' || notificationBody.notificationType == 'servicerequest') {
-              // Play custom sound
-              AudioPlayer().play(AssetSource(AppAudios.requestSound));
-            }
+            BookingSoundService.playBookingAlert(notificationBody.bookingId!);
 
             if(notificationBody.bookingType == "repeat" && notificationBody.repeatBookingType == "single"){
               Get.toNamed(RouteHelper.getBookingDetailsRoute( subBookingId : notificationBody.bookingId, fromPage : "fromNotification"));
@@ -161,6 +157,16 @@ class NotificationHelper {
           Get.dialog(const DemoResetDialogWidget(), barrierDismissible: false);
         }
       }
+      else if(BookingSoundService.isBookingNotification(message.data['type'])) {
+        final bookingId = BookingSoundService.extractBookingId(message.data) ?? '';
+        if(bookingId.isNotEmpty) {
+          BookingSoundService.playBookingAlert(bookingId);
+        }
+        NotificationHelper.showNotification(message, false, flutterLocalNotificationsPlugin);
+        if(Get.isRegistered<BookingRequestController>()) {
+          Get.find<BookingRequestController>().getBookingRequestList('pending', 1, reload: true);
+        }
+      }
       else{
         NotificationHelper.showNotification(message, false,flutterLocalNotificationsPlugin);
       }
@@ -194,10 +200,7 @@ class NotificationHelper {
 
           else if(notificationBody.notificationType =='booking' && notificationBody.bookingId!=null && notificationBody.bookingId!=''){
             debugPrint('1 ----------------> ${notificationBody.toJson()}');
-            if (notificationBody.notificationType == 'booking' || notificationBody.notificationType == 'servicerequest') {
-              // Play custom sound
-              AudioPlayer().play(AssetSource(AppAudios.requestSound));
-            }
+            BookingSoundService.playBookingAlert(notificationBody.bookingId!);
 
             if(notificationBody.bookingType == "repeat" && notificationBody.repeatBookingType == "single"){
               Get.toNamed(RouteHelper.getBookingDetailsRoute( subBookingId : notificationBody.bookingId, fromPage : "fromNotification"));
@@ -357,10 +360,13 @@ class NotificationHelper {
 
 @pragma('vm:entry-point')
 Future<dynamic> myBackgroundMessageHandler(RemoteMessage message) async {
-    AudioPlayer().play(AssetSource(AppAudios.requestSound));
+  if (BookingSoundService.isBookingNotification(message.data['type'])) {
+    final bookingId = BookingSoundService.extractBookingId(message.data) ?? '';
+    if (bookingId.isNotEmpty) {
+      await BookingSoundService.playBookingAlert(bookingId);
+    }
+  }
   if (kDebugMode) {
-
-
     print("----------------> onBackground: ${message.notification?.title}/${message.notification?.body}/${message.notification?.titleLocKey}");
   }
 }
