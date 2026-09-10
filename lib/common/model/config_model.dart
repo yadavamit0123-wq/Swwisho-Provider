@@ -53,6 +53,7 @@ class ConfigContent {
   int? subscriptionDeadlineWarning;
   int? providerCanCancelBooking;
   int? providerCanEditBooking;
+  int? providerCanReplyReview;
   int? providerSlfDelete;
   int? maxCashInHandLimit;
   int? suspendOnCashInHandLimit;
@@ -100,6 +101,7 @@ class ConfigContent {
     this.subscriptionDeadlineWarning,
     this.providerCanCancelBooking,
     this.providerCanEditBooking,
+    this.providerCanReplyReview,
     this.providerSlfDelete,
     this.maxCashInHandLimit,
     this.suspendOnCashInHandLimit,
@@ -147,6 +149,7 @@ class ConfigContent {
     subscriptionDeadlineWarning = int.tryParse(json['subscription_deadline_warning']?.toString() ?? '');
     providerCanCancelBooking = int.tryParse(json['provider_can_cancel_booking']?.toString() ?? '');
     providerCanEditBooking = int.tryParse(json['provider_can_edit_booking']?.toString() ?? '');
+    providerCanReplyReview = int.tryParse(json['provider_can_reply_review']?.toString() ?? '');
     providerSlfDelete = int.tryParse(json['provider_self_delete']?.toString() ?? '');
     maxCashInHandLimit = int.tryParse(json['max_cash_in_hand_limit']?.toString() ?? '');
     suspendOnCashInHandLimit = int.tryParse(json['suspend_on_cash_in_hand_limit']?.toString() ?? '');
@@ -212,6 +215,7 @@ class ConfigContent {
     data['subscription_deadline_warning'] = subscriptionDeadlineWarning;
     data['provider_can_cancel_booking'] = providerCanCancelBooking;
     data['provider_can_edit_booking'] = providerCanEditBooking;
+    data['provider_can_reply_review'] = providerCanReplyReview;
     data['provider_self_delete'] = providerSlfDelete;
     data['max_cash_in_hand_limit'] = maxCashInHandLimit;
     data['suspend_on_cash_in_hand_limit'] = suspendOnCashInHandLimit;

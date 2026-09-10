@@ -13,7 +13,6 @@ class ServicesScreen extends StatefulWidget {
      this.subscriptionModelData,
      required this.index,
      required this.fromPage,
-     r
    });
 
   @override

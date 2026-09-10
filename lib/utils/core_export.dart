@@ -218,6 +218,7 @@ export 'package:demandium_provider/feature/category/widget/category_item.dart';
 export 'package:demandium_provider/feature/category/widget/category_shimmer.dart';
 export 'package:demandium_provider/feature/category/widget/category_subcategory_shimmer.dart';
 export 'package:demandium_provider/feature/category/widget/search_service_list_shimmer.dart';
+export 'package:demandium_provider/feature/category/widget/service_search_widget.dart';
 export 'package:demandium_provider/feature/category/widget/service_list_shimmer.dart';
 export 'package:demandium_provider/feature/category/widget/service_list_view.dart';
 export 'package:demandium_provider/feature/category/widget/service_shimmer.dart';
