@@ -31,8 +31,6 @@ export 'package:expandable_bottom_sheet/expandable_bottom_sheet.dart';
 export 'package:just_the_tooltip/just_the_tooltip.dart';
 export 'package:phone_numbers_parser/phone_numbers_parser.dart';
 export 'package:uuid/uuid.dart';
-export 'package:pdf/pdf.dart';
-export 'package:pdf/widgets.dart';
 export 'package:printing/printing.dart';
 export 'package:path_provider/path_provider.dart';
 export 'package:open_file/open_file.dart';
