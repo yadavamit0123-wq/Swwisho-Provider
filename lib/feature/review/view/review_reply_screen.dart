@@ -1,5 +1,6 @@
 import 'package:demandium_provider/utils/core_export.dart';
 import 'package:get/get.dart';
+import 'package:readmore/readmore.dart';
 
 
 class ReviewReplyScreen extends StatefulWidget {
