@@ -64,6 +64,7 @@ export 'package:demandium_provider/theme/dark_theme.dart';
 export 'package:demandium_provider/theme/light_theme.dart';
 export 'package:demandium_provider/common/enums/enums.dart';
 export 'package:demandium_provider/common/model/api_response_model.dart';
+export 'package:demandium_provider/common/model/config_model.dart';
 export 'package:demandium_provider/common/model/customer_config_model.dart';
 export 'package:demandium_provider/common/model/error_response.dart';
 export 'package:demandium_provider/common/model/language_model.dart';
