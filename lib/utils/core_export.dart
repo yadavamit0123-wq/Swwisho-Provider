@@ -36,7 +36,7 @@ export 'package:uuid/uuid.dart';
 export 'package:printing/printing.dart';
 export 'package:path_provider/path_provider.dart';
 export 'package:open_file/open_file.dart';
-export 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+export 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart' hide ImageSource;
 export 'package:demandium_provider/api/api_client.dart';
 export 'package:demandium_provider/api/api_checker.dart';
 export 'package:demandium_provider/utils/app_constants.dart';
@@ -403,6 +403,7 @@ export 'package:demandium_provider/feature/service_details/widget/faq_screen.dar
 export 'package:demandium_provider/feature/service_details/widget/price_table_screen.dart';
 export 'package:demandium_provider/feature/service_details/widget/rating_bar.dart';
 export 'package:demandium_provider/feature/service_details/widget/service_details_shimmer.dart';
+export 'package:demandium_provider/feature/service_details/widget/service_overview.dart';
 export 'package:demandium_provider/feature/service_details/widget/variation_bottom_sheet.dart';
 export 'package:demandium_provider/feature/serviceman/controller/serviceman_details_controller.dart';
 export 'package:demandium_provider/feature/serviceman/controller/serviceman_setup_controller.dart';
