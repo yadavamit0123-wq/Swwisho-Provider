@@ -23,6 +23,7 @@ export 'package:url_launcher/url_launcher.dart';
 export 'package:url_launcher/url_launcher_string.dart';
 export 'package:pin_code_fields/pin_code_fields.dart';
 export 'package:shimmer_animation/shimmer_animation.dart';
+export 'package:scroll_to_index/scroll_to_index.dart';
 export 'package:country_code_picker/country_code_picker.dart';
 export 'package:dotted_border/dotted_border.dart';
 export 'package:chewie/chewie.dart';

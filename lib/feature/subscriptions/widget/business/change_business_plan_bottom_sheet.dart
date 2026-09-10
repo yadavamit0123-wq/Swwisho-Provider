@@ -92,7 +92,7 @@ class _ChangeBusinessPlanBottomSheetState extends State<ChangeBusinessPlanBottom
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
                   child: Row(
-                    children: subscriptionPackagesList!.map((element){
+                    children: subscriptionPackagesList!.map<Widget>((element){
 
                       String? packageStatus;
                       SubscriptionPackage? activePackage;
