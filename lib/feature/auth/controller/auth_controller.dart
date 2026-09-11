@@ -62,7 +62,13 @@ class AuthController extends GetxController implements GetxService {
           authRepo.clearUserNumberAndPassword();
         }
 
-        final token = body is Map ? body['content']?['token']?.toString() : null;
+        String? token;
+        if (body is Map) {
+          final content = body['content'];
+          if (content is Map) {
+            token = content['token']?.toString();
+          }
+        }
         if (token == null || token.isEmpty) {
           showCustomSnackBar('something_went_wrong'.tr);
           return;
