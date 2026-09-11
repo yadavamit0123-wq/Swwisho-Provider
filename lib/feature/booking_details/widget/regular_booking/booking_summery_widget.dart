@@ -35,9 +35,12 @@ class BookingSummeryView extends StatelessWidget{
 
       var grandTotal = (bookingDetails.totalBookingAmount ?? 0);
       double travelingCharge = double.parse(bookingDetails.travelingCharge?.toString() ?? '0');
-      double gstOnCommission = double.parse(bookingDetails.gstOnCommission?.toString() ?? '0');
-      double commission = double.parse(bookingDetails.commission?.toString() ?? '0');
-      gstOnCommission += commission;
+      double commission = double.tryParse(bookingDetails.commission?.toString() ?? '0') ?? 0;
+      double gstOnCommission = double.tryParse(bookingDetails.gstOnCommission?.toString() ?? '0') ?? 0;
+      final tdsPercent = Get.find<SplashController>().customerConfigModel.content?.tds ?? 1;
+      double tdsAmount = BookingHelper.getTdsAmount(bookingDetails, tdsPercent: tdsPercent);
+      double feesAndTaxes = commission + gstOnCommission;
+      double walletDeduction = feesAndTaxes + tdsAmount;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -258,7 +261,7 @@ class BookingSummeryView extends StatelessWidget{
                         ),
                       ),
                       const SizedBox(width: Dimensions.paddingSizeDefault,),
-                      Text("(+) ${PriceConverter.convertPrice(gstOnCommission, isShowLongPrice:true)}",
+                      Text("(+) ${PriceConverter.convertPrice(feesAndTaxes, isShowLongPrice:true)}",
                         style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault,
                             color: Theme.of(context).textTheme.bodyLarge!.color?.withValues(alpha:0.9)
                         ),
@@ -266,6 +269,45 @@ class BookingSummeryView extends StatelessWidget{
                     ],
                   ),
 
+                  if(tdsAmount > 0)...[
+                    const SizedBox(height: Dimensions.paddingSizeExtraSmall,),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text("tds".tr,style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault,
+                              color: Theme.of(context).textTheme.bodyLarge!.color?.withValues(alpha:0.9)
+                          ),overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: Dimensions.paddingSizeDefault,),
+                        Text("(+) ${PriceConverter.convertPrice(tdsAmount, isShowLongPrice:true)}",
+                          style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault,
+                              color: Theme.of(context).textTheme.bodyLarge!.color?.withValues(alpha:0.9)
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+
+                  if(walletDeduction > 0)...[
+                    const SizedBox(height: Dimensions.paddingSizeExtraSmall,),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text("wallet_deduction".tr,style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault,
+                              color: Theme.of(context).textTheme.bodyLarge!.color?.withValues(alpha:0.9)
+                          ),overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: Dimensions.paddingSizeDefault,),
+                        Text(PriceConverter.convertPrice(walletDeduction, isShowLongPrice:true),
+                          style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault,
+                              color: Theme.of(context).colorScheme.error
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
 
                   if(bookingDetails.extraFee != null && bookingDetails.extraFee! > 0)
                     Padding(

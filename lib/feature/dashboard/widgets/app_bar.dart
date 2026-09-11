@@ -24,6 +24,10 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
         return AppBar(
           elevation: 5,
           titleSpacing: -5,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Get.isDarkMode ? Brightness.light : Brightness.dark,
+          ),
           surfaceTintColor: Theme.of(context).cardColor,
           backgroundColor: Theme.of(context).cardColor,
           shadowColor: Get.isDarkMode?Theme.of(context).primaryColor.withValues(alpha:0.5):Theme.of(context).primaryColor.withValues(alpha:0.1),

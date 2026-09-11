@@ -120,9 +120,34 @@ class BookingDetailsController extends GetxController implements GetxService{
   Future<void> acceptBookingRequest(String bookingId) async {
     _isAcceptButtonLoading = true;
     update();
-    String? providerCharge = userProfile?.providerCharge.toString();
 
-    if(double.parse(providerCharge ?? '0') <= double.parse(userProfile!.newWalletAmount.toString())) {
+    final walletBalance = double.tryParse(userProfile!.newWalletAmount.toString()) ?? 0;
+    if (walletBalance < AppConstants.minimumWalletRecharge) {
+      showCustomSnackBar('minimum_wallet_recharge_hint'.tr, type: ToasterMessageType.error);
+      _isAcceptButtonLoading = false;
+      update();
+      return;
+    }
+
+    BookingDetailsContent? bookingContent = _bookingDetails?.content?.id == bookingId
+        ? _bookingDetails?.content
+        : _subBookingDetails?.content?.id == bookingId
+            ? _subBookingDetails?.content
+            : null;
+
+    if (bookingContent == null) {
+      Response detailsResponse = await bookingDetailsRepo.getBookingDetails(bookingId);
+      if (detailsResponse.statusCode == 200) {
+        bookingContent = BookingDetailsModel.fromJson(detailsResponse.body).content;
+      }
+    }
+
+    final tdsPercent = Get.find<SplashController>().customerConfigModel.content?.tds ?? 1;
+    final requiredWallet = bookingContent != null
+        ? BookingHelper.getWalletDeductionRequired(bookingContent, tdsPercent: tdsPercent)
+        : double.tryParse(userProfile?.providerCharge ?? '0') ?? 0;
+
+    if (walletBalance >= requiredWallet) {
       Response response = await bookingDetailsRepo.acceptBookingRequest(bookingId);
       if (response.statusCode == 200 && response.body['response_code'] == "status_update_success_200") {
         await BookingSoundService.stopAlert(bookingId: bookingId);

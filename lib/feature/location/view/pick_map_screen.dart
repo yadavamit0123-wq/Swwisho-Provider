@@ -23,7 +23,7 @@ class _PickMapScreenState extends State<PickMapScreen> {
     super.initState();
     _initialPosition = widget.initialPosition ??  LatLng(
         Get.find<SplashController>().configModel.content!.defaultLocation!.defaultLocation!.lat ?? 23.777176,
-        Get.find<SplashController>().configModel.content!.defaultLocation!.defaultLocation!.lat ?? -90.399452,
+        Get.find<SplashController>().configModel.content!.defaultLocation!.defaultLocation!.lon ?? -90.399452,
     );
 
     if (kDebugMode) {

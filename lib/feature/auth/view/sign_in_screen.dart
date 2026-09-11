@@ -190,6 +190,7 @@ class SignInScreenState extends State<SignInScreen> {
 
   _initializeController(){
     var authController  = Get.find<AuthController>();
+    authController.resetLoading();
     String phoneWithoutCountryCode =  ValidationHelper.getValidPhone(Get.find<AuthController>().getUserNumber());
     String countryCode = ValidationHelper.getCountryCode(Get.find<AuthController>().getUserNumber());
 

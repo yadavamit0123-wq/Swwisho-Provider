@@ -58,7 +58,15 @@ Future<void> main() async {
     HttpOverrides.global = MyHttpOverrides();
   }
 
-  await Firebase.initializeApp();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    systemNavigationBarColor: Colors.transparent,
+  ));
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   await FlutterDownloader.initialize(debug: true); // ✅ fixed
 

@@ -26,64 +26,99 @@ class AuthController extends GetxController implements GetxService {
 
   var countryDialCode= "+880";
 
+  String? _readResponseCode(dynamic body) {
+    return body is Map ? body['response_code']?.toString() : null;
+  }
+
+  String? _readResponseMessage(dynamic body, {String? fallback}) {
+    if (body is Map && body['message'] != null) {
+      return body['message'].toString();
+    }
+    return fallback;
+  }
+
+  void resetLoading() {
+    _isLoading = false;
+    update();
+  }
+
   Future<void> login(String emailOrPhone, String password, String type) async {
     _isLoading = true;
     update();
-    Response? response = await authRepo.login(emailOrPassword: emailOrPhone, password: password, type: type);
-    if (response!.statusCode == 200  && response.body['response_code']=='auth_login_200'){
-      if (isActiveRememberMe!) {
-        authRepo.saveUserNumberAndPassword(emailOrPhone, password);
-      } else {
-        authRepo.clearUserNumberAndPassword();
+    try {
+      final response = await authRepo.login(emailOrPassword: emailOrPhone, password: password, type: type);
+      if (response == null) {
+        showCustomSnackBar('connection_to_api_server_failed'.tr);
+        return;
       }
-      authRepo.saveUserToken(response.body['content']["token"]);
-      await Get.find<UserProfileController>().getProviderInfo();
-      await authRepo.updateToken();
-      Get.offAllNamed(RouteHelper.initial);
-      Get.find<SplashController>().updateLanguage(true);
-      showCustomSnackBar("successfully_logged_in".tr, type: ToasterMessageType.success);
-      _isLoading = false;
-      update();
-    }
-    else if((response.body['response_code']=='unverified_email_401' || response.body['response_code']=='unverified_phone_401') && response.statusCode==401){
 
-      var config = Get.find<SplashController>().configModel.content;
-      SendOtpType sendOtpType = (type == "phone" && config?.firebaseOtpVerification == 1) ? SendOtpType.firebase : SendOtpType.verification;
+      final body = response.body;
+      final responseCode = _readResponseCode(body);
 
-      await Get.find<AuthController>().sendVerificationCode(identity:  emailOrPhone , identityType: type, type: sendOtpType, fromPage: "verification").then((status){
-        if(status !=null){
-          if(status.isSuccess!){
-            Get.toNamed(RouteHelper.getVerificationRoute(
-              identity: emailOrPhone,identityType: type,
-              fromPage: "verification",
-              firebaseSession: sendOtpType == SendOtpType.firebase ? status.message : null,
-            ));
-          }else{
-            showCustomSnackBar(status.message.toString().capitalizeFirst);
-          }
-          _isLoading = false;
-          update();
+      if (response.statusCode == 200 && responseCode == 'auth_login_200') {
+        if (isActiveRememberMe!) {
+          authRepo.saveUserNumberAndPassword(emailOrPhone, password);
+        } else {
+          authRepo.clearUserNumberAndPassword();
         }
-      });
 
-    }
-    else if(response.statusCode == 401 && response.body['response_code'] == "account_disabled_401"){
+        final token = body is Map ? body['content']?['token']?.toString() : null;
+        if (token == null || token.isEmpty) {
+          showCustomSnackBar('something_went_wrong'.tr);
+          return;
+        }
+
+        await authRepo.saveUserToken(token);
+        Get.offAllNamed(RouteHelper.initial);
+        Get.find<SplashController>().updateLanguage(true);
+        showCustomSnackBar("successfully_logged_in".tr, type: ToasterMessageType.success);
+        return;
+      }
+
+      if ((responseCode == 'unverified_email_401' || responseCode == 'unverified_phone_401') && response.statusCode == 401) {
+        final config = Get.find<SplashController>().configModel.content;
+        final sendOtpType = (type == "phone" && config?.firebaseOtpVerification == 1)
+            ? SendOtpType.firebase
+            : SendOtpType.verification;
+
+        final status = await sendVerificationCode(
+          identity: emailOrPhone,
+          identityType: type,
+          type: sendOtpType,
+          fromPage: "verification",
+        );
+
+        if (status != null && status.isSuccess == true) {
+          Get.toNamed(RouteHelper.getVerificationRoute(
+            identity: emailOrPhone,
+            identityType: type,
+            fromPage: "verification",
+            firebaseSession: sendOtpType == SendOtpType.firebase ? status.message : null,
+          ));
+        } else if (status?.message != null) {
+          showCustomSnackBar(status!.message.toString().capitalizeFirst);
+        }
+        return;
+      }
+
+      if (response.statusCode == 401 && responseCode == "account_disabled_401") {
+        showCustomSnackBar(
+          icon: Images.userBlock,
+          toasterTitle: 'account_blocked_notice'.tr,
+          _readResponseMessage(body, fallback: response.statusText)?.capitalizeFirst,
+        );
+        return;
+      }
+
       showCustomSnackBar(
-        icon:Images.userBlock,
-        toasterTitle: 'account_blocked_notice'.tr ,
-        response.body['message'].toString().capitalizeFirst??response.statusText,
+        _readResponseMessage(body, fallback: response.statusText)?.capitalizeFirst ?? 'something_went_wrong'.tr,
       );
+    } catch (_) {
+      showCustomSnackBar('something_went_wrong'.tr);
+    } finally {
       _isLoading = false;
       update();
     }
-    else{
-      showCustomSnackBar(
-        response.body['message'].toString().capitalizeFirst??response.statusText,
-      );
-      _isLoading = false;
-      update();
-    }
-
   }
 
   Future<ResponseModel?> sendVerificationCode({required String identity, required String identityType,required  SendOtpType type, required String fromPage , bool resendOtp = false}) async {

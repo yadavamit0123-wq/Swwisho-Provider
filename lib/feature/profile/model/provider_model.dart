@@ -316,6 +316,7 @@ class Account {
   String? accountReceivable;
   String? totalWithdrawn;
   String? newAccountBalance;
+  String? cashCollection;
   String? createdAt;
   String? updatedAt;
 
@@ -328,6 +329,7 @@ class Account {
         this.accountReceivable,
         this.totalWithdrawn,
         this.newAccountBalance,
+        this.cashCollection,
         this.createdAt,
         this.updatedAt});
 
@@ -342,6 +344,7 @@ class Account {
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
     newAccountBalance = json['new_account_balance']?.toString() ?? '0';
+    cashCollection = json['cash_collection']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -354,6 +357,7 @@ class Account {
     data['account_receivable'] = accountReceivable;
     data['total_withdrawn'] = totalWithdrawn;
     data['new_account_balance'] = newAccountBalance;
+    data['cash_collection'] = cashCollection;
     data['created_at'] = createdAt;
     data['updated_at'] = updatedAt;
     return data;

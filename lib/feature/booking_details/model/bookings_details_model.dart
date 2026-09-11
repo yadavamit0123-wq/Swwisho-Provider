@@ -42,6 +42,7 @@ class BookingDetailsContent {
 
   num? commission;
   num? gstOnCommission;
+  double? tds;
   num? travelingCharge;
   String? serviceSchedule;
   String? serviceAddressId;
@@ -157,6 +158,7 @@ class BookingDetailsContent {
     serviceAddressId = json['service_address_id'];
     commission = json['comission'];
     gstOnCommission = json['gst_on_comission'];
+    tds = double.tryParse(json['tds']?.toString() ?? '');
     travelingCharge = json['traveling_charge'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];

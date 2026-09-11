@@ -141,9 +141,20 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
                     }
                     final t = filtered[index];
                     final isCredit = (double.tryParse(t.credit) ?? 0) > 0;
+                    final isCash = t.trxType.toLowerCase().contains('cash');
                     final amount = isCredit
                         ? double.tryParse(t.credit) ?? 0
                         : double.tryParse(t.debit) ?? 0;
+                    final Color amountColor = isCash
+                        ? Colors.amber.shade800
+                        : isCredit
+                            ? Colors.green
+                            : Colors.red;
+                    final String typeLabel = isCash
+                        ? 'CASH'
+                        : isCredit
+                            ? 'CREDIT'
+                            : 'DEBIT';
 
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
@@ -174,17 +185,16 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
                           ListTile(
                             contentPadding: const EdgeInsets.all(16.0),
                             leading: CircleAvatar(
-                              backgroundColor:
-                              isCredit ? Colors.green[100] : Colors.red[100],
+                              backgroundColor: amountColor.withValues(alpha: 0.15),
                               child: Icon(
-                                isCredit ? Icons.arrow_downward : Icons.arrow_upward,
-                                color: isCredit ? Colors.green : Colors.red,
+                                isCash ? Icons.payments_outlined : isCredit ? Icons.arrow_downward : Icons.arrow_upward,
+                                color: amountColor,
                               ),
                             ),
                             title: Text(
-                              '${isCredit ? 'CREDIT' : 'DEBIT'}: \t ₹${amount.toStringAsFixed(2)}',
+                              '$typeLabel: \t ₹${amount.toStringAsFixed(2)}',
                               style: TextStyle(
-                                color: isCredit ? Colors.green : Colors.red,
+                                color: amountColor,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
                               ),

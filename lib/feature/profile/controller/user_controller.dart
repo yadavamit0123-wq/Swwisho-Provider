@@ -179,7 +179,7 @@ class UserProfileController extends GetxController implements GetxService{
            offlineAt = DateFormat('yyyy-MM-dd HH:mm:ss').format(fallbackTime);
          }
 
-        if(offlineAt != null || offlineAt != ''){
+        if(offlineAt != null && offlineAt != ''){
           availabilityController = AvailabilityController(offlineAt: offlineAt ?? DateTime.now().toString());
         }
         _newWalletAmount = _providerModel?.content?.providerInfo?.owner?.account?.newAccountBalance.toString() ?? '0';

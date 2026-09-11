@@ -39,6 +39,7 @@ class _AccountInformationState extends State<AccountInformation> {
             final payableAmount = double.tryParse(account?.accountPayable ?? '0') ?? 0;
             final pendingBalance = double.tryParse(account?.balancePending ?? '0') ?? 0;
             final totalWithdrawn = double.tryParse(account?.totalWithdrawn ?? '0') ?? 0;
+            final cashCollection = double.tryParse(account?.cashCollection ?? '0') ?? 0;
             final transactionAmount = userController.getTransactionAmountAmount(payableAmount, receivableAmount);
             final transactionType = userController.getTransactionType(payableAmount, receivableAmount);
 
@@ -47,6 +48,14 @@ class _AccountInformationState extends State<AccountInformation> {
               padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
               child: Column(
                 children: [
+                  if(cashCollection > 0)
+                    _AccountInfoCard(
+                      title: 'cash_collection'.tr,
+                      amount: cashCollection,
+                      infoText: 'cash_collection'.tr,
+                    ),
+                  if(cashCollection > 0)
+                    const SizedBox(height: Dimensions.paddingSizeDefault),
                   _AccountInfoCard(
                     title: 'account_payable'.tr,
                     amount: payableAmount,

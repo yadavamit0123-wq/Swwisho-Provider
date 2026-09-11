@@ -159,8 +159,6 @@ class _DashBoardScreenState extends State<DashBoardScreen>{
         backgroundColor: Theme.of(context).colorScheme.surface,
         appBar:  MainAppBar(
           color: Theme.of(context).primaryColor,
-          title: AppConstants.appName,
-          titleFontSize: Dimensions.fontSizeExtraLarge + 4,
         ),
         body: RefreshIndicator(
           color: Theme.of(context).primaryColorLight,

@@ -10,6 +10,29 @@ class BookingHelper{
     return subTotal;
   }
 
+  static double getOrderValue(BookingDetailsContent booking) {
+    return getSubTotalCost(booking)
+        - (booking.totalDiscountAmount ?? 0)
+        - (booking.totalCampaignDiscountAmount ?? 0)
+        - (booking.totalCouponDiscountAmount ?? 0)
+        - (booking.totalReferralDiscountAmount ?? 0);
+  }
+
+  static double getTdsAmount(BookingDetailsContent booking, {int tdsPercent = 1}) {
+    if (booking.tds != null && booking.tds! > 0) {
+      return booking.tds!;
+    }
+    final commission = double.tryParse(booking.commission?.toString() ?? '0') ?? 0;
+    final spEarning = getOrderValue(booking) - commission;
+    return spEarning > 0 ? spEarning * (tdsPercent / 100) : 0;
+  }
+
+  static double getWalletDeductionRequired(BookingDetailsContent booking, {int tdsPercent = 1}) {
+    final commission = double.tryParse(booking.commission?.toString() ?? '0') ?? 0;
+    final gst = double.tryParse(booking.gstOnCommission?.toString() ?? '0') ?? 0;
+    return commission + gst + getTdsAmount(booking, tdsPercent: tdsPercent);
+  }
+
   static double getBookingServiceUnitConst(ItemService? item) {
     return  (item?.serviceCost ?? 0) * (item?.quantity ?? 1);
   }
