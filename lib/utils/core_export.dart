@@ -325,7 +325,9 @@ export 'package:demandium_provider/feature/profile/view/bank_information/control
 export 'package:demandium_provider/feature/profile/view/bank_information/model/bank_info_nodel.dart';
 export 'package:demandium_provider/feature/profile/view/bank_information/repo/bank_info_repo.dart';
 export 'package:demandium_provider/feature/profile/view/bank_information/view/bank_information.dart';
+export 'package:demandium_provider/feature/profile/view/account_information/view/account_information.dart';
 export 'package:demandium_provider/feature/profile/view/business_information/business_information.dart';
+export 'package:demandium_provider/feature/profile/view/profile_information/profile_information_screen.dart';
 export 'package:demandium_provider/feature/profile/view/view/profile_screen.dart';
 export 'package:demandium_provider/feature/profile/view/wallet_history/model/wallet_history_tran_model.dart';
 export 'package:demandium_provider/feature/profile/view/wallet_history/view/wallet_history.dart';
