@@ -71,7 +71,7 @@ Future<Map<String, Map<String, String>>> init() async {
 
   Get.lazyPut(() => SplashRepo(sharedPreferences: Get.find(), apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => AuthRepo(apiClient: Get.find(), sharedPreferences: Get.find()), fenix: true);
-  Get.lazyPut(() => UserRepo(apiClient: Get.find()), fenix: true);
+  Get.lazyPut(() => UserRepo(Get.find(), apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => DashBoardRepo(apiClient: Get.find(), sharedPreferences: Get.find()), fenix: true);
   Get.lazyPut(() => BookingDetailsRepo(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => BookingRequestRepo(apiClient: Get.find()), fenix: true);
@@ -87,11 +87,11 @@ Future<Map<String, Map<String, String>>> init() async {
   Get.lazyPut(() => ReportRepo(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => LocationRepo(apiClient: Get.find(), sharedPreferences: Get.find()), fenix: true);
   Get.lazyPut(() => HtmlRepository(apiClient: Get.find()), fenix: true);
-  Get.lazyPut(() => ServiceDetailsRepo(apiClient: Get.find()), fenix: true);
+  Get.lazyPut(() => ServiceDetailsRepo(apiClient: Get.find(), sharedPreferences: Get.find()), fenix: true);
   Get.lazyPut(() => BusinessSettingRepo(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => NotificationSetupRepo(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => SuggestServiceRepo(apiClient: Get.find()), fenix: true);
-  Get.lazyPut(() => BankInfoRepo(apiClient: Get.find()), fenix: true);
+  Get.lazyPut(() => BankInfoRepo(apiClient: Get.find(), sharedPreferences: Get.find()), fenix: true);
 
   Get.lazyPut(() => ThemeController(sharedPreferences: Get.find()), fenix: true);
   Get.lazyPut(() => LocalizationController(sharedPreferences: Get.find(), apiClient: Get.find()), fenix: true);

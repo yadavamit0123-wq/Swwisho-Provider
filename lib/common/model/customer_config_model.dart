@@ -700,19 +700,25 @@ class AdvanceBooking {
 
 class Language {
   String? languageCode;
+  String? fullName;
   bool? isDefault;
+  int? status;
 
-  Language({this.languageCode, this.isDefault});
+  Language({this.languageCode, this.fullName, this.isDefault, this.status});
 
   Language.fromJson(Map<String, dynamic> json) {
     languageCode = json['code'];
+    fullName = json['full_name'] ?? json['name'] ?? json['code'];
     isDefault = json['default'];
+    status = int.tryParse(json['status']?.toString() ?? '');
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['code'] = languageCode;
+    data['full_name'] = fullName;
     data['default'] = isDefault;
+    data['status'] = status;
     return data;
   }
 }

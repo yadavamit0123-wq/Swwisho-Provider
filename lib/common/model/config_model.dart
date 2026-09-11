@@ -63,6 +63,12 @@ class ConfigContent {
   int? bookingImageVerification;
   int? sendOtpTimer;
   int? serviceAtProviderPlace;
+  int? phoneVerification;
+  int? emailVerification;
+  int? firebaseOtpVerification;
+  ForgetPasswordVerificationMethod? forgetPasswordVerificationMethod;
+  String? appUrlAndroid;
+  String? appUrlIos;
 
   double? minimumWithdrawAmount;
   double? maximumWithdrawAmount;
@@ -111,6 +117,12 @@ class ConfigContent {
     this.bookingImageVerification,
     this.sendOtpTimer,
     this.serviceAtProviderPlace,
+    this.phoneVerification,
+    this.emailVerification,
+    this.firebaseOtpVerification,
+    this.forgetPasswordVerificationMethod,
+    this.appUrlAndroid,
+    this.appUrlIos,
     this.minimumWithdrawAmount,
     this.maximumWithdrawAmount,
     this.defaultLocation,
@@ -160,6 +172,14 @@ class ConfigContent {
     sendOtpTimer = int.tryParse(json['send_otp_timer']?.toString() ?? '') ??
         int.tryParse(json['otp_resend_time']?.toString() ?? '');
     serviceAtProviderPlace = int.tryParse(json['service_at_provider_place']?.toString() ?? '');
+    phoneVerification = int.tryParse(json['phone_verification']?.toString() ?? '');
+    emailVerification = int.tryParse(json['email_verification']?.toString() ?? '');
+    firebaseOtpVerification = int.tryParse(json['firebase_otp_verification']?.toString() ?? '');
+    forgetPasswordVerificationMethod = json['forgot_password_verification_method'] != null
+        ? ForgetPasswordVerificationMethod.fromJson(json['forgot_password_verification_method'])
+        : null;
+    appUrlAndroid = json['app_url_playstore'];
+    appUrlIos = json['app_url_appstore'];
 
     minimumWithdrawAmount = double.tryParse(json['minimum_withdraw_amount']?.toString() ?? '');
     maximumWithdrawAmount = double.tryParse(json['maximum_withdraw_amount']?.toString() ?? '');
@@ -225,6 +245,14 @@ class ConfigContent {
     data['booking_image_verification'] = bookingImageVerification;
     data['send_otp_timer'] = sendOtpTimer;
     data['service_at_provider_place'] = serviceAtProviderPlace;
+    data['phone_verification'] = phoneVerification;
+    data['email_verification'] = emailVerification;
+    data['firebase_otp_verification'] = firebaseOtpVerification;
+    if (forgetPasswordVerificationMethod != null) {
+      data['forgot_password_verification_method'] = forgetPasswordVerificationMethod!.toJson();
+    }
+    data['app_url_playstore'] = appUrlAndroid;
+    data['app_url_appstore'] = appUrlIos;
     data['minimum_withdraw_amount'] = minimumWithdrawAmount;
     data['maximum_withdraw_amount'] = maximumWithdrawAmount;
     if (defaultLocation != null) {

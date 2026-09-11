@@ -250,7 +250,7 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
                           '';
 
                       final response = await userController.updateProfile(address: address);
-                      if (response.isSuccess) {
+                      if (response.isSuccess == true) {
                         showCustomSnackBar(response.message, type: ToasterMessageType.success);
                         Get.back();
                       } else {

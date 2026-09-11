@@ -186,7 +186,7 @@ class UserProfileController extends GetxController implements GetxService{
          double payablePercentage = getOverflowPercent(
            double.tryParse(_providerModel?.content?.providerInfo?.owner?.account?.accountPayable??"0")??0,
            double.tryParse(_providerModel?.content?.providerInfo?.owner?.account?.accountReceivable??"0")??0,
-             Get.find<SplashController>().configModel.content?.maxCashInHandLimit ?? 0,
+             (Get.find<SplashController>().configModel.content?.maxCashInHandLimit ?? 0).toDouble(),
          );
 
          hideOverflowDialog(payablePercentage: payablePercentage, hideDialog: false);

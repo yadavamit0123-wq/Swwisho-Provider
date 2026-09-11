@@ -126,7 +126,7 @@ class MyApp extends StatelessWidget {
                     double transactionAmount =  userProfileController.getTransactionAmountAmount(payableAmount, receivableAmount);
 
                     double payablePercent =  userProfileController.providerModel != null ?
-                    userProfileController.getOverflowPercent(payableAmount, receivableAmount, Get.find<SplashController>().configModel.content?.maxCashInHandLimit?? 0) : 0;
+                    userProfileController.getOverflowPercent(payableAmount, receivableAmount, (Get.find<SplashController>().configModel.content?.maxCashInHandLimit ?? 0).toDouble()) : 0;
 
                     bool overFlowDialogStatus = userProfileController.showOverflowDialog && userProfileController.providerModel != null && Get.find<SplashController>().configModel.content?.suspendOnCashInHandLimit == 1 &&  Get.find<SplashController>().configModel.content?.digitalPayment == 1;
 

@@ -21,6 +21,7 @@ class CustomTextField extends StatefulWidget {
   final Function(String text)? onChanged;
   final String? countryDialCode;
   final String? suffixIconUrl;
+  final String? suffixIcon;
   final Function(CountryCode countryCode)? onCountryChanged;
   final String? Function(String?)? onValidate;
   final bool contentPadding;
@@ -29,6 +30,7 @@ class CustomTextField extends StatefulWidget {
   final String? prefixIcon;
   final bool? isFromOfflinePayment;
   final Function? onSuffixTap;
+  final Function()? onPressedSuffix;
 
   const CustomTextField({
     super.key,
@@ -49,6 +51,7 @@ class CustomTextField extends StatefulWidget {
     this.countryDialCode,
     this.onCountryChanged,
     this.suffixIconUrl,
+    this.suffixIcon,
     this.onChanged,
     this.onValidate,
     this.title,
@@ -58,6 +61,7 @@ class CustomTextField extends StatefulWidget {
     this.prefixIcon,
     this.isFromOfflinePayment = false,
     this.onSuffixTap,
+    this.onPressedSuffix,
   });
 
   @override
@@ -218,10 +222,10 @@ class CustomTextFieldState extends State<CustomTextField> {
                   ),
                   onPressed: _toggle,
                 )
-              : widget.suffixIconUrl != null
+              : (widget.suffixIconUrl ?? widget.suffixIcon) != null
                   ? IconButton(
-                      onPressed: widget.onSuffixTap as void Function()?,
-                      icon: Image.asset(widget.suffixIconUrl!, width: 20),
+                      onPressed: (widget.onSuffixTap ?? widget.onPressedSuffix) as void Function()?,
+                      icon: Image.asset((widget.suffixIconUrl ?? widget.suffixIcon)!, width: 20),
                     )
                   : null,
         ),

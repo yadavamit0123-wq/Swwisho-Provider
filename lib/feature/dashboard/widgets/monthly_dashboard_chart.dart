@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:get/get.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 

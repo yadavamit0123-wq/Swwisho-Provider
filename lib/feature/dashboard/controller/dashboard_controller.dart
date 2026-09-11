@@ -1,5 +1,6 @@
 import 'package:demandium_provider/feature/custom_post/model/post_model.dart';
 import 'package:demandium_provider/feature/dashboard/model/additional_info_count.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:demandium_provider/utils/core_export.dart';

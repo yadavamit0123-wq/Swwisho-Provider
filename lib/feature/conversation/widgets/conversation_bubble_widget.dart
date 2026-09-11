@@ -1,5 +1,7 @@
+import 'dart:isolate';
 import 'dart:ui';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 
 

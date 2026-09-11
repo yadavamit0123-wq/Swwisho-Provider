@@ -18,7 +18,7 @@ class TotalCashInHandWidget extends StatelessWidget {
 
           double transactionAmount =  userProfileController.getTransactionAmountAmount(payableAmount, receivableAmount);
 
-          double payablePercent =  userProfileController.getOverflowPercent(payableAmount, receivableAmount, Get.find<SplashController>().configModel.content?.maxCashInHandLimit ?? 0);
+          double payablePercent =  userProfileController.getOverflowPercent(payableAmount, receivableAmount, (Get.find<SplashController>().configModel.content?.maxCashInHandLimit ?? 0).toDouble());
 
           return Container(
             decoration: BoxDecoration(
@@ -42,7 +42,7 @@ class TotalCashInHandWidget extends StatelessWidget {
                       preferredDirection: AxisDirection.down, tailLength: 14, tailBaseWidth: 20,
                       controller: toolTip,backgroundColor: Colors.black87,
                       content: Padding(padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
-                        child: Text('${'maximum_cash_in_hand_amount'.tr} ${PriceConverter.convertPrice(Get.find<SplashController>().configModel.content?.maxCashInHandLimit??0)}',style: robotoRegular.copyWith(color: Colors.white70),),
+                        child: Text('${'maximum_cash_in_hand_amount'.tr} ${PriceConverter.convertPrice((Get.find<SplashController>().configModel.content?.maxCashInHandLimit ?? 0).toDouble())}',style: robotoRegular.copyWith(color: Colors.white70),),
                       ),
                       child: InkWell(
                         onTap: ()=> toolTip?.showTooltip(),
