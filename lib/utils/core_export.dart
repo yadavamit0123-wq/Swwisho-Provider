@@ -154,7 +154,7 @@ export 'package:demandium_provider/feature/booking_details/model/booking_price_m
 export 'package:demandium_provider/feature/booking_details/model/bookings_details_model.dart';
 export 'package:demandium_provider/feature/booking_details/model/cart_model.dart';
 export 'package:demandium_provider/feature/booking_details/model/invoice.dart';
-export 'package:demandium_provider/feature/booking_details/model/provider.dart';
+export 'package:demandium_provider/feature/booking_details/model/provider.dart' hide Provider;
 export 'package:demandium_provider/feature/booking_details/model/supplier.dart';
 export 'package:demandium_provider/feature/booking_details/repo/booking_details_repo.dart';
 export 'package:demandium_provider/feature/booking_details/view/booking_details_screen.dart';
@@ -389,7 +389,7 @@ export 'package:demandium_provider/feature/reporting/widgets/transation_report/t
 export 'package:demandium_provider/feature/reporting/widgets/transation_report/transation_filtered_widget.dart';
 export 'package:demandium_provider/feature/reporting/widgets/transation_report/trnsaction_report_statistics.dart';
 export 'package:demandium_provider/feature/review/controller/review_controller.dart';
-export 'package:demandium_provider/feature/review/model/review_model.dart' hide Booking, Provider;
+export 'package:demandium_provider/feature/review/model/review_model.dart' hide Booking;
 export 'package:demandium_provider/feature/review/repository/review_repo.dart';
 export 'package:demandium_provider/feature/review/view/provider_review_screen.dart';
 export 'package:demandium_provider/feature/review/view/review_reply_screen.dart';
