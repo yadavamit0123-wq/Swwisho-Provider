@@ -51,7 +51,9 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double currentBalance = double.tryParse(Get.find<UserProfileController>().providerModel?.content?.providerInfo?.owner?.account?.newAccountBalance.toString() ?? "0") ?? 0 ;
+    double currentBalance = UserProfileController.resolveWalletBalance(
+      Get.find<UserProfileController>().providerModel?.content?.providerInfo?.owner?.account,
+    );
 
     return Scaffold(
       appBar: AppBar(

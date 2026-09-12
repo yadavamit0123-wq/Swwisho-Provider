@@ -269,7 +269,7 @@ class BookingSummeryView extends StatelessWidget{
                     ],
                   ),
 
-                  if(tdsAmount > 0)...[
+                  if(tdsAmount > 0 && bookingDetails.paymentMethod != 'cash_after_service')...[
                     const SizedBox(height: Dimensions.paddingSizeExtraSmall,),
                     Row(
                       children: [

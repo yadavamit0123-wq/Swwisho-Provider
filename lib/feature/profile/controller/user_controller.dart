@@ -129,6 +129,16 @@ class UserProfileController extends GetxController implements GetxService{
    String _newWalletAmount = '0';
    String get providerCharge => _providerCharge;
    String get newWalletAmount => _newWalletAmount;
+   double get walletBalance => double.tryParse(_newWalletAmount) ?? 0;
+
+   static double resolveWalletBalance(Account? account) {
+     if (account == null) return 0;
+     final newBalance = double.tryParse(account.newAccountBalance?.toString() ?? '');
+     final receivedBalance = double.tryParse(account.receivedBalance?.toString() ?? '');
+     if (newBalance != null && newBalance > 0) return newBalance;
+     if (receivedBalance != null && receivedBalance > 0) return receivedBalance;
+     return newBalance ?? receivedBalance ?? 0;
+   }
    XFile? _pickedFile ;
    bool _isLoading = false;
 
@@ -166,9 +176,10 @@ class UserProfileController extends GetxController implements GetxService{
 
 
     if(_providerModel == null || reload){
+      _isLoading = true;
+      update();
       Response response = await userRepo.getProviderInfo();
       if (response.statusCode == 200) {
-         getZoneList();
         _providerModel = ProviderModel.fromJson(response.body);
         _providerCharge = _providerModel?.content?.providerCharge ?? '0';
         isOnline = _providerModel?.content?.providerInfo?.isOnline == 0 ? true : false;
@@ -182,7 +193,9 @@ class UserProfileController extends GetxController implements GetxService{
         if(offlineAt != null && offlineAt != ''){
           availabilityController = AvailabilityController(offlineAt: offlineAt ?? DateTime.now().toString());
         }
-        _newWalletAmount = _providerModel?.content?.providerInfo?.owner?.account?.newAccountBalance.toString() ?? '0';
+        _newWalletAmount = resolveWalletBalance(
+          _providerModel?.content?.providerInfo?.owner?.account,
+        ).toString();
          double payablePercentage = getOverflowPercent(
            double.tryParse(_providerModel?.content?.providerInfo?.owner?.account?.accountPayable??"0")??0,
            double.tryParse(_providerModel?.content?.providerInfo?.owner?.account?.accountReceivable??"0")??0,

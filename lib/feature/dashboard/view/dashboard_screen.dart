@@ -145,7 +145,7 @@ class _DashBoardScreenState extends State<DashBoardScreen>{
             final userProfileController = Get.find<UserProfileController>();
 
             if (!userProfileController.hasShownWalletDialog) {
-              double balance = double.parse(userProfileController.newWalletAmount.toString() ?? '0');
+              double balance = userProfileController.walletBalance;
               checkWallet(balance, context);
               userProfileController.hasShownWalletDialog = true;
             }

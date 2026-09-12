@@ -18,7 +18,14 @@ class BookingHelper{
         - (booking.totalReferralDiscountAmount ?? 0);
   }
 
+  static bool isCashAfterService(BookingDetailsContent booking) {
+    return booking.paymentMethod == 'cash_after_service';
+  }
+
   static double getTdsAmount(BookingDetailsContent booking, {int tdsPercent = 1}) {
+    if (isCashAfterService(booking)) {
+      return 0;
+    }
     if (booking.tds != null && booking.tds! > 0) {
       return booking.tds!;
     }

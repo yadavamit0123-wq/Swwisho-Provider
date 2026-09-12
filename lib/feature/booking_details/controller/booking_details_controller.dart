@@ -121,13 +121,8 @@ class BookingDetailsController extends GetxController implements GetxService{
     _isAcceptButtonLoading = true;
     update();
 
-    final walletBalance = double.tryParse(userProfile!.newWalletAmount.toString()) ?? 0;
-    if (walletBalance < AppConstants.minimumWalletRecharge) {
-      showCustomSnackBar('minimum_wallet_recharge_hint'.tr, type: ToasterMessageType.error);
-      _isAcceptButtonLoading = false;
-      update();
-      return;
-    }
+    await userProfile?.getProviderInfo(reload: true);
+    final walletBalance = userProfile?.walletBalance ?? 0;
 
     BookingDetailsContent? bookingContent = _bookingDetails?.content?.id == bookingId
         ? _bookingDetails?.content
@@ -147,7 +142,7 @@ class BookingDetailsController extends GetxController implements GetxService{
         ? BookingHelper.getWalletDeductionRequired(bookingContent, tdsPercent: tdsPercent)
         : double.tryParse(userProfile?.providerCharge ?? '0') ?? 0;
 
-    if (walletBalance >= requiredWallet) {
+    if (requiredWallet <= 0 || walletBalance >= requiredWallet) {
       Response response = await bookingDetailsRepo.acceptBookingRequest(bookingId);
       if (response.statusCode == 200 && response.body['response_code'] == "status_update_success_200") {
         await BookingSoundService.stopAlert(bookingId: bookingId);

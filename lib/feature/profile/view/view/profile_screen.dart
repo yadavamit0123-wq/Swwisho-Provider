@@ -13,18 +13,21 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
 
-
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.find<BankInfoController>().getBankInfoData();
+      Get.find<TransactionController>().getWithdrawMethods();
+      Get.find<UserProfileController>().getProviderInfo(reload: true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: GetBuilder<UserProfileController>(
-        initState: (_) async {
-          Get.find<BankInfoController>().getBankInfoData();
-          Get.find<UserProfileController>().getProviderInfo(reload: true);
-          Get.find<TransactionController>().getWithdrawMethods();
-        },
         builder: (userController) {
           if(userController.providerModel!=null){
             return  SingleChildScrollView(
@@ -137,9 +140,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             );
-          }else{
+          }else if(userController.isLoading){
             return Center(
               child: CircularProgressIndicator(color: Theme.of(context).hoverColor,),
+            );
+          }else{
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('something_went_wrong'.tr, style: robotoRegular),
+                  const SizedBox(height: Dimensions.paddingSizeDefault),
+                  CustomButton(
+                    btnTxt: 'retry'.tr,
+                    onPressed: () => userController.getProviderInfo(reload: true),
+                  ),
+                ],
+              ),
             );
           }
 

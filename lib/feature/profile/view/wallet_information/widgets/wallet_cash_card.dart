@@ -32,7 +32,9 @@ class WalletCashCard extends StatelessWidget {
                 double transactionAmount = 0;
                 double receivableAmount = double.tryParse(userProfileController.providerModel?.content?.providerInfo?.owner?.account?.accountReceivable ?? "0" ) ?? 0;
                 double payableAmount = double.tryParse(userProfileController.providerModel?.content?.providerInfo?.owner?.account?.accountPayable ?? "0") ?? 0 ;
-                double newAccountBalance = double.tryParse(userProfileController.providerModel?.content?.providerInfo?.owner?.account?.newAccountBalance.toString() ?? "0") ?? 0 ;
+                double newAccountBalance = UserProfileController.resolveWalletBalance(
+                  userProfileController.providerModel?.content?.providerInfo?.owner?.account,
+                );
 
                 transactionAmount =  userProfileController.getTransactionAmountAmount(payableAmount, receivableAmount);
 

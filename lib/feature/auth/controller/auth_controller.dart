@@ -77,6 +77,7 @@ class AuthController extends GetxController implements GetxService {
         await authRepo.saveUserToken(token);
         Get.offAllNamed(RouteHelper.initial);
         Get.find<SplashController>().updateLanguage(true);
+        Get.find<UserProfileController>().getProviderInfo(reload: true);
         showCustomSnackBar("successfully_logged_in".tr, type: ToasterMessageType.success);
         return;
       }
