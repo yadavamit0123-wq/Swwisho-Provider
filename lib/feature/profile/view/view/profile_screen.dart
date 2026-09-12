@@ -12,21 +12,24 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  bool _requestedProfileLoad = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userController = Get.find<UserProfileController>();
-      if (userController.providerModel == null) {
-        userController.getProviderInfo(reload: true);
-      } else {
-        userController.refreshProviderInfoIfStale();
+    _requestedProfileLoad = true;
+    final userController = Get.find<UserProfileController>();
+    final profileFuture = userController.providerModel == null
+        ? userController.getProviderInfo(reload: true)
+        : userController.refreshProviderInfoIfStale();
+    profileFuture.whenComplete(() {
+      if (mounted) {
+        setState(() => _requestedProfileLoad = false);
       }
-      Future.microtask(() {
-        Get.find<BankInfoController>().getBankInfoData();
-        Get.find<TransactionController>().getWithdrawMethods();
-      });
+    });
+    Future.microtask(() {
+      Get.find<BankInfoController>().getBankInfoData();
+      Get.find<TransactionController>().getWithdrawMethods();
     });
   }
 
@@ -147,7 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             );
-          }else if(userController.isLoading){
+          }else if(userController.isLoading || _requestedProfileLoad){
             return Center(
               child: CircularProgressIndicator(color: Theme.of(context).hoverColor,),
             );

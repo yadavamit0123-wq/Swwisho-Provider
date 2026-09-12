@@ -198,7 +198,15 @@ class UserProfileController extends GetxController implements GetxService{
       try {
       Response response = await userRepo.getProviderInfo();
       if (response.statusCode == 200) {
-        _providerModel = ProviderModel.fromJson(response.body);
+        ProviderModel parsedModel;
+        try {
+          parsedModel = ProviderModel.fromJson(response.body);
+        } catch (_) {
+          _isLoading = false;
+          update();
+          return false;
+        }
+        _providerModel = parsedModel;
         _providerCharge = _providerModel?.content?.providerCharge ?? '0';
         isOnline = _providerModel?.content?.providerInfo?.isOnline == 0 ? true : false;
         offlineAt = _providerModel?.content?.providerInfo?.offlineAt;
@@ -224,7 +232,8 @@ class UserProfileController extends GetxController implements GetxService{
 
         companyNameController!.text = _providerModel?.content?.providerInfo?.companyName??'';
 
-        countryDialCode = ValidationHelper.getValidCountryCode(_providerModel?.content?.providerInfo?.companyPhone ?? "" ) != "" ? ValidationHelper.getValidCountryCode(_providerModel?.content?.providerInfo?.companyPhone ?? "") : CountryCode.fromCountryCode(Get.find<SplashController>().configModel.content!.countryCode!).dialCode ?? "+880";
+        final configCountryCode = Get.find<SplashController>().configModel.content?.countryCode ?? 'IN';
+        countryDialCode = ValidationHelper.getValidCountryCode(_providerModel?.content?.providerInfo?.companyPhone ?? "" ) != "" ? ValidationHelper.getValidCountryCode(_providerModel?.content?.providerInfo?.companyPhone ?? "") : CountryCode.fromCountryCode(configCountryCode).dialCode ?? "+91";
         companyPhoneController!.text = ValidationHelper.getValidPhone(_providerModel?.content?.providerInfo?.companyPhone ?? "") != "" ? ValidationHelper.getValidPhone(_providerModel?.content?.providerInfo?.companyPhone??"" ) : _providerModel?.content?.providerInfo?.companyPhone ?? "";
 
         companyEmailController!.text = _providerModel?.content?.providerInfo?.companyEmail??"";

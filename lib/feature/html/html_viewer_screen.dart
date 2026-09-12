@@ -11,23 +11,37 @@ class HtmlViewerScreen extends StatefulWidget {
   State<HtmlViewerScreen> createState() => _HtmlViewerScreenState();
 }
 class _HtmlViewerScreenState extends State<HtmlViewerScreen> {
+  bool _isUrlOnly(String? value) {
+    if (value == null || value.trim().isEmpty) return false;
+    final trimmed = value.trim();
+    return trimmed.startsWith('http://') || trimmed.startsWith('https://');
+  }
+
   String? _fallbackHtml() {
     final config = Get.find<SplashController>().customerConfigModel.content;
     if (config == null) return null;
+    String? value;
     switch (widget.htmlType) {
       case HtmlType.privacyPolicy:
-        return config.privacyPolicy;
+        value = config.privacyPolicy;
+        break;
       case HtmlType.termsAndCondition:
-        return config.termsAndConditions;
+        value = config.termsAndConditions;
+        break;
       case HtmlType.aboutUs:
-        return config.aboutUs;
+        value = config.aboutUs;
+        break;
       case HtmlType.refundPolicy:
-        return config.refundPolicy;
+        value = config.refundPolicy;
+        break;
       case HtmlType.cancellationPolicy:
-        return config.cancellationPolicy;
+        value = config.cancellationPolicy;
+        break;
       default:
         return null;
     }
+    if (_isUrlOnly(value)) return null;
+    return value;
   }
 
   Widget _buildHtmlContent(String data, {String image = ''}) {
@@ -119,13 +133,13 @@ class _HtmlViewerScreenState extends State<HtmlViewerScreen> {
                 : widget.htmlType == HtmlType.cancellationPolicy ? htmlViewController.pagesContent?.images?.cancellationPolicy ?? ""
                 : null;
 
-            if(data != null && data.isNotEmpty) {
+            if(data != null && data.isNotEmpty && !_isUrlOnly(data)) {
               return _buildHtmlContent(data, image: image ?? '');
             }
           }
 
           final fallback = _fallbackHtml();
-          if (fallback != null && fallback.isNotEmpty) {
+          if (fallback != null && fallback.isNotEmpty && !_isUrlOnly(fallback)) {
             return _buildHtmlContent(fallback);
           }
 

@@ -109,12 +109,12 @@ class AboutUs {
         this.updatedAt});
 
   AboutUs.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    keyName = json['key'];
-    liveValues = json['value'];
-    settingsType = json['type'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
+    id = json['id']?.toString();
+    keyName = json['key']?.toString();
+    liveValues = json['value']?.toString() ?? json['live_values']?.toString();
+    settingsType = json['type']?.toString();
+    createdAt = json['created_at']?.toString();
+    updatedAt = json['updated_at']?.toString();
   }
 
   Map<String, dynamic> toJson() {

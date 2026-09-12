@@ -113,7 +113,7 @@ class AppConstants {
   static const String geocodeUri = '/api/v1/provider/config/geocode-api';
   static const String searchLocationUri = '/api/v1/provider/config/place-api-autocomplete';
   static const String placeDetailsUri = '/api/v1/provider/config/place-api-details';
-  static const String pages = '/api/v1/provider/config/pages';
+  static const String pages = '/api/v1/customer/config/pages';
   static const String regularBookingInvoiceUrl = '/booking/invoice/regular/';
   static const String fullRepeatBookingInvoiceUrl = '/booking/invoice/repeat/';
   static const String singleRepeatBookingInvoiceUrl = '/booking/invoice/repeat/single/';
