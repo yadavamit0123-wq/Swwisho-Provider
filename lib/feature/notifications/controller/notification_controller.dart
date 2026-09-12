@@ -71,7 +71,7 @@ class NotificationController extends GetxController implements GetxService{
        _notificationModel = NotificationModel();
      }
 
-     _pageSize = int.tryParse(response.body is Map ? response.body['content']?['last_page']?.toString() ?? '' : '') ?? 1;
+     _pageSize = notificationModel?.content?.lastPage ?? 1;
 
      _totalNumberOfNotification  = notificationModel?.content?.total??0;
 
