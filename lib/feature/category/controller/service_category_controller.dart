@@ -69,9 +69,21 @@ class ServiceCategoryController extends GetxController implements GetxService{
     Response response = await serviceRepo.getCategoryList();
     if(response.statusCode == 200){
       serviceCategoryList = [];
-      List<dynamic> list = response.body['content']['data'];
-      for (var category in list) {
-        serviceCategoryList!.add(ServiceCategoryModel.fromJson(category));
+      dynamic list;
+      final content = response.body['content'];
+      if (content is Map) {
+        list = content['data'];
+      } else if (content is List) {
+        list = content;
+      }
+      if (list is List) {
+        for (var category in list) {
+          try {
+            if (category is Map) {
+              serviceCategoryList!.add(ServiceCategoryModel.fromJson(Map<String, dynamic>.from(category)));
+            }
+          } catch (_) {}
+        }
       }
 
       if((serviceCategoryList!.isNotEmpty && serviceSubCategoryList.isEmpty) || reloadSubcategory){

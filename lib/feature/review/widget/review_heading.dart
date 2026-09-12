@@ -46,14 +46,14 @@ class ReviewHeading extends StatelessWidget {
                 children: [
                   Text( "${rating?.ratingCount ?? "0"} ${'ratings'.tr}",
                     style: robotoRegular.copyWith(
-                      color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha:.6),
+                      color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black).withValues(alpha:.6),
                       fontSize: Dimensions.fontSizeDefault,
                     ),
                   ),
                   const SizedBox(width: Dimensions.paddingSizeSmall,),
                   Text("${rating?.reviewCount ?? "0" } ${'reviews'.tr}",
                     style: robotoRegular.copyWith(
-                      color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha:.6), fontSize: Dimensions.fontSizeDefault,
+                      color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black).withValues(alpha:.6), fontSize: Dimensions.fontSizeDefault,
                     ),
                   ),
                 ],

@@ -9,22 +9,25 @@ class ReviewLinearChart extends StatelessWidget {
   Widget build(BuildContext context) {
 
     double fiveStar = 0.0, fourStar = 0.0, threeStar = 0.0,twoStar = 0.0, oneStar = 0.0;
-    for(int i =0 ; i< rating.ratingGroupCount!.length; i++)
+    final groups = rating.ratingGroupCount ?? [];
+    final ratingCount = rating.ratingCount ?? 0;
+    for(int i =0 ; i< groups.length; i++)
     {
-      if(rating.ratingGroupCount![i].reviewRating == 1){
-        oneStar = (rating.ratingGroupCount![i].reviewRating! * rating.ratingCount!) / 100;
+      final reviewRating = groups[i].reviewRating ?? 0;
+      if(reviewRating == 1){
+        oneStar = (reviewRating * ratingCount) / 100;
       }
-      if(rating.ratingGroupCount![i].reviewRating == 2){
-        twoStar = (rating.ratingGroupCount![i].reviewRating! * rating.ratingCount!) / 100;
+      if(reviewRating == 2){
+        twoStar = (reviewRating * ratingCount) / 100;
       }
-      if(rating.ratingGroupCount![i].reviewRating == 3){
-        threeStar = (rating.ratingGroupCount![i].reviewRating! * rating.ratingCount!) / 100;
+      if(reviewRating == 3){
+        threeStar = (reviewRating * ratingCount) / 100;
       }
-      if(rating.ratingGroupCount![i].reviewRating == 4){
-        fourStar = (rating.ratingGroupCount![i].reviewRating! * rating.ratingCount!) / 100;
+      if(reviewRating == 4){
+        fourStar = (reviewRating * ratingCount) / 100;
       }
-      if(rating.ratingGroupCount![i].reviewRating == 5){
-        fiveStar = (rating.ratingGroupCount![i].reviewRating! * rating.ratingCount!) / 100;
+      if(reviewRating == 5){
+        fiveStar = (reviewRating * ratingCount) / 100;
       }
     }
     return Column(

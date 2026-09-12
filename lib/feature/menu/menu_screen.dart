@@ -89,33 +89,27 @@ class _MenuButton extends StatelessWidget {
         final route = menu.route;
         final isLogout = menu.isLogout;
         Get.back();
-        Future.microtask(() {
-          if (isLogout) {
-            Get.find<AuthController>().clearSharedData();
-            Get.offAllNamed(RouteHelper.signIn);
-            return;
-          }
-          if (route == 'custom_post') {
-            Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet().then((isTrial) {
-              if (isTrial && Get.find<UserProfileController>().checkAvailableFeatureInSubscriptionPlan(featureType: 'bidding')) {
-                Get.to(() => const CustomerRequestListScreen());
-              }
-            });
-            return;
-          }
-          if (route == 'language_sheet') {
-            Get.bottomSheet(
-              const ChooseLanguageBottomSheet(),
-              backgroundColor: Colors.transparent,
-              isScrollControlled: true,
-              barrierColor: Colors.black.withValues(alpha: Get.isDarkMode ? 0.7 : 0.6),
-            );
-            return;
-          }
-          if (route.isNotEmpty) {
-            Get.toNamed(route);
-          }
-        });
+        if (isLogout) {
+          Get.find<AuthController>().clearSharedData();
+          Get.offAllNamed(RouteHelper.signIn);
+          return;
+        }
+        if (route == 'custom_post') {
+          Get.to(() => const CustomerRequestListScreen());
+          return;
+        }
+        if (route == 'language_sheet') {
+          Get.bottomSheet(
+            const ChooseLanguageBottomSheet(),
+            backgroundColor: Colors.transparent,
+            isScrollControlled: true,
+            barrierColor: Colors.black.withValues(alpha: Get.isDarkMode ? 0.7 : 0.6),
+          );
+          return;
+        }
+        if (route.isNotEmpty) {
+          Get.toNamed(route);
+        }
       },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

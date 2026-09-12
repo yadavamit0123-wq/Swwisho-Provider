@@ -123,13 +123,7 @@ class BottomNavScreenState extends State<BottomNavScreen> {
           }),
         ),
         floatingActionButton: Get.find<SplashController>().configModel.content?.biddingStatus==1 && Get.find<SplashController>().showCustomBookingButton?   GestureDetector(
-          onTap: () => Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet().then((isTrial){
-            if(isTrial){
-              if(Get.find<UserProfileController>().checkAvailableFeatureInSubscriptionPlan(featureType: 'bidding')){
-                Get.to(()=> const CustomerRequestListScreen());
-              }
-            }
-          }),
+          onTap: () => Get.to(()=> const CustomerRequestListScreen()),
           child: Container(
             decoration: BoxDecoration(
               boxShadow: shadow,

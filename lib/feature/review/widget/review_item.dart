@@ -35,7 +35,7 @@ class ReviewItem extends StatelessWidget {
           highlightColor:  Theme.of(context).primaryColor.withValues(alpha:0.05),
           hoverColor: Theme.of(context).primaryColor,
           borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-          onTap: () => Get.toNamed(RouteHelper.getBookingDetailsRoute( bookingId : review.bookingId!, fromPage : "others")),
+          onTap: () => Get.toNamed(RouteHelper.getBookingDetailsRoute( bookingId : review.bookingId ?? "", fromPage : "others")),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: Dimensions.paddingSizeDefault),
             child: Column( crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -54,7 +54,7 @@ class ReviewItem extends StatelessWidget {
                   ) ,
 
                   Expanded(
-                    child: Text(DateConverter.dateMonthYearTime(DateConverter.isoUtcStringToLocalDate(review.updatedAt!)),
+                    child: Text(_safeReviewDate(review.updatedAt ?? review.createdAt),
                       style: robotoRegular.copyWith(
                         color: Theme.of(context).hintColor.withValues(alpha:0.8),
                         fontSize: Dimensions.fontSizeSmall + 1
@@ -98,7 +98,7 @@ class ReviewItem extends StatelessWidget {
                             Padding(padding: const EdgeInsets.symmetric(horizontal: 1.5),
                               child: Icon(Icons.star, color: Theme.of(context).colorScheme.tertiary, size: 15),
                             ),
-                            Text(review.reviewRating!.toString(),
+                            Text((review.reviewRating ?? 0).toString(),
                               style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
                             ),
                             const SizedBox(width: Dimensions.paddingSizeDefault,),
@@ -146,7 +146,7 @@ class ReviewItem extends StatelessWidget {
                   Expanded(
                     child: Text(review.reviewComment ?? "",
                       style: robotoRegular.copyWith(
-                        color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha:0.6),
+                        color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black).withValues(alpha:0.6),
                         fontSize: Dimensions.fontSizeSmall + 1,
                       ),
                       textAlign: TextAlign.justify,
@@ -182,5 +182,15 @@ class ReviewItem extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+String _safeReviewDate(String? raw) {
+  final parsed = DateTime.tryParse(raw ?? '');
+  if (parsed == null) return '';
+  try {
+    return DateConverter.dateMonthYearTime(parsed.toLocal());
+  } catch (_) {
+    return raw ?? '';
   }
 }

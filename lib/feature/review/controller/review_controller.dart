@@ -49,20 +49,38 @@ class ReviewController extends GetxController implements GetxService{
       _isLoading = true;
       update();
     }
-    Response response = await reviewRepo.getProviderReviewList(offset);
-    if (response.statusCode == 200 && response.body['response_code'] == 'default_200') {
-      _pageSize = response.body['content']['reviews']['last_page'];
-      if(offset == 1 ){
+    try {
+      Response response = await reviewRepo.getProviderReviewList(offset);
+      if (response.statusCode == 200 && response.body['response_code'] == 'default_200') {
+        final content = response.body['content'];
+        final reviews = content is Map ? content['reviews'] : null;
+        _pageSize = int.tryParse(reviews is Map ? reviews['last_page']?.toString() ?? '' : '') ?? 1;
+        if(offset == 1 ){
+          _providerReviewList =[];
+          _providerRating = null;
+        }
+        _providerReviewList ??= [];
+        final data = reviews is Map ? reviews['data'] : null;
+        if (data is List) {
+          for (final review in data) {
+            try {
+              if (review is Map) {
+                _providerReviewList!.add(Review.fromJson(Map<String, dynamic>.from(review)));
+              }
+            } catch (_) {}
+          }
+        }
+        try {
+          if (content is Map && content['rating'] is Map) {
+            _providerRating = Rating.fromJson(Map<String, dynamic>.from(content['rating']));
+          }
+        } catch (_) {}
+      } else {
         _providerReviewList =[];
-        _providerRating==null;
+        _providerRating = null;
       }
-        response.body['content']['reviews']['data'].forEach((review){
-          _providerReviewList!.add( Review.fromJson(review));
-        });
-        _providerRating = Rating.fromJson(response.body['content']['rating']);
-    } else {
-      _providerReviewList =[];
-      _providerRating = null;
+    } catch (_) {
+      _providerReviewList ??= [];
     }
     _isLoading = false;
     update();
@@ -75,9 +93,17 @@ class ReviewController extends GetxController implements GetxService{
     Response response = await reviewRepo.getServiceReviewList(serviceID,1);
     if (response.statusCode == 200 && response.body['response_code'] ==  'default_200') {
       try{
-        response.body['content']['reviews']['data'].forEach((review){
-          _serviceReviewList!.add( Review.fromJson(review));
-        });
+        final data = response.body['content'] is Map ? response.body['content']['reviews'] : null;
+        final list = data is Map ? data['data'] : null;
+        if (list is List) {
+          for (final review in list) {
+            try {
+              if (review is Map) {
+                _serviceReviewList!.add(Review.fromJson(Map<String, dynamic>.from(review)));
+              }
+            } catch (_) {}
+          }
+        }
       }catch(error){
         if (kDebugMode) {
           print('error : $error');

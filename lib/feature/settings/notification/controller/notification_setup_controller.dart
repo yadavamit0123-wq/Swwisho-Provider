@@ -32,27 +32,49 @@ class NotificationSetupController extends GetxController with GetSingleTickerPro
   @override
   void onInit(){
     super.onInit();
-    tabController = TabController(vsync: this, length: 2);
+    tabController = TabController(vsync: this, length: 1);
   }
 
 
 
+  List<dynamic> _notificationListFrom(dynamic content) {
+    if (content is List) return content;
+    if (content is Map && content['data'] is List) return content['data'];
+    return [];
+  }
+
   Future<void> getNotificationSetupList({ required String type}) async {
+    try {
     Response response = await notificationSetupRepo.getNotificationSetupList(type: type);
 
     if(response.statusCode == 200){
-      List<dynamic> resentList = response.body['content'];
+      final list = _notificationListFrom(response.body['content']);
 
       if(type =="provider"){
         _providerNotificationSetupList = [];
-        for (var element in resentList) {
-          _providerNotificationSetupList!.add(NotificationSetup.fromJson(element));
+        for (var element in list) {
+          try {
+            if (element is Map) {
+              _providerNotificationSetupList!.add(NotificationSetup.fromJson(Map<String, dynamic>.from(element)));
+            }
+          } catch (_) {}
         }
       }else{
         _servicemanNotificationSetupList = [];
-        for (var element in resentList) {
-          _servicemanNotificationSetupList!.add(NotificationSetup.fromJson(element));
+        for (var element in list) {
+          try {
+            if (element is Map) {
+              _servicemanNotificationSetupList!.add(NotificationSetup.fromJson(Map<String, dynamic>.from(element)));
+            }
+          } catch (_) {}
         }
+      }
+    }
+    } catch (_) {
+      if (type == "provider") {
+        _providerNotificationSetupList ??= [];
+      } else {
+        _servicemanNotificationSetupList ??= [];
       }
     }
     update();

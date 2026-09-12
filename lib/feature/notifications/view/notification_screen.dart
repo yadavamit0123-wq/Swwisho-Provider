@@ -48,7 +48,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           child: Text(
                             Get.find<NotificationController>().dateList[index0].toString(),
                             style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge,
-                                color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha:0.7)
+                                color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black).withValues(alpha:0.7)
                             ),
                             textDirection: TextDirection.ltr,
                           )
@@ -98,15 +98,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(controller.notificationList[index0][index1].title.toString().trim(),
-                                              style: robotoMedium.copyWith(color: Theme.of(context).
-                                              textTheme.bodyLarge!.color!.withValues(alpha:0.7) ,
+                                              style: robotoMedium.copyWith(color: (Theme.of(context).
+                                              textTheme.bodyLarge?.color ?? Colors.black).withValues(alpha:0.7) ,
                                                 fontSize: Dimensions.fontSizeDefault,
                                               ),
                                             ),
                                             const SizedBox(height: Dimensions.paddingSizeSmall,),
                                             Text("${controller.notificationList[index0][index1].description}",
-                                              style: robotoRegular.copyWith(color: Theme.of(context).
-                                              textTheme.bodyLarge!.color!.withValues(alpha:0.5) ,
+                                              style: robotoRegular.copyWith(color: (Theme.of(context).
+                                              textTheme.bodyLarge?.color ?? Colors.black).withValues(alpha:0.5) ,
                                                 fontSize: Dimensions.fontSizeDefault,
                                               ),
                                               maxLines:2,
@@ -119,10 +119,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                         child: Row(
                                           mainAxisAlignment: MainAxisAlignment.end,
                                           children: [
-                                            Text(DateConverter.convertStringTimeOnly(
-                                                DateConverter.isoUtcStringToLocalDate(
-                                                    controller.notificationList[index0][index1].createdAt)),
-                                            ),
+                                            Text(_safeNotificationTime(controller.notificationList[index0][index1].createdAt)),
                                           ],
                                         ),
                                       ),
@@ -161,6 +158,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
         )
       ),
     );
+  }
+}
+
+String _safeNotificationTime(String? raw) {
+  final parsed = DateTime.tryParse(raw ?? '');
+  if (parsed == null) return '';
+  try {
+    return DateConverter.convertStringTimeOnly(parsed.toLocal());
+  } catch (_) {
+    return '';
   }
 }
 

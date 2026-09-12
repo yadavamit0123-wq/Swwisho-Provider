@@ -425,21 +425,21 @@ class BookingDetailsService {
       this.updatedAt});
 
   BookingDetailsService.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    name = json['name'];
-    shortDescription = json['short_description'];
-    description = json['description'];
-    coverImage = json['cover_image'];
-    thumbnail = json['thumbnail'];
-    thumbnailFullPath = json['thumbnail_full_path'];
-    categoryId = json['category_id'];
-    subCategoryId = json['sub_category_id'];
-    tax = double.tryParse(json['tax'].toString());
-    orderCount = json['order_count'];
-    isActive = json['is_active'];
-    ratingCount = json['rating_count'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
+    id = json['id']?.toString();
+    name = json['name']?.toString();
+    shortDescription = json['short_description']?.toString();
+    description = json['description']?.toString();
+    coverImage = json['cover_image']?.toString();
+    thumbnail = json['thumbnail']?.toString();
+    thumbnailFullPath = json['thumbnail_full_path']?.toString();
+    categoryId = json['category_id']?.toString();
+    subCategoryId = json['sub_category_id']?.toString();
+    tax = double.tryParse(json['tax']?.toString() ?? '');
+    orderCount = int.tryParse(json['order_count']?.toString() ?? '');
+    isActive = int.tryParse(json['is_active']?.toString() ?? '');
+    ratingCount = int.tryParse(json['rating_count']?.toString() ?? '');
+    createdAt = json['created_at']?.toString();
+    updatedAt = json['updated_at']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -669,21 +669,21 @@ class Customer {
       this.updatedAt});
 
   Customer.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    firstName = json['first_name'];
-    lastName = json['last_name'];
-    email = json['email'];
-    phone = json['phone'];
-    identificationType = json['identification_type'];
-    gender = json['gender'];
-    profileImage = json['profile_image'];
-    profileImageFullPath = json['profile_image_full_path'];
-    isPhoneVerified = json['is_phone_verified'];
-    isEmailVerified = json['is_email_verified'];
-    isActive = json['is_active'];
-    userType = json['user_type'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
+    id = json['id']?.toString();
+    firstName = json['first_name']?.toString();
+    lastName = json['last_name']?.toString();
+    email = json['email']?.toString();
+    phone = json['phone']?.toString();
+    identificationType = json['identification_type']?.toString();
+    gender = json['gender']?.toString();
+    profileImage = json['profile_image']?.toString();
+    profileImageFullPath = json['profile_image_full_path']?.toString();
+    isPhoneVerified = int.tryParse(json['is_phone_verified']?.toString() ?? '');
+    isEmailVerified = int.tryParse(json['is_email_verified']?.toString() ?? '');
+    isActive = int.tryParse(json['is_active']?.toString() ?? '');
+    userType = json['user_type']?.toString();
+    createdAt = json['created_at']?.toString();
+    updatedAt = json['updated_at']?.toString();
   }
 
   Map<String, dynamic> toJson() {

@@ -18,21 +18,25 @@ class NotificationSetup {
       });
 
   NotificationSetup.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    userType = json['user_type'];
-    title = json['title'];
-    subTitle = json['sub_title'];
-    key = json['key'];
-    value = json['value'] != null ? Value.fromJson(json['value']) : null;
-    providerNotifications = json['provider_notifications'] != null
-        ? ProviderNotifications.fromJson(json['provider_notifications'])
-        : ProviderNotifications.fromJson({
-      "value" : {
-        "notification" : null,
-        "sms" : null,
-        "email" : null
-      }
-    });
+    id = json['id']?.toString();
+    userType = json['user_type']?.toString();
+    title = json['title']?.toString();
+    subTitle = json['sub_title']?.toString();
+    key = json['key']?.toString();
+    if (json['value'] is Map) {
+      value = Value.fromJson(Map<String, dynamic>.from(json['value']));
+    }
+    if (json['provider_notifications'] is Map) {
+      providerNotifications = ProviderNotifications.fromJson(Map<String, dynamic>.from(json['provider_notifications']));
+    } else {
+      providerNotifications = ProviderNotifications.fromJson({
+        "value" : {
+          "notification" : null,
+          "sms" : null,
+          "email" : null
+        }
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -84,10 +88,12 @@ class ProviderNotifications {
       {this.id, this.providerId, this.notificationSetupId, this.value});
 
   ProviderNotifications.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    providerId = json['provider_id'];
-    notificationSetupId = json['notification_setup_id'];
-    value = json['value'] != null ? Value.fromJson(json['value']) : null;
+    id = int.tryParse(json['id']?.toString() ?? '');
+    providerId = json['provider_id']?.toString();
+    notificationSetupId = json['notification_setup_id']?.toString();
+    if (json['value'] is Map) {
+      value = Value.fromJson(Map<String, dynamic>.from(json['value']));
+    }
   }
 
   Map<String, dynamic> toJson() {

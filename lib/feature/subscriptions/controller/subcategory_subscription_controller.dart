@@ -58,24 +58,33 @@ class  SubcategorySubscriptionController extends GetxController implements GetxS
       _isPaginationLoading = true;
       update();
     }
+    try {
       Response response = await subscriptionRepo.getSubcategorySubscriptionList(offset, categoryId: categoryId);
       if(response.statusCode==200 && response.body['response_code']=="default_200"){
-        List<dynamic> list =response.body['content']['data'];
-        for (var element in list) {
-          if(element['sub_category']!=null){
-            _subscriptionList.add(SubscriptionModelData.fromJson(element));
+        dynamic list;
+        final content = response.body['content'];
+        if (content is Map) {
+          list = content['data'];
+          _pageSize = int.tryParse(content['last_page']?.toString() ?? '');
+          if(categoryId == null){
+            _totalSubscription = int.tryParse(content['total']?.toString() ?? '') ?? _totalSubscription;
           }
+        } else if (content is List) {
+          list = content;
         }
-        _pageSize  = response.body['content']['last_page'];
-        if(categoryId == null){
-          _totalSubscription = response.body['content']['total'];
+        if (list is List) {
+          for (var element in list) {
+            try {
+              if (element is Map && element['sub_category'] != null) {
+                _subscriptionList.add(SubscriptionModelData.fromJson(Map<String, dynamic>.from(element)));
+              }
+            } catch (_) {}
+          }
         }
       } else if(response.statusCode== 401){
         ApiChecker.checkApi(response);
       }
-      else{
-        // showCustomSnackBar(response.statusText);
-      }
+    } catch (_) {}
     _isPaginationLoading = false;
     _isLoading = false;
     update();

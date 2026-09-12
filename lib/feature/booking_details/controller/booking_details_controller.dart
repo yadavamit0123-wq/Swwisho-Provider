@@ -83,23 +83,26 @@ class BookingDetailsController extends GetxController implements GetxService{
   }
 
   Future<void> getBookingDetails(String bookingID,{bool reload = true, bool initEditBooking = true}) async {
+    try {
+      Response response = await bookingDetailsRepo.getBookingDetails(bookingID);
 
-    Response response = await bookingDetailsRepo.getBookingDetails(bookingID);
+      if(response.statusCode == 200 ){
+        try {
+          _bookingDetails = BookingDetailsModel.fromJson(response.body);
+        } catch (_) {}
 
-    if(response.statusCode == 200 ){
-      _bookingDetails = BookingDetailsModel.fromJson(response.body);
-
-      if(initEditBooking){
-        Get.find<BookingEditController>().getServiceListBasedOnSubcategory(subCategoryId : bookingDetails?.content?.subcategoryId ?? "");
-        Get.find<BookingEditController>().initializedControllerValue(_bookingDetails?.content);
+        if(initEditBooking && _bookingDetails?.content != null){
+          Get.find<BookingEditController>().getServiceListBasedOnSubcategory(subCategoryId : bookingDetails?.content?.subcategoryId ?? "");
+          Get.find<BookingEditController>().initializedControllerValue(_bookingDetails?.content);
+        }
+       dropDownValue = bookingDetails?.content?.bookingStatus ?? "";
+        if(response.body is Map && response.body["response_code"] == "default_204"){
+          Get.find<BookingRequestController>().removeBookingItemFromList(bookingID, bookingStatus: "", shouldUpdate: true);
+        }
+      }  else{
+       ApiChecker.checkApi(response);
       }
-     dropDownValue = bookingDetails?.content?.bookingStatus ?? "";
-      if(response.body["response_code"] == "default_204"){
-        Get.find<BookingRequestController>().removeBookingItemFromList(bookingID, bookingStatus: "", shouldUpdate: true);
-      }
-    }  else{
-     ApiChecker.checkApi(response);
-    }
+    } catch (_) {}
     update();
   }
 
@@ -120,59 +123,64 @@ class BookingDetailsController extends GetxController implements GetxService{
   Future<void> acceptBookingRequest(String bookingId) async {
     _isAcceptButtonLoading = true;
     update();
+    try {
+      final walletBalance = userProfile?.walletBalance ?? 0;
 
-    await userProfile?.getProviderInfo(reload: true);
-    final walletBalance = userProfile?.walletBalance ?? 0;
+      BookingDetailsContent? bookingContent = _bookingDetails?.content?.id == bookingId
+          ? _bookingDetails?.content
+          : _subBookingDetails?.content?.id == bookingId
+              ? _subBookingDetails?.content
+              : null;
 
-    BookingDetailsContent? bookingContent = _bookingDetails?.content?.id == bookingId
-        ? _bookingDetails?.content
-        : _subBookingDetails?.content?.id == bookingId
-            ? _subBookingDetails?.content
-            : null;
+      final tdsPercent = Get.find<SplashController>().customerConfigModel.content?.tds ?? 1;
+      final requiredWallet = bookingContent != null
+          ? BookingHelper.getWalletDeductionRequired(bookingContent, tdsPercent: tdsPercent)
+          : double.tryParse(userProfile?.providerCharge ?? '0') ?? 0;
 
-    if (bookingContent == null) {
-      Response detailsResponse = await bookingDetailsRepo.getBookingDetails(bookingId);
-      if (detailsResponse.statusCode == 200) {
-        bookingContent = BookingDetailsModel.fromJson(detailsResponse.body).content;
+      if (requiredWallet <= 0 || walletBalance >= requiredWallet) {
+        Response response = await bookingDetailsRepo.acceptBookingRequest(bookingId);
+        final code = response.body is Map ? response.body['response_code']?.toString() ?? '' : '';
+        final accepted = response.statusCode == 200 &&
+            (code == "status_update_success_200" || code == "default_200" || code.contains("success"));
+        if (accepted) {
+          BookingSoundService.stopAlert(bookingId: bookingId);
+          showCustomSnackBar(
+            response.body is Map ? (response.body["message"] ?? "Booking accepted") : "Booking accepted",
+            type: ToasterMessageType.success,
+          );
+          getBookingDetails(bookingId, reload: false);
+          Get.find<BookingRequestController>().getBookingRequestList(
+            Get.find<BookingRequestController>().bookingStatus,
+            1,
+          );
+        } else {
+          ApiChecker.checkApi(response);
+        }
+      } else {
+        showCustomSnackBar('Your wallet balance is low. Recharge wallet to accept booking', type: ToasterMessageType.error);
       }
+    } catch (_) {
+      showCustomSnackBar('Failed to accept booking'.tr, type: ToasterMessageType.error);
+    } finally {
+      _isAcceptButtonLoading = false;
+      update();
     }
-
-    final tdsPercent = Get.find<SplashController>().customerConfigModel.content?.tds ?? 1;
-    final requiredWallet = bookingContent != null
-        ? BookingHelper.getWalletDeductionRequired(bookingContent, tdsPercent: tdsPercent)
-        : double.tryParse(userProfile?.providerCharge ?? '0') ?? 0;
-
-    if (requiredWallet <= 0 || walletBalance >= requiredWallet) {
-      Response response = await bookingDetailsRepo.acceptBookingRequest(bookingId);
-      if (response.statusCode == 200 && response.body['response_code'] == "status_update_success_200") {
-        await BookingSoundService.stopAlert(bookingId: bookingId);
-        await getBookingDetails(bookingId, reload: false);
-        showCustomSnackBar(response.body["message"], type: ToasterMessageType.success
-        );
-        Get.find<BookingRequestController>().getBookingRequestList(Get.find<BookingRequestController>().bookingStatus, 1);
-      }
-      else {
-        ApiChecker.checkApi(response);
-      }
-    }else{
-      showCustomSnackBar('Your wallet balance is low. Recharge wallet to accept booking', type: ToasterMessageType.error);
-    }
-    _isAcceptButtonLoading = false;
-    update();
   }
 
   Future<void> ignoreBookingRequest(String bookingId) async {
     _isIgnoreButtonLoading = true;
     update();
-    Response response = await bookingDetailsRepo.ignoreBookingRequest(bookingId);
-    if(response.statusCode==200 ) {
-      await BookingSoundService.stopAlert(bookingId: bookingId);
-      showCustomSnackBar(response.body["message"],  type: ToasterMessageType.success);
-      Get.find<BookingRequestController>().getBookingRequestList(Get.find<BookingRequestController>().bookingStatus, 1);
-    }
-    else{
-      ApiChecker.checkApi(response);
-    }
+    try {
+      Response response = await bookingDetailsRepo.ignoreBookingRequest(bookingId);
+      if(response.statusCode==200 ) {
+        BookingSoundService.stopAlert(bookingId: bookingId);
+        showCustomSnackBar(response.body["message"],  type: ToasterMessageType.success);
+        Get.find<BookingRequestController>().getBookingRequestList(Get.find<BookingRequestController>().bookingStatus, 1);
+      }
+      else{
+        ApiChecker.checkApi(response);
+      }
+    } catch (_) {}
     _isIgnoreButtonLoading = false;
     update();
   }

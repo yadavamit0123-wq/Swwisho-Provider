@@ -22,15 +22,16 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     tooltipController = JustTheController();
 
     subscriptionMenuController = AutoScrollController(
-      viewportBoundaryGetter: () => Rect.fromLTRB(0, 0, 0, MediaQuery.of(context).padding.bottom),
       axis: Axis.vertical,
     );
-    subscriptionMenuController!.scrollToIndex(0, preferPosition: AutoScrollPosition.middle);
-    subscriptionMenuController!.highlight(0);
 
     controller.getCategoryList(shouldUpdate: false);
     controller.changeSubscriptionCategoryIndex(0, isUpdate: false);
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      subscriptionMenuController?.scrollToIndex(0, preferPosition: AutoScrollPosition.middle);
+      subscriptionMenuController?.highlight(0);
+    });
   }
 
 
@@ -158,7 +159,7 @@ class SubscriptionHeaderWidget extends StatelessWidget {
         child: Container(
           color: Theme.of(context).cardColor,
           child: Column(children: [
-            mySubscriptionController.totalSubscription! > 0 ? SizedBox(
+            (mySubscriptionController.totalSubscription ?? 0) > 0 ? SizedBox(
                 height: 36,
                 width: double.infinity,
                 child: Center(
@@ -175,7 +176,7 @@ class SubscriptionHeaderWidget extends StatelessWidget {
                           style: robotoBold.copyWith(color: Theme.of(context).primaryColorLight),
                         ),
                         TextSpan(
-                          text: mySubscriptionController.totalSubscription! > 1
+                          text: (mySubscriptionController.totalSubscription ?? 0) > 1
                               ? 'subscriptions'.tr:'subscription'.tr,
                           style: robotoRegular.copyWith(
                             fontSize: Dimensions.fontSizeDefault,

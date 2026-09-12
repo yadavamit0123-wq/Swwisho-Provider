@@ -184,24 +184,20 @@ class BookingRequestItem extends StatelessWidget {
                         if(Get.find<UserProfileController>().providerModel?.content?.subscriptionInfo?.subscribedPackageDetails?.isCanceled == 1){
                           showCustomSnackBar("your_subscription_plan_has_been_cancelled_you_will_not_able_to_accept_any_booking_request".tr, type : ToasterMessageType.info);
                         }else{
-                          Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet().then((isTrial){
-                            if(isTrial){
-                              showCustomDialog(child:  ConfirmationDialog(
-                                noButtonColor: Theme.of(Get.context!).colorScheme.error,
-                                noTextColor: Colors.white,
-                                yesButtonColor: Theme.of(Get.context!).primaryColor,
-                                title: "want_accept_this_booking?".tr,
-                                icon: Images.servicemanImage,
-                                description: 'accept_booking_hint_text'.tr,
-                                onYesPressed: (){
-                                  Get.find<BookingDetailsController>().acceptBookingRequest(booking.id!);
-                                  Get.back();
-                                },
-                                onNoPressed: () => Get.back(),
+                          showCustomDialog(child:  ConfirmationDialog(
+                            noButtonColor: Theme.of(Get.context!).colorScheme.error,
+                            noTextColor: Colors.white,
+                            yesButtonColor: Theme.of(Get.context!).primaryColor,
+                            title: "want_accept_this_booking?".tr,
+                            icon: Images.servicemanImage,
+                            description: 'accept_booking_hint_text'.tr,
+                            onYesPressed: (){
+                              Get.find<BookingDetailsController>().acceptBookingRequest(booking.id!);
+                              Get.back();
+                            },
+                            onNoPressed: () => Get.back(),
 
-                              ));
-                            }
-                          });
+                          ));
                         }
                       }else if(option.title == "ignore"){
                         showCustomDialog(child:  ConfirmationDialog(

@@ -37,32 +37,42 @@ class Review {
       });
 
   Review.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    readableId = int.tryParse(json['readable_id'].toString());
-    bookingId = json['booking_id'];
-    serviceId = json['service_id'];
-    providerId = json['provider_id'];
-    reviewRating = double.parse(json['review_rating'].toString());
-    reviewComment = json['review_comment'];
-    bookingDate = json['booking_date'];
-    isActive = json['is_active'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
-    customer = json['customer'] != null
-        ? Customer.fromJson(json['customer'])
-        : null;
-    booking = json['booking'] != null
-        ? Booking.fromJson(json['booking'])
-        : null;
-    provider = json['provider'] != null
-        ? Provider.fromJson(json['provider'])
-        : null;
-    service = json['service'] != null
-        ? BookingDetailsService.fromJson(json['service'])
-        : null;
-    reviewReply = json['review_reply'] != null
-        ? ReviewReply.fromJson(json['review_reply'])
-        : null;
+    id = json['id']?.toString();
+    readableId = int.tryParse(json['readable_id']?.toString() ?? '');
+    bookingId = json['booking_id']?.toString();
+    serviceId = json['service_id']?.toString();
+    providerId = json['provider_id']?.toString();
+    reviewRating = double.tryParse(json['review_rating']?.toString() ?? '');
+    reviewComment = json['review_comment']?.toString();
+    bookingDate = json['booking_date']?.toString();
+    isActive = int.tryParse(json['is_active']?.toString() ?? '');
+    createdAt = json['created_at']?.toString();
+    updatedAt = json['updated_at']?.toString();
+    try {
+      if (json['customer'] is Map) {
+        customer = Customer.fromJson(Map<String, dynamic>.from(json['customer']));
+      }
+    } catch (_) {}
+    try {
+      if (json['booking'] is Map) {
+        booking = Booking.fromJson(Map<String, dynamic>.from(json['booking']));
+      }
+    } catch (_) {}
+    try {
+      if (json['provider'] is Map) {
+        provider = Provider.fromJson(Map<String, dynamic>.from(json['provider']));
+      }
+    } catch (_) {}
+    try {
+      if (json['service'] is Map) {
+        service = BookingDetailsService.fromJson(Map<String, dynamic>.from(json['service']));
+      }
+    } catch (_) {}
+    try {
+      if (json['review_reply'] is Map) {
+        reviewReply = ReviewReply.fromJson(Map<String, dynamic>.from(json['review_reply']));
+      }
+    } catch (_) {}
   }
 
   Map<String, dynamic> toJson() {
@@ -109,11 +119,15 @@ class Rating {
     ratingCount = int.tryParse(json['rating_count'].toString());
     reviewCount = int.tryParse(json['review_count'].toString());
     averageRating = double.tryParse(json['average_rating'].toString());
-    if (json['rating_group_count'] != null) {
+    if (json['rating_group_count'] is List) {
       ratingGroupCount = <RatingGroupCount>[];
-      json['rating_group_count'].forEach((v) {
-        ratingGroupCount!.add(RatingGroupCount.fromJson(v));
-      });
+      for (final v in json['rating_group_count']) {
+        try {
+          if (v is Map) {
+            ratingGroupCount!.add(RatingGroupCount.fromJson(Map<String, dynamic>.from(v)));
+          }
+        } catch (_) {}
+      }
     }
   }
 
@@ -136,8 +150,8 @@ class RatingGroupCount {
   RatingGroupCount({this.reviewRating, this.total});
 
   RatingGroupCount.fromJson(Map<String, dynamic> json) {
-    reviewRating = double.parse(json['review_rating'].toString());
-    total = double.parse(json['total'].toString());
+    reviewRating = double.tryParse(json['review_rating']?.toString() ?? '');
+    total = double.tryParse(json['total']?.toString() ?? '');
   }
 
   Map<String, dynamic> toJson() {
@@ -189,28 +203,32 @@ class Booking {
         this.detail});
 
   Booking.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    readableId = json['readable_id'];
-    customerId = json['customer_id'];
-    providerId = json['provider_id'];
-    zoneId = json['zone_id'];
-    bookingStatus = json['booking_status'];
-    isPaid = json['is_paid'];
-    paymentMethod = json['payment_method'];
-    transactionId = json['transaction_id'];
-    serviceSchedule = json['service_schedule'];
-    serviceAddressId = json['service_address_id'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
-    categoryId = json['category_id'];
-    subCategoryId = json['sub_category_id'];
-    servicemanId = json['serviceman_id'];
-    isChecked = json['is_checked'];
-    if (json['detail'] != null) {
+    id = json['id']?.toString();
+    readableId = int.tryParse(json['readable_id']?.toString() ?? '');
+    customerId = json['customer_id']?.toString();
+    providerId = json['provider_id']?.toString();
+    zoneId = json['zone_id']?.toString();
+    bookingStatus = json['booking_status']?.toString();
+    isPaid = int.tryParse(json['is_paid']?.toString() ?? '');
+    paymentMethod = json['payment_method']?.toString();
+    transactionId = json['transaction_id']?.toString();
+    serviceSchedule = json['service_schedule']?.toString();
+    serviceAddressId = json['service_address_id']?.toString();
+    createdAt = json['created_at']?.toString();
+    updatedAt = json['updated_at']?.toString();
+    categoryId = json['category_id']?.toString();
+    subCategoryId = json['sub_category_id']?.toString();
+    servicemanId = json['serviceman_id']?.toString();
+    isChecked = int.tryParse(json['is_checked']?.toString() ?? '');
+    if (json['detail'] is List) {
       detail = <ServiceDetails>[];
-      json['detail'].forEach((v) {
-        detail!.add(ServiceDetails.fromJson(v));
-      });
+      for (final v in json['detail']) {
+        try {
+          if (v is Map) {
+            detail!.add(ServiceDetails.fromJson(Map<String, dynamic>.from(v)));
+          }
+        } catch (_) {}
+      }
     }
   }
 
@@ -473,12 +491,12 @@ class ReviewReply {
         this.updatedAt});
 
   ReviewReply.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    readableId = json['readable_id'];
-    userId = json['user_id'];
-    reply = json['reply'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
+    id = json['id']?.toString();
+    readableId = int.tryParse(json['readable_id']?.toString() ?? '');
+    userId = json['user_id']?.toString();
+    reply = json['reply']?.toString();
+    createdAt = json['created_at']?.toString();
+    updatedAt = json['updated_at']?.toString();
   }
 
   Map<String, dynamic> toJson() {

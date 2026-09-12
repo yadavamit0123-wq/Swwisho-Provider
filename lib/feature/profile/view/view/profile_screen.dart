@@ -81,15 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
 
                 GestureDetector(
-                  onTap: () {
-                    Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet().then((isTrial){
-                      if(isTrial){
-                        if(userController.checkAvailableFeatureInSubscriptionPlan(featureType: 'review')){
-                          Get.to(() => const ProviderReviewScreen());
-                        }
-                      }
-                    });
-                  },
+                  onTap: () => Get.to(() => const ProviderReviewScreen()),
                   child: ProfileCardItem(title: "reviews", leadingIcon: Images.reviewIcon),
                 ),
 
@@ -110,15 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
 
                 GestureDetector(
-                  onTap: () {
-                    Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet().then((isTrial){
-                      if(isTrial){
-                        if(userController.checkAvailableFeatureInSubscriptionPlan(featureType: "service_request")){
-                          Get.toNamed(RouteHelper.suggestService);
-                        }
-                      }
-                    });
-                  },
+                  onTap: () => Get.toNamed(RouteHelper.suggestService),
                   child: ProfileCardItem(title: "suggest_service", leadingIcon: Images.suggestServiceIcon,isDarkItem: true,),
                 ),
 

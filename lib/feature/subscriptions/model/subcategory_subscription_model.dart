@@ -125,20 +125,22 @@ class SubscriptionModelData {
       });
 
   SubscriptionModelData.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    providerId = json['provider_id'];
-    categoryId = json['category_id'];
-    subCategoryId = json['sub_category_id'];
-    isSubscribed = int.parse(json['is_subscribed'].toString());
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
-    servicesCount = int.tryParse(json['services_count'].toString());
-    ongoingBookingCount = int.tryParse(json['ongoing_booking_count'].toString());
-    completedBookingCount = int.tryParse(json['completed_booking_count'].toString());
-    canceledBookingCount = int.tryParse(json['canceled_booking_count'].toString());
-    subCategory = json['sub_category'] != null
-        ? ServiceSubCategoryModel.fromJson(json['sub_category'])
-        : null;
+    id = json['id']?.toString();
+    providerId = json['provider_id']?.toString();
+    categoryId = json['category_id']?.toString();
+    subCategoryId = json['sub_category_id']?.toString();
+    isSubscribed = int.tryParse(json['is_subscribed']?.toString() ?? '');
+    createdAt = json['created_at']?.toString();
+    updatedAt = json['updated_at']?.toString();
+    servicesCount = int.tryParse(json['services_count']?.toString() ?? '');
+    ongoingBookingCount = int.tryParse(json['ongoing_booking_count']?.toString() ?? '');
+    completedBookingCount = int.tryParse(json['completed_booking_count']?.toString() ?? '');
+    canceledBookingCount = int.tryParse(json['canceled_booking_count']?.toString() ?? '');
+    try {
+      if (json['sub_category'] is Map) {
+        subCategory = ServiceSubCategoryModel.fromJson(Map<String, dynamic>.from(json['sub_category']));
+      }
+    } catch (_) {}
   }
 
   Map<String, dynamic> toJson() {

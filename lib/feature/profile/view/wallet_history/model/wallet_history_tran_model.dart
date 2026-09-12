@@ -38,26 +38,30 @@ class WalletTransactionHistory {
   });
 
   factory WalletTransactionHistory.fromJson(Map<String, dynamic> json) {
+    Booking? booking;
+    try {
+      if (json['booking'] is Map) {
+        booking = Booking.fromJson(Map<String, dynamic>.from(json['booking']));
+      }
+    } catch (_) {}
     return WalletTransactionHistory(
-      id: json['id'],
-      refTrxId: json['ref_trx_id'],
-      bookingId: json['booking_id'],
-      trxType: json['trx_type'],
-      debit: json['debit'],
-      credit: json['credit'],
-      balance: json['balance'],
-      fromUserId: json['from_user_id'],
-      toUserId: json['to_user_id'],
-      createdAt: json['created_at'],
-      updatedAt: json['updated_at'],
-      fromUserAccount: json['from_user_account'],
-      toUserAccount: json['to_user_account'],
-      referenceNote: json['reference_note'],
-      isGuest: json['is_guest'] ?? 0,
-      bookingRepeatId: json['booking_repeat_id'],
-      booking: json['booking'] != null
-          ? Booking.fromJson(json['booking'])
-          : null,
+      id: json['id']?.toString() ?? '',
+      refTrxId: json['ref_trx_id']?.toString(),
+      bookingId: json['booking_id']?.toString(),
+      trxType: json['trx_type']?.toString() ?? '',
+      debit: json['debit']?.toString() ?? '0',
+      credit: json['credit']?.toString() ?? '0',
+      balance: json['balance']?.toString() ?? '0',
+      fromUserId: json['from_user_id']?.toString() ?? '',
+      toUserId: json['to_user_id']?.toString() ?? '',
+      createdAt: json['created_at']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
+      fromUserAccount: json['from_user_account']?.toString(),
+      toUserAccount: json['to_user_account']?.toString(),
+      referenceNote: json['reference_note']?.toString(),
+      isGuest: int.tryParse(json['is_guest']?.toString() ?? '') ?? 0,
+      bookingRepeatId: json['booking_repeat_id']?.toString(),
+      booking: booking,
     );
   }
 

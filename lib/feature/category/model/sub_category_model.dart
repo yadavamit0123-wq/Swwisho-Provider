@@ -72,24 +72,28 @@ class ServiceSubCategoryModel {
   }
 
   ServiceSubCategoryModel.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    parentId = json['parent_id'];
-    name = json['name'];
-    image = json['image'];
-    imageFullPath = json['image_full_path'];
-    position = int.parse(json['position'].toString());
-    description = json['description'];
-    isActive = int.parse(json['is_active'].toString());
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
-    isSubscribed = json['is_subscribed'];
-    if (json['services'] != null) {
+    id = json['id']?.toString();
+    parentId = json['parent_id']?.toString();
+    name = json['name']?.toString();
+    image = json['image']?.toString();
+    imageFullPath = json['image_full_path']?.toString();
+    position = int.tryParse(json['position']?.toString() ?? '');
+    description = json['description']?.toString();
+    isActive = int.tryParse(json['is_active']?.toString() ?? '');
+    createdAt = json['created_at']?.toString();
+    updatedAt = json['updated_at']?.toString();
+    isSubscribed = int.tryParse(json['is_subscribed']?.toString() ?? '');
+    if (json['services'] is List) {
       services = <ServiceModel>[];
-      json['services'].forEach((v) {
-        services!.add(ServiceModel.fromJson(v));
-      });
+      for (final v in json['services']) {
+        try {
+          if (v is Map) {
+            services!.add(ServiceModel.fromJson(Map<String, dynamic>.from(v)));
+          }
+        } catch (_) {}
+      }
     }
-    servicesCount = int.tryParse(json['services_count'].toString());
+    servicesCount = int.tryParse(json['services_count']?.toString() ?? '');
   }
 
   Map<String, dynamic> toJson() {

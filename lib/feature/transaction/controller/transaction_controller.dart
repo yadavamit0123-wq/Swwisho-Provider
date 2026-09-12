@@ -57,31 +57,53 @@ class TransactionController extends GetxController implements GetxService{
       Response response = await transactionRepo.getWalletTransHistory();
 
       if (response.statusCode == 200) {
-        List<dynamic> decoded;
-
-        if (response.body is String) {
-          decoded = jsonDecode(response.body) as List<dynamic>;
-        } else if (response.body is List) {
-          decoded = response.body;
-        } else {
-          throw Exception('Unexpected response.body type: ${response.body.runtimeType}');
-        }
-
-        walletTransactions..clear()..addAll(decoded.map((e) => WalletTransactionHistory.fromJson(e as Map<String, dynamic>)));
-
-        // Uncomment if you want to show a success message
-        // showCustomSnackBar('Wallet history fetched successfully', type: ToasterMessageType.success);
+        final decoded = _walletHistoryListFrom(response.body);
+        walletTransactions
+          ..clear()
+          ..addAll(decoded);
       } else {
         ApiChecker.checkApi(response);
       }
     } catch (e) {
-      //I/flutter ( 2485): Error fetching wallet history: type 'Null' is not a subtype of type 'List<dynamic>' in type cast
       debugPrint('Error fetching wallet history: $e');
-      showCustomSnackBar('Failed to fetch wallet history', type: ToasterMessageType.error);
     } finally {
       _isLoading = false;
       update();
     }
+  }
+
+  List<WalletTransactionHistory> _walletHistoryListFrom(dynamic body) {
+    dynamic raw = body;
+    if (raw is String) {
+      try {
+        raw = jsonDecode(raw);
+      } catch (_) {
+        return [];
+      }
+    }
+    List<dynamic> list = [];
+    if (raw is List) {
+      list = raw;
+    } else if (raw is Map) {
+      final content = raw['content'];
+      if (content is List) {
+        list = content;
+      } else if (content is Map && content['data'] is List) {
+        list = content['data'];
+      } else if (raw['data'] is List) {
+        list = raw['data'];
+      }
+    }
+
+    final result = <WalletTransactionHistory>[];
+    for (final item in list) {
+      try {
+        if (item is Map) {
+          result.add(WalletTransactionHistory.fromJson(Map<String, dynamic>.from(item)));
+        }
+      } catch (_) {}
+    }
+    return result;
   }
 
   @override

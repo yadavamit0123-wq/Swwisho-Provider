@@ -48,7 +48,7 @@ class NotificationController extends GetxController implements GetxService{
 
   Future<void> getNotifications(int offset, {bool reload = true,bool saveNotificationCount=true})async{
     _offset = offset;
-
+    try {
     Response response = await notificationRepo.getNotification(offset);
 
     if(reload){
@@ -62,31 +62,42 @@ class NotificationController extends GetxController implements GetxService{
 
       allNotificationList =[];
       _totalNumberOfNotification = 0;
-     _notificationModel =  NotificationModel.fromJson(response.body);
+     try {
+       final body = response.body is Map
+           ? Map<String, dynamic>.from(response.body)
+           : <String, dynamic>{};
+       _notificationModel = NotificationModel.fromJson(body);
+     } catch (_) {
+       _notificationModel = NotificationModel();
+     }
 
-     _pageSize = response.body['content']['last_page'];
+     _pageSize = int.tryParse(response.body is Map ? response.body['content']?['last_page']?.toString() ?? '' : '') ?? 1;
 
-     _totalNumberOfNotification  = notificationModel!.content!.total??0;
+     _totalNumberOfNotification  = notificationModel?.content?.total??0;
 
      getNotificationCount();
      if(saveNotificationCount){
        setNotificationCount(_totalNumberOfNotification);
      }
 
-      for (var data in notificationModel!.content!.data!) {
-        if(!dateList.contains(DateConverter.dateStringMonthYear(DateTime.tryParse(data.createdAt!)))) {
-          dateList.add(DateConverter.dateStringMonthYear(DateTime.tryParse(data.createdAt!)));
+      final items = notificationModel?.content?.data ?? [];
+      for (var data in items) {
+        final date = DateTime.tryParse(data.createdAt ?? '');
+        final label = DateConverter.dateStringMonthYear(date);
+        if(!dateList.contains(label)) {
+          dateList.add(label);
         }
       }
 
-      for (var data in notificationModel!.content!.data!) {
+      for (var data in items) {
         allNotificationList.add(data);
       }
 
       for(int i=0;i< dateList.length;i++){
        notificationList.add([]);
        for (var element in allNotificationList) {
-         if(dateList[i]== DateConverter.dateStringMonthYear(DateTime.tryParse(element.createdAt!))){
+         final date = DateTime.tryParse(element.createdAt ?? '');
+         if(dateList[i]== DateConverter.dateStringMonthYear(date)){
            notificationList[i].add(element);
          }
        }
@@ -95,13 +106,16 @@ class NotificationController extends GetxController implements GetxService{
     } else{
       ApiChecker.checkApi(response);
     }
+    } catch (_) {
+      _notificationModel ??= NotificationModel();
+    }
     _paginationLoading = false;
     _isLoading =false;
     update();
   }
 
   void getNotificationCount() async {
-    _notificationCount = (await notificationRepo.getNotificationCount())!;
+    _notificationCount = (await notificationRepo.getNotificationCount()) ?? 0;
     if(_totalNumberOfNotification>_notificationCount){
       _notificationCount = _totalNumberOfNotification - _notificationCount;
     }else{

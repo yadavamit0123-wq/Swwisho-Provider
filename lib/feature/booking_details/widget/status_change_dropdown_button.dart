@@ -81,22 +81,18 @@ class ChangeStatusDropdownButton extends StatelessWidget {
                   if(Get.find<UserProfileController>().providerModel?.content?.subscriptionInfo?.subscribedPackageDetails?.isCanceled == 1){
                     showCustomSnackBar("your_subscription_plan_has_been_cancelled_you_will_not_able_to_accept_any_booking_request".tr, type : ToasterMessageType.info);
                   }else{
-                    Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet().then((isTrial){
-                      if(isTrial){
-                        showCustomDialog(child:  ConfirmationDialog(
-                          yesButtonColor: Theme.of(Get.context!).primaryColor,
-                          title: "want_accept_this_booking?".tr,
-                          icon: Images.servicemanImage,
-                          description: 'accept_booking_hint_text'.tr,
-                          onYesPressed: (){
-                            Navigator.of(context).pop();
-                            bookingDetailsController.acceptBookingRequest(bookingId);
+                    showCustomDialog(child:  ConfirmationDialog(
+                      yesButtonColor: Theme.of(Get.context!).primaryColor,
+                      title: "want_accept_this_booking?".tr,
+                      icon: Images.servicemanImage,
+                      description: 'accept_booking_hint_text'.tr,
+                      onYesPressed: (){
+                        Navigator.of(context).pop();
+                        bookingDetailsController.acceptBookingRequest(bookingId);
 
-                          },
-                          onNoPressed: () => Navigator.of(context).pop(),
-                        ),);
-                      }
-                    });
+                      },
+                      onNoPressed: () => Navigator.of(context).pop(),
+                    ),);
                   }
                 },
               ),

@@ -7,10 +7,11 @@ class NotificationModel {
   NotificationModel({this.responseCode, this.message, this.content});
 
   NotificationModel.fromJson(Map<String, dynamic> json) {
-    responseCode = json['response_code'];
-    message = json['message'];
-    content =
-    json['content'] != null ? Content.fromJson(json['content']) : null;
+    responseCode = json['response_code']?.toString();
+    message = json['message']?.toString();
+    if (json['content'] is Map) {
+      content = Content.fromJson(Map<String, dynamic>.from(json['content']));
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -55,29 +56,36 @@ class Content {
         this.total});
 
   Content.fromJson(Map<String, dynamic> json) {
-    currentPage = json['current_page'];
-    if (json['data'] != null) {
+    currentPage = int.tryParse(json['current_page']?.toString() ?? '');
+    if (json['data'] is List) {
       data = <Data>[];
-      json['data'].forEach((v) {
-        data!.add( Data.fromJson(v));
-      });
+      for (final v in json['data']) {
+        try {
+          if (v is Map) {
+            data!.add(Data.fromJson(Map<String, dynamic>.from(v)));
+          }
+        } catch (_) {}
+      }
     }
-    firstPageUrl = json['first_page_url'];
-    from = int.tryParse(json['from'].toString());
-    lastPage = json['last_page'];
-    lastPageUrl = json['last_page_url'];
-    if (json['links'] != null) {
+    firstPageUrl = json['first_page_url']?.toString();
+    from = int.tryParse(json['from']?.toString() ?? '');
+    lastPage = int.tryParse(json['last_page']?.toString() ?? '');
+    lastPageUrl = json['last_page_url']?.toString();
+    if (json['links'] is List) {
       links = <Links>[];
-      json['links'].forEach((v) {
-        links!.add(Links.fromJson(v));
-      });
+      for (final v in json['links']) {
+        try {
+          if (v is Map) {
+            links!.add(Links.fromJson(Map<String, dynamic>.from(v)));
+          }
+        } catch (_) {}
+      }
     }
-    nextPageUrl = json['next_page_url'];
-    path = json['path'];
-
-    prevPageUrl = json['prev_page_url'];
-    to = int.tryParse(json['to'].toString());
-    total = json['total'];
+    nextPageUrl = json['next_page_url']?.toString();
+    path = json['path']?.toString();
+    prevPageUrl = json['prev_page_url']?.toString();
+    to = int.tryParse(json['to']?.toString() ?? '');
+    total = int.tryParse(json['total']?.toString() ?? '');
   }
 
   Map<String, dynamic> toJson() {
@@ -168,15 +176,17 @@ class Data{
         this.updatedAt});
 
   Data.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    title = json['title'];
-    description = json['description'];
-    coverImage = json['cover_image'];
-    coverImageFullPath = json['cover_image_full_path'];
-    toUsers = json['to_users'].cast<String>();
-    isActive = json['is_active'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
+    id = json['id']?.toString();
+    title = json['title']?.toString();
+    description = json['description']?.toString();
+    coverImage = json['cover_image']?.toString();
+    coverImageFullPath = json['cover_image_full_path']?.toString();
+    if (json['to_users'] is List) {
+      toUsers = json['to_users'].map<String>((e) => e.toString()).toList();
+    }
+    isActive = int.tryParse(json['is_active']?.toString() ?? '');
+    createdAt = json['created_at']?.toString();
+    updatedAt = json['updated_at']?.toString();
   }
 
   Map<String, dynamic> toJson() {

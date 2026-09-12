@@ -212,7 +212,7 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
                                   ),
                                 ),
                                 Text(
-                                  'Date: ${DateFormat('MMM dd, yyyy - hh:mm a').format(DateTime.parse(t.createdAt))}',
+                                  'Date: ${_safeWalletDate(t.createdAt)}',
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey,
@@ -241,4 +241,10 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
       ),
     );
   }
+}
+
+String _safeWalletDate(String? raw) {
+  final parsed = DateTime.tryParse(raw ?? '');
+  if (parsed == null) return raw ?? '';
+  return DateFormat('MMM dd, yyyy - hh:mm a').format(parsed.toLocal());
 }
