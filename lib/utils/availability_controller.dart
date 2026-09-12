@@ -14,7 +14,7 @@ class AvailabilityController {
   }
 
   void _startCountdown() {
-    DateTime offlineTime = DateFormat('yyyy-MM-dd HH:mm:ss').parse(offlineAt);
+    DateTime offlineTime = _parseOfflineTime(offlineAt);
     DateTime allowedOnlineTime = offlineTime.add(const Duration(hours: 4));
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -34,6 +34,24 @@ class AvailabilityController {
         remainingTimeNotifier.value = '$hours:$minutes:$seconds';
       }
     });
+  }
+
+  DateTime _parseOfflineTime(String value) {
+    final trimmed = value.trim();
+    final formats = [
+      DateFormat('yyyy-MM-dd HH:mm:ss'),
+      DateFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+    ];
+    for (final format in formats) {
+      try {
+        return format.parse(trimmed);
+      } catch (_) {}
+    }
+    try {
+      return DateTime.parse(trimmed);
+    } catch (_) {
+      return DateTime.now().subtract(const Duration(hours: 24));
+    }
   }
 
   void dispose() {

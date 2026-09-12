@@ -12,24 +12,23 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _requestedProfileLoad = false;
 
   @override
   void initState() {
     super.initState();
-    _requestedProfileLoad = true;
     final userController = Get.find<UserProfileController>();
-    final profileFuture = userController.providerModel == null
-        ? userController.getProviderInfo(reload: true)
-        : userController.refreshProviderInfoIfStale();
-    profileFuture.whenComplete(() {
-      if (mounted) {
-        setState(() => _requestedProfileLoad = false);
-      }
-    });
+    if (userController.hasProfileData) {
+      userController.refreshProviderInfoIfStale();
+    } else {
+      userController.getProviderInfo(reload: true);
+    }
     Future.microtask(() {
-      Get.find<BankInfoController>().getBankInfoData();
-      Get.find<TransactionController>().getWithdrawMethods();
+      if (Get.isRegistered<BankInfoController>()) {
+        Get.find<BankInfoController>().getBankInfoData();
+      }
+      if (Get.isRegistered<TransactionController>()) {
+        Get.find<TransactionController>().getWithdrawMethods();
+      }
     });
   }
 
@@ -39,137 +38,116 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: GetBuilder<UserProfileController>(
         builder: (userController) {
-          if(userController.providerModel!=null){
-            return  SingleChildScrollView(
-              physics: const ClampingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics()
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
+          return SingleChildScrollView(
+            physics: const ClampingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics()
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
 
-                  profileHeaderSection(context,userController),
+                profileHeaderSection(context,userController),
 
-                  const SizedBox(height: Dimensions.paddingSizeLarge),
+                const SizedBox(height: Dimensions.paddingSizeLarge),
 
-                  GestureDetector(
-                    onTap: () => Get.to(() => const ProfileInformationScreen()),
-                    child: ProfileCardItem(title: "edit_profile", leadingIcon: Images.profileInformation),
-                  ),
+                GestureDetector(
+                  onTap: () => Get.to(() => const ProfileInformationScreen()),
+                  child: ProfileCardItem(title: "edit_profile", leadingIcon: Images.profileInformation),
+                ),
 
-                  GestureDetector(
-                    onTap: ()=> Get.to(() => const AccountInformation()),
-                    child: ProfileCardItem(title: "account_information", leadingIcon: Images.accountInformation),
-                  ),
+                GestureDetector(
+                  onTap: ()=> Get.to(() => const AccountInformation()),
+                  child: ProfileCardItem(title: "account_information", leadingIcon: Images.accountInformation),
+                ),
 
-                  GestureDetector(
-                    onTap: ()=> Get.to(() => const WalletInformation()),
-                    child: ProfileCardItem(title: "wallet_information", leadingIcon: Images.walletSmall),
-                  ),
+                GestureDetector(
+                  onTap: ()=> Get.to(() => const WalletInformation()),
+                  child: ProfileCardItem(title: "wallet_information", leadingIcon: Images.walletSmall),
+                ),
 
-                  GestureDetector(
-                    onTap: ()=> Get.to(() => const WalletHistoryScreen()),
-                    child: ProfileCardItem(title: "wallet History", leadingIcon: Images.help),
-                  ),
+                GestureDetector(
+                  onTap: ()=> Get.to(() => const WalletHistoryScreen()),
+                  child: ProfileCardItem(title: "wallet History", leadingIcon: Images.help),
+                ),
 
-                  GestureDetector(
-                    onTap: () => Get.to(() => const BusinessInformation()),
-                    child: ProfileCardItem(title: "Business_Information", leadingIcon: Images.businessInformation),
-                  ),
+                GestureDetector(
+                  onTap: () => Get.to(() => const BusinessInformation()),
+                  child: ProfileCardItem(title: "Business_Information", leadingIcon: Images.businessInformation),
+                ),
 
-                  GestureDetector(
-                    onTap: ()=> Get.to(() => const BusinessSettingScreen()),
-                    child: ProfileCardItem(title: "business_settings", leadingIcon: Images.businessSettings),
-                  ),
+                GestureDetector(
+                  onTap: ()=> Get.to(() => const BusinessSettingScreen()),
+                  child: ProfileCardItem(title: "business_settings", leadingIcon: Images.businessSettings),
+                ),
 
-                  GestureDetector(
-                    onTap: () {
-                      Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet().then((isTrial){
-                        if(isTrial){
-                          if(userController.checkAvailableFeatureInSubscriptionPlan(featureType: 'review')){
-                            Get.to(() => const ProviderReviewScreen());
-                          }
+                GestureDetector(
+                  onTap: () {
+                    Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet().then((isTrial){
+                      if(isTrial){
+                        if(userController.checkAvailableFeatureInSubscriptionPlan(featureType: 'review')){
+                          Get.to(() => const ProviderReviewScreen());
                         }
-                      });
-                    },
-                    child: ProfileCardItem(title: "reviews", leadingIcon: Images.reviewIcon),
-                  ),
+                      }
+                    });
+                  },
+                  child: ProfileCardItem(title: "reviews", leadingIcon: Images.reviewIcon),
+                ),
 
-                  GestureDetector(
-                    onTap: () => Get.toNamed(RouteHelper.bankInfo),
-                    child: ProfileCardItem(title: "bank_information", leadingIcon: Images.bankInformation),
-                  ),
+                GestureDetector(
+                  onTap: () => Get.toNamed(RouteHelper.bankInfo),
+                  child: ProfileCardItem(title: "bank_information", leadingIcon: Images.bankInformation),
+                ),
 
-                  (Get.find<UserProfileController>().providerModel?.content?.subscriptionInfo?.status == "commission_base") ?
-                  GestureDetector(
-                    onTap: () => showCustomBottomSheet(child: const CommissionBottomSheet()),
-                    child: ProfileCardItem(title: "commission", leadingIcon: Images.commission,isDarkItem: true,),
-                  ) : const SizedBox(),
+                (userController.providerModel?.content?.subscriptionInfo?.status == "commission_base") ?
+                GestureDetector(
+                  onTap: () => showCustomBottomSheet(child: const CommissionBottomSheet()),
+                  child: ProfileCardItem(title: "commission", leadingIcon: Images.commission,isDarkItem: true,),
+                ) : const SizedBox(),
 
-                  GestureDetector(
-                    onTap: () => showCustomBottomSheet(child:  const PromotionBottomSheet()),
-                    child: ProfileCardItem(title: "promotional_cost", leadingIcon: Images.promotionalCostIcon,isDarkItem: true,),
-                  ),
+                GestureDetector(
+                  onTap: () => showCustomBottomSheet(child:  const PromotionBottomSheet()),
+                  child: ProfileCardItem(title: "promotional_cost", leadingIcon: Images.promotionalCostIcon,isDarkItem: true,),
+                ),
 
-                  GestureDetector(
-                    onTap: () {
-                      Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet().then((isTrial){
-                        if(isTrial){
-                          if(userController.checkAvailableFeatureInSubscriptionPlan(featureType: "service_request")){
-                            Get.toNamed(RouteHelper.suggestService);
-                          }
+                GestureDetector(
+                  onTap: () {
+                    Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet().then((isTrial){
+                      if(isTrial){
+                        if(userController.checkAvailableFeatureInSubscriptionPlan(featureType: "service_request")){
+                          Get.toNamed(RouteHelper.suggestService);
                         }
-                      });
-                    },
-                    child: ProfileCardItem(title: "suggest_service", leadingIcon: Images.suggestServiceIcon,isDarkItem: true,),
-                  ),
+                      }
+                    });
+                  },
+                  child: ProfileCardItem(title: "suggest_service", leadingIcon: Images.suggestServiceIcon,isDarkItem: true,),
+                ),
 
-                  Get.find<SplashController>().configModel.content?.providerSlfDelete == 1?
-                  GestureDetector(
-                    onTap: (){
-                      showCustomBottomSheet(child: const DeleteAccountBottomSheet());
-                    },
-                    child: ProfileCardItem(title: "delete_account".tr, leadingIcon: Images.servicemanDelete,isDarkItem: true,),
-                  ): const SizedBox(),
+                Get.find<SplashController>().configModel.content?.providerSlfDelete == 1?
+                GestureDetector(
+                  onTap: (){
+                    showCustomBottomSheet(child: const DeleteAccountBottomSheet());
+                  },
+                  child: ProfileCardItem(title: "delete_account".tr, leadingIcon: Images.servicemanDelete,isDarkItem: true,),
+                ): const SizedBox(),
 
-                  const SizedBox(height: Dimensions.paddingSizeLarge),
-                  RichText(
-                    text: TextSpan(
-                        text: "app_version".tr,
-                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault,color: Theme.of(context).primaryColorLight),
-                        children: <TextSpan>[
-                          TextSpan(
-                            text: " ${AppConstants.appVersion} ",
-                            style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault),
-                          )
-                        ]
-                    ),
+                const SizedBox(height: Dimensions.paddingSizeLarge),
+                RichText(
+                  text: TextSpan(
+                      text: "app_version".tr,
+                      style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault,color: Theme.of(context).primaryColorLight),
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: " ${AppConstants.appVersion} ",
+                          style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault),
+                        )
+                      ]
                   ),
-                  
-                  const SizedBox(height: Dimensions.paddingSizeLarge),
-                ],
-              ),
-            );
-          }else if(userController.isLoading || _requestedProfileLoad){
-            return Center(
-              child: CircularProgressIndicator(color: Theme.of(context).hoverColor,),
-            );
-          }else{
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('something_went_wrong'.tr, style: robotoRegular),
-                  const SizedBox(height: Dimensions.paddingSizeDefault),
-                  CustomButton(
-                    btnTxt: 'retry'.tr,
-                    onPressed: () => userController.getProviderInfo(reload: true),
-                  ),
-                ],
-              ),
-            );
-          }
+                ),
 
+                const SizedBox(height: Dimensions.paddingSizeLarge),
+              ],
+            ),
+          );
         },
       ),
     );
@@ -319,8 +297,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
 
                     ColumnText(
-                      amount: DateTime.now().difference(DateConverter.isoStringToLocalDate(userController
-                          .providerModel?.content?.providerInfo?.createdAt.toString()??DateTime.now().toString())).inDays.toString(),
+                      amount: _daysSinceJoined(userController).toString(),
                       title: "Days_Since_Joined".tr
                     ),
                   ],
@@ -331,5 +308,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
+  }
+
+  int _daysSinceJoined(UserProfileController userController) {
+    final createdAt = userController.providerModel?.content?.providerInfo?.createdAt;
+    if (createdAt == null || createdAt.isEmpty) return 0;
+    try {
+      return DateTime.now().difference(DateConverter.isoStringToLocalDate(createdAt)).inDays;
+    } catch (_) {
+      final parsed = DateTime.tryParse(createdAt);
+      if (parsed == null) return 0;
+      return DateTime.now().difference(parsed).inDays;
+    }
   }
 }

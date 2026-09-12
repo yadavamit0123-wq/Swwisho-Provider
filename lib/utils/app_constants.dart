@@ -129,6 +129,7 @@ class AppConstants {
   static const String notificationCount = 'provider_notification_count';
   static const String initialLanguage = 'provider_initial_language';
   static const String isRememberActive = 'provider_is_remember_active';
+  static const String providerProfileCache = 'provider_profile_cache';
 
   static const double limitOfPickedImageSizeInMB = 2;
   static const double limitOfPickedVideoSizeInMB = 50;

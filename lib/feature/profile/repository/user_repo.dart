@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 
@@ -9,6 +11,25 @@ class UserRepo {
 
   Future<Response> getProviderInfo() async {
     return await apiClient.getData(AppConstants.providerProfileUri);
+  }
+
+  Future<void> cacheProviderInfo(Map<String, dynamic> body) async {
+    await sharedPreferences.setString(AppConstants.providerProfileCache, jsonEncode(body));
+  }
+
+  Map<String, dynamic>? getCachedProviderInfo() {
+    final raw = sharedPreferences.getString(AppConstants.providerProfileCache);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> clearCachedProviderInfo() async {
+    await sharedPreferences.remove(AppConstants.providerProfileCache);
   }
 
   Future<Response?> getZonesDataList() async {

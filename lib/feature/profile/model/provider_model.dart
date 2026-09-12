@@ -1,3 +1,16 @@
+List<String> _toStringList(dynamic value) {
+  if (value == null) return [];
+  if (value is List) return value.map((e) => e.toString()).toList();
+  if (value is String && value.isNotEmpty) return [value];
+  return [];
+}
+
+Map<String, dynamic> _asMap(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return {};
+}
+
 class ProviderModel {
   String? responseCode;
   String? message;
@@ -7,11 +20,15 @@ class ProviderModel {
   ProviderModel({this.responseCode, this.message, this.content});
 
   ProviderModel.fromJson(Map<String, dynamic> json) {
-    responseCode = json['response_code'];
-    message = json['message'];
-    content =
-    json['content'] != null ? Content.fromJson(json['content']) : null;
-
+    responseCode = json['response_code']?.toString();
+    message = json['message']?.toString();
+    if (json['content'] != null) {
+      try {
+        content = Content.fromJson(_asMap(json['content']));
+      } catch (_) {
+        content = null;
+      }
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -36,22 +53,39 @@ class Content {
   Content({this.providerInfo, this.bookingOverview,this.promotionalCostPercentage, this.subscriptionInfo});
 
   Content.fromJson(Map<String, dynamic> json) {
-    providerInfo = json['provider_info'] != null
-        ? ProviderInfo.fromJson(json['provider_info'])
-        : null;
-    if (json['booking_overview'] != null) {
-      bookingOverview = <BookingOverview>[];
-      json['booking_overview'].forEach((v) {
-        bookingOverview!.add(BookingOverview.fromJson(v));
-      });
+    final rawProvider = json['provider_info'] ?? json['provider'] ?? json['user'];
+    if (rawProvider != null) {
+      try {
+        providerInfo = ProviderInfo.fromJson(_asMap(rawProvider));
+      } catch (_) {}
     }
-    promotionalCostPercentage = json['promotional_cost_percentage'] != null
-        ? PromotionalCostPercentage.fromJson(json['promotional_cost_percentage'])
-        : null;
-    subscriptionInfo  = json['subscription_info'] != null
-        ? SubscriptionInfo.fromJson(json['subscription_info'])
-        : null;
-    providerCharge = json['provider_charge'] ?? 0;
+    if (providerInfo == null &&
+        (json['company_name'] != null || json['user_id'] != null || json['logo_full_path'] != null)) {
+      try {
+        providerInfo = ProviderInfo.fromJson(json);
+      } catch (_) {}
+    }
+    if (json['booking_overview'] is List) {
+      bookingOverview = <BookingOverview>[];
+      for (final item in json['booking_overview']) {
+        try {
+          bookingOverview!.add(BookingOverview.fromJson(_asMap(item)));
+        } catch (_) {}
+      }
+    }
+    if (json['promotional_cost_percentage'] != null) {
+      try {
+        promotionalCostPercentage = PromotionalCostPercentage.fromJson(
+          _asMap(json['promotional_cost_percentage']),
+        );
+      } catch (_) {}
+    }
+    if (json['subscription_info'] != null) {
+      try {
+        subscriptionInfo = SubscriptionInfo.fromJson(_asMap(json['subscription_info']));
+      } catch (_) {}
+    }
+    providerCharge = json['provider_charge']?.toString() ?? '0';
   }
 
   Map<String, dynamic> toJson() {
@@ -144,19 +178,19 @@ class ProviderInfo {
       });
 
   ProviderInfo.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    userId = json['user_id'];
-    companyName = json['company_name'];
-    panNumber = json['pan_number'];
-    panImage = json['pan_image'];
-    companyPhone = json['company_phone'];
-    companyAddress = json['company_address'];
-    companyEmail = json['company_email'];
-    logo = json['logo'];
-    logoFullPath = json['logo_full_path'];
-    contactPersonName = json['contact_person_name'];
-    contactPersonPhone = json['contact_person_phone'];
-    contactPersonEmail = json['contact_person_email'];
+    id = json['id']?.toString();
+    userId = json['user_id']?.toString();
+    companyName = json['company_name']?.toString();
+    panNumber = json['pan_number']?.toString();
+    panImage = json['pan_image']?.toString();
+    companyPhone = json['company_phone']?.toString();
+    companyAddress = json['company_address']?.toString();
+    companyEmail = json['company_email']?.toString();
+    logo = json['logo']?.toString();
+    logoFullPath = json['logo_full_path']?.toString();
+    contactPersonName = json['contact_person_name']?.toString();
+    contactPersonPhone = json['contact_person_phone']?.toString();
+    contactPersonEmail = json['contact_person_email']?.toString();
     orderCount = json['order_count']?.toString();
     serviceManCount = int.tryParse(json['service_man_count']?.toString() ?? '') ?? 0;
     serviceCapacityPerDay = int.tryParse(json['service_capacity_per_day']?.toString() ?? '') ?? 0;
@@ -167,12 +201,20 @@ class ProviderInfo {
     offlineAt = json['offline_at']?.toString();
     commissionPercentage = double.tryParse(json['commission_percentage']?.toString() ?? '') ?? 0;
     isActive = int.tryParse(json['is_active']?.toString() ?? '') ?? 0;
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
+    createdAt = json['created_at']?.toString();
+    updatedAt = json['updated_at']?.toString();
     isApproved = int.tryParse(json['is_approved']?.toString() ?? '') ?? 0;
-    zoneId = json['zone_id'];
-    owner = json['owner'] != null ? Owner.fromJson(json['owner']) : null;
-    coordinates = json['coordinates'] != null ? Coordinates.fromJson(json['coordinates']) : null;
+    zoneId = json['zone_id']?.toString();
+    if (json['owner'] != null) {
+      try {
+        owner = Owner.fromJson(_asMap(json['owner']));
+      } catch (_) {}
+    }
+    if (json['coordinates'] != null) {
+      try {
+        coordinates = Coordinates.fromJson(_asMap(json['coordinates']));
+      } catch (_) {}
+    }
     isSuspend =  int.tryParse(json['is_suspended'].toString());
     serviceAvailability =  int.tryParse(json['service_availability'].toString());
   }
@@ -267,8 +309,8 @@ class Owner {
     phone = json['phone'];
     identificationNumber = json['identification_number'];
     identificationType = json['identification_type'];
-    identificationImage =  json['identification_image'] !=null ? json['identification_image'].cast<String>() : [];
-    identificationImageFullPath =  json['identification_image_full_path'] !=null ? json['identification_image_full_path'].cast<String>() : [];
+    identificationImage = _toStringList(json['identification_image']);
+    identificationImageFullPath = _toStringList(json['identification_image_full_path']);
     gender = json['gender'];
     profileImage = json['profile_image'];
     isPhoneVerified = json['is_phone_verified'];
@@ -514,7 +556,7 @@ class SubscribedPackageDetails {
     paymentMethod = json['payment_method'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
-    featureList = json['feature_list'] !=null ? json['feature_list'].cast<String>() : [];
+    featureList = _toStringList(json['feature_list']);
     description = json['description'];
     numberOfUses = int.tryParse(json['number_of_uses'].toString());
     isCanceled = int.tryParse(json['is_canceled'].toString());

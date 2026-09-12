@@ -357,7 +357,11 @@ class AuthController extends GetxController implements GetxService {
   }
 
   bool clearSharedData() {
-    return authRepo.clearSharedData();
+    final cleared = authRepo.clearSharedData();
+    if (Get.isRegistered<UserProfileController>()) {
+      Get.find<UserProfileController>().clearUserProfileData();
+    }
+    return cleared;
   }
 
   void toggleRememberMe() {
