@@ -23,7 +23,7 @@ class MenuScreen extends StatelessWidget {
 
     final menuList = <MenuModel>[
       MenuModel(icon: Images.profileInformation, title: 'my_profile'.tr, route: RouteHelper.getProfileRoute()),
-      MenuModel(icon: Images.translate, title: 'language'.tr, route: RouteHelper.getLanguageScreenRoute()),
+      MenuModel(icon: Images.translate, title: 'language'.tr, route: 'language_sheet'),
       MenuModel(icon: Images.notificationIcon, title: 'notifications'.tr, route: RouteHelper.getNotificationRoute()),
       MenuModel(icon: Images.notificationSetup, title: 'notification_channel_setup'.tr, route: RouteHelper.getNotificationScreen()),
       MenuModel(icon: Images.help, title: 'help_&_support'.tr, route: RouteHelper.getHelpAndSupportScreen()),
@@ -86,23 +86,36 @@ class _MenuButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
+        final route = menu.route;
+        final isLogout = menu.isLogout;
         Get.back();
-        if (menu.isLogout) {
-          Get.find<AuthController>().clearSharedData();
-          Get.offAllNamed(RouteHelper.signIn);
-          return;
-        }
-        if (menu.route == 'custom_post') {
-          Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet().then((isTrial) {
-            if (isTrial && Get.find<UserProfileController>().checkAvailableFeatureInSubscriptionPlan(featureType: 'bidding')) {
-              Get.to(() => const CustomerRequestListScreen());
-            }
-          });
-          return;
-        }
-        if (menu.route.isNotEmpty) {
-          Get.toNamed(menu.route);
-        }
+        Future.microtask(() {
+          if (isLogout) {
+            Get.find<AuthController>().clearSharedData();
+            Get.offAllNamed(RouteHelper.signIn);
+            return;
+          }
+          if (route == 'custom_post') {
+            Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet().then((isTrial) {
+              if (isTrial && Get.find<UserProfileController>().checkAvailableFeatureInSubscriptionPlan(featureType: 'bidding')) {
+                Get.to(() => const CustomerRequestListScreen());
+              }
+            });
+            return;
+          }
+          if (route == 'language_sheet') {
+            Get.bottomSheet(
+              const ChooseLanguageBottomSheet(),
+              backgroundColor: Colors.transparent,
+              isScrollControlled: true,
+              barrierColor: Colors.black.withValues(alpha: Get.isDarkMode ? 0.7 : 0.6),
+            );
+            return;
+          }
+          if (route.isNotEmpty) {
+            Get.toNamed(route);
+          }
+        });
       },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

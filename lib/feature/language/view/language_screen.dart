@@ -100,7 +100,11 @@ class _ChooseLanguageScreenState extends State<ChooseLanguageScreen> {
                         localizationController.localLanguages[localizationController.selectedIndex].languageCode!,
                         localizationController.localLanguages[localizationController.selectedIndex].countryCode,
                       ), isInitial: true);
-                      Get.offNamed(RouteHelper.signIn);
+                      if (Get.find<AuthController>().isLoggedIn()) {
+                        Get.offNamed(RouteHelper.getInitialRoute());
+                      } else {
+                        Get.offNamed(RouteHelper.signIn);
+                      }
                     }else {
                       showCustomSnackBar('select_a_language'.tr, type: ToasterMessageType.info);
                     }

@@ -61,7 +61,7 @@ class SplashScreenState extends State<SplashScreen> {
 
     Get.find<SplashController>().getConfigData().then((isSuccess) {
       if(isSuccess) {
-        Timer(const Duration(seconds: 1), () async {
+        Timer(const Duration(milliseconds: 300), () async {
 
           if(_checkAvailableUpdate()) {
             Get.offNamed(RouteHelper.getUpdateRoute(true));
@@ -78,9 +78,7 @@ class SplashScreenState extends State<SplashScreen> {
             else{
               if (Get.find<AuthController>().isLoggedIn()) {
                 Get.find<AuthController>().updateToken();
-                Get.find<UserProfileController>().getProviderInfo()
-                    .then((value) => Get.offNamed(RouteHelper.getInitialRoute())
-                );
+                Get.offNamed(RouteHelper.getInitialRoute());
               } else {
                 if( Get.find<SplashController>().showInitialLanguageScreen()){
                   Get.toNamed(RouteHelper.getLanguageScreenRoute());

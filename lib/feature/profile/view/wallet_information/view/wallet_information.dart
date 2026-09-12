@@ -14,7 +14,12 @@ class _WalletInformationState extends State<WalletInformation> {
   @override
   void initState() {
     super.initState();
-    Get.find<UserProfileController>().getProviderInfo(reload: true);
+    final userController = Get.find<UserProfileController>();
+    if (userController.providerModel == null) {
+      userController.getProviderInfo(reload: true);
+    } else {
+      userController.refreshProviderInfoIfStale();
+    }
     Get.find<UserProfileController>().updateNumberOfTimeShowingDialog();
 
   }

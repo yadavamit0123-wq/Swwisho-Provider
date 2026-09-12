@@ -17,9 +17,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.find<BankInfoController>().getBankInfoData();
-      Get.find<TransactionController>().getWithdrawMethods();
-      Get.find<UserProfileController>().getProviderInfo(reload: true);
+      final userController = Get.find<UserProfileController>();
+      if (userController.providerModel == null) {
+        userController.getProviderInfo(reload: true);
+      } else {
+        userController.refreshProviderInfoIfStale();
+      }
+      Future.microtask(() {
+        Get.find<BankInfoController>().getBankInfoData();
+        Get.find<TransactionController>().getWithdrawMethods();
+      });
     });
   }
 

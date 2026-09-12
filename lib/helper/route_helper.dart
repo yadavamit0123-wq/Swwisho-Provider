@@ -124,7 +124,6 @@ class RouteHelper {
     GetPage(name: profile, page: () => const ProfileScreen()),
     GetPage(name: serviceManSetup, page: () => const ServicemanSetupScreen()),
     GetPage(name: addNewServicemanScreen, page: () => const AddNewServicemanScreen(),),
-    GetPage(binding: BankInfoBinding(),name: profile, page: () => const ProfileScreen()),
     GetPage(name: bookingDetails,
         page: () => getRoute(BookingDetailsScreen(
           bookingId: Get.parameters['booking_id'],

@@ -125,6 +125,7 @@ class UserProfileController extends GetxController implements GetxService{
   }
 
    ProviderModel? _providerModel;
+   DateTime? _lastProviderInfoSync;
    String _providerCharge = '0';
    String _newWalletAmount = '0';
    String get providerCharge => _providerCharge;
@@ -170,14 +171,31 @@ class UserProfileController extends GetxController implements GetxService{
     update();
   }
 
+  Future<void> refreshProviderInfoIfStale({Duration maxAge = const Duration(minutes: 2)}) async {
+    if (_providerModel == null) {
+      await getProviderInfo(reload: true);
+      return;
+    }
+    if (_lastProviderInfoSync != null &&
+        DateTime.now().difference(_lastProviderInfoSync!) < maxAge) {
+      return;
+    }
+    await getProviderInfo(reload: true);
+  }
+
   Future<bool> getProviderInfo({reload = false}) async {
 
-    Get.find<LocationController>().setPickedLocation();
-
+    if (_providerModel != null && !reload) {
+      return true;
+    }
 
     if(_providerModel == null || reload){
-      _isLoading = true;
-      update();
+      if (_providerModel == null) {
+        Get.find<LocationController>().setPickedLocation();
+        _isLoading = true;
+        update();
+      }
+      try {
       Response response = await userRepo.getProviderInfo();
       if (response.statusCode == 200) {
         _providerModel = ProviderModel.fromJson(response.body);
@@ -223,12 +241,28 @@ class UserProfileController extends GetxController implements GetxService{
         _totalOngoingRequest= 0;
         _totalAcceptedRequest= 0;
 
-        _providerId = _providerModel!.content!.providerInfo!.id!;
-        myZoneId =_providerModel!.content!.providerInfo!.zoneId!;
+        final providerInfo = _providerModel?.content?.providerInfo;
+        if (providerInfo == null) {
+          _isLoading = false;
+          update();
+          return _providerModel != null;
+        }
+        _providerId = providerInfo.id ?? '';
+        myZoneId = providerInfo.zoneId ?? '';
         _selectedZoneID = myZoneId!;
         _selectedZoneName ='';
 
-         getZoneList();
+         if (zoneList.isEmpty) {
+           getZoneList();
+         } else {
+           for (var element in zoneList) {
+             if (element.id == providerInfo.zoneId) {
+               myZone = element.name ?? '';
+               break;
+             }
+           }
+           update();
+         }
 
         if(companyNameController!.text==personalNameController!.text
             && companyPhoneController!.text==personalPhoneController!.text
@@ -256,10 +290,14 @@ class UserProfileController extends GetxController implements GetxService{
           _totalOngoingRequest= 0;
           _totalAcceptedRequest= 0;
         }
+        _lastProviderInfoSync = DateTime.now();
         _isLoading= false;
         update();
       } else {
         ApiChecker.checkApi(response);
+      }
+      } catch (_) {
+        // Keep cached profile data when refresh fails.
       }
     }
     _isLoading = false;

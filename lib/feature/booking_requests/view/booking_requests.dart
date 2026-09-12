@@ -18,7 +18,6 @@ class _BookingRequestScreenState extends State<BookingRequestScreen>{
   void initState() {
     super.initState();
 
-    Get.find<UserProfileController>().getProviderInfo(reload: true);
     Get.find<BookingRequestController>().updateBookingRequestIndex(1);
     Get.find<BookingRequestController>().updateSelectedServiceType();
     Get.find<BookingRequestController>().getBookingRequestList('pending',1,reload: true, isFirst: true);

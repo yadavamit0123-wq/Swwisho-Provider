@@ -7,20 +7,28 @@ class BottomNavScreen extends StatefulWidget {
   final int pageIndex;
 
   static Future<void> loadData({int pageIndex = 0}) async {
-    Get.find<DashboardController>().getDashboardData(reload: true);
-    Get.find<ServiceCategoryController>().getCategoryList(shouldUpdate: true,reloadSubcategory: true);
     Get.find<LocalizationController>().filterLanguage(shouldUpdate: false);
-    Get.find<ConversationController>().getChannelList(1, type: "serviceman");
-    Get.find<ConversationController>().getChannelList(1, type: "customer");
-    Get.find<ServicemanSetupController>().getAllServicemanList(1,reload: true, status: 'all');
-    await Get.find<UserProfileController>().getProviderInfo(reload: true).then((isProviderModelAvailable){
+    Get.find<AuthController>().updateToken();
+    Get.find<DashboardController>().getDashboardData(reload: true);
+
+    final userController = Get.find<UserProfileController>();
+    if (userController.providerModel == null) {
+      userController.getProviderInfo(reload: true);
+    }
+
+    Future.microtask(() {
+      userController.refreshProviderInfoIfStale();
+      Get.find<ServiceCategoryController>().getCategoryList(shouldUpdate: true, reloadSubcategory: true);
+      Get.find<HtmlViewController>().getPagesContent();
       Get.find<BusinessSubscriptionController>().getSubscriptionPackageList();
-      if(pageIndex != 1){
+      Get.find<ConversationController>().getChannelList(1, type: "serviceman");
+      Get.find<ConversationController>().getChannelList(1, type: "customer");
+      Get.find<ServicemanSetupController>().getAllServicemanList(1, reload: true, status: 'all');
+      Get.find<UserProfileController>().trialWidgetShow(route: "");
+      if (pageIndex != 1) {
         Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet();
       }
-      Get.find<UserProfileController>().trialWidgetShow(route: "");
     });
-    Get.find<AuthController>().updateToken();
   }
 
   const BottomNavScreen({super.key, required this.pageIndex});
@@ -30,35 +38,36 @@ class BottomNavScreen extends StatefulWidget {
 }
 
 class BottomNavScreenState extends State<BottomNavScreen> {
-  PageController? _pageController;
   int _pageIndex = 0;
-  List<Widget>? _screens;
+  final Set<int> _visitedTabs = {};
+  final Map<int, Widget> _pageCache = {};
   bool _canExit = GetPlatform.isWeb ? true : false;
+
   @override
   void initState() {
     super.initState();
     BottomNavScreen.loadData(pageIndex: widget.pageIndex);
     _pageIndex = widget.pageIndex;
-    _pageController = PageController(initialPage: widget.pageIndex);
-
-    Future.delayed(const Duration(seconds: 1), () {
-      setState(() {});
-    });
-
+    _visitedTabs.add(_pageIndex);
   }
 
-
+  Widget _pageWidget(int index) {
+    return _pageCache.putIfAbsent(index, () {
+      switch (index) {
+        case 0:
+          return const DashBoardScreen();
+        case 1:
+          return const BookingRequestScreen();
+        case 2:
+          return const AllServicesScreen();
+        default:
+          return const SizedBox.shrink();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-
-    _screens = [
-      const DashBoardScreen(),
-      const BookingRequestScreen(),
-      const AllServicesScreen(),
-      Text("more".tr),
-    ];
-
     final padding = MediaQuery.of(context).padding;
 
     return CustomPopScopeWidget(
@@ -103,17 +112,15 @@ class BottomNavScreenState extends State<BottomNavScreen> {
             ),
           ),
         ),
-        body: GetBuilder<UserProfileController>(
-            builder: (userProfileController) {
-              return PageView.builder(
-                controller: _pageController,
-                itemCount: _screens!.length,
-                physics: const NeverScrollableScrollPhysics(),
-                itemBuilder: (context, index) {
-                  return _screens![index];
-                },
-              );
+        body: IndexedStack(
+          index: _pageIndex,
+          sizing: StackFit.expand,
+          children: List.generate(3, (index) {
+            if (!_visitedTabs.contains(index)) {
+              return const SizedBox.shrink();
             }
+            return _pageWidget(index);
+          }),
         ),
         floatingActionButton: Get.find<SplashController>().configModel.content?.biddingStatus==1 && Get.find<SplashController>().showCustomBookingButton?   GestureDetector(
           onTap: () => Get.find<BusinessSubscriptionController>().openTrialEndBottomSheet().then((isTrial){
@@ -149,12 +156,9 @@ class BottomNavScreenState extends State<BottomNavScreen> {
       ).then((_){
         Get.find<UserProfileController>().trialWidgetShow(route: "");
       });
-    }else {
-      setState(() {
-        _pageController?.jumpToPage(pageIndex);
-        _pageIndex = pageIndex;
-
-      });
+    } else {
+      _visitedTabs.add(pageIndex);
+      setState(() => _pageIndex = pageIndex);
     }
   }
 
