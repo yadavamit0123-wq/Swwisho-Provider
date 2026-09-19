@@ -32,8 +32,8 @@ class BookingDetailsCustomerInfo extends StatelessWidget {
                 ? (bookingDetails.serviceAddress?.contactPersonNumber ?? bookingDetails.subBooking?.serviceAddress?.contactPersonNumber ?? bookingDetails.customer?.phone ?? bookingDetails.customer?.email ?? "")
                 : BookingContactHelper.maskPhone(bookingDetails.serviceAddress?.contactPersonNumber ?? bookingDetails.customer?.phone),
             image: bookingDetails.customer?.profileImageFullPath ?? bookingDetails.subBooking?.customer?.profileImageFullPath ?? "",
-            address: BookingContactHelper.canShowContactDetails(bookingDetails)
-                ? (bookingDetails.serviceAddress?.address ?? bookingDetails.subBooking?.serviceAddress?.address ?? 'address_not_found'.tr)
+            address: BookingContactHelper.canShowAddress(bookingDetails)
+                ? (BookingContactHelper.resolveCustomerAddress(bookingDetails) ?? 'address_not_found'.tr)
                 : 'accept_booking_to_view_contact_details'.tr,
           )
 

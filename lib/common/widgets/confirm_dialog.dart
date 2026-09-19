@@ -15,11 +15,12 @@ class ConfirmationDialog extends StatelessWidget {
   final Color? yesTextColor;
   final Color? noButtonColor;
   final Widget? customButton;
+  final Widget? extraWidget;
 
   final Function? onNoPressed;
   final bool isLoading;
   const ConfirmationDialog({super.key,  this.icon, this.iconSize = 50, this.title,  this.description,  this.onYesPressed, this.onNoPressed, this.yesButtonColor=const Color(0xFFF24646),
-    this.isLoading=false, this.iconWidget, this.noTextColor, this.yesTextColor, this.noButtonColor, this.noButtonText, this.yesButtonText, this.customButton});
+    this.isLoading=false, this.iconWidget, this.noTextColor, this.yesTextColor, this.noButtonColor, this.noButtonText, this.yesButtonText, this.customButton, this.extraWidget});
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +57,12 @@ class ConfirmationDialog extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ) : const SizedBox(height: Dimensions.paddingSizeDefault,),
+
+          if (extraWidget != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+              child: extraWidget!,
+            ),
 
           const SizedBox(height: Dimensions.paddingSizeLarge),
 

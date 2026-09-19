@@ -1,3 +1,5 @@
+import 'package:demandium_provider/feature/booking_details/widget/accept_booking_address_preview.dart';
+import 'package:demandium_provider/helper/booking_contact_helper.dart';
 import 'package:get/get.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 
@@ -86,6 +88,10 @@ class ChangeStatusDropdownButton extends StatelessWidget {
                       title: "want_accept_this_booking?".tr,
                       icon: Images.servicemanImage,
                       description: 'accept_booking_hint_text'.tr,
+                      extraWidget: AcceptBookingAddressPreview(
+                        serviceLocation: bookingDetails.serviceLocation,
+                        address: BookingContactHelper.resolveCustomerAddress(bookingDetails),
+                      ),
                       onYesPressed: (){
                         Navigator.of(context).pop();
                         bookingDetailsController.acceptBookingRequest(bookingId);

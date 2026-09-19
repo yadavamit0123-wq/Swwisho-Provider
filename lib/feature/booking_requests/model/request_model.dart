@@ -22,6 +22,7 @@ class BookingRequestModel {
   List<RepeatBooking>? repeatBookingList;
   SubCategory? subCategory;
   String ? serviceLocation;
+  ServiceAddress? serviceAddress;
 
 
   BookingRequestModel({
@@ -44,7 +45,8 @@ class BookingRequestModel {
     this.repeatBookingList,
     this.subCategory,
     this.serviceSchedule,
-    this.serviceLocation
+    this.serviceLocation,
+    this.serviceAddress,
   });
 
   BookingRequestModel.fromJson(Map<String, dynamic> json) {
@@ -75,6 +77,9 @@ class BookingRequestModel {
         ? SubCategory.fromJson(json['sub_category'])
         : null;
     serviceLocation = json['service_location'];
+    serviceAddress = json['service_address'] is Map
+        ? ServiceAddress.fromJson(Map<String, dynamic>.from(json['service_address']))
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -102,6 +107,9 @@ class BookingRequestModel {
       data['sub_category'] = subCategory!.toJson();
     }
     data['service_location'] = serviceLocation;
+    if (serviceAddress != null) {
+      data['service_address'] = serviceAddress!.toJson();
+    }
 
     return data;
   }

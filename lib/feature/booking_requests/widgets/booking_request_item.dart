@@ -1,3 +1,5 @@
+import 'package:demandium_provider/feature/booking_details/widget/accept_booking_address_preview.dart';
+import 'package:demandium_provider/helper/booking_contact_helper.dart';
 import 'package:demandium_provider/helper/booking_helper.dart';
 import 'package:get/get.dart';
 import 'package:demandium_provider/utils/core_export.dart';
@@ -136,15 +138,32 @@ class BookingRequestItem extends StatelessWidget {
             ),
             margin: EdgeInsets.fromLTRB( Dimensions.paddingSizeDefault, 5, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
             padding: EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeExtraSmall),
-            child: Row(spacing: Dimensions.paddingSizeExtraSmall, children: [
-              Icon(Icons.location_on_rounded, size: 17),
-              Text(
-                booking.serviceLocation == "provider" ?  "your_location".tr : "customer_location".tr ,
-                style: robotoMedium.copyWith(
-                    color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.8)
-                ),
-              )
-            ]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(spacing: Dimensions.paddingSizeExtraSmall, children: [
+                  Icon(Icons.location_on_rounded, size: 17),
+                  Text(
+                    booking.serviceLocation == "provider" ?  "your_location".tr : "customer_location".tr ,
+                    style: robotoMedium.copyWith(
+                        color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.8)
+                    ),
+                  )
+                ]),
+                if (BookingContactHelper.canShowAddressForRequest(booking)) ...[
+                  const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+                  Text(
+                    BookingContactHelper.resolveCustomerAddressFromRequest(booking) ?? 'address_not_found'.tr,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: robotoRegular.copyWith(
+                      fontSize: Dimensions.fontSizeSmall,
+                      color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           )
         ],),
         Positioned.fill(child: CustomInkWell(
@@ -191,6 +210,10 @@ class BookingRequestItem extends StatelessWidget {
                             title: "want_accept_this_booking?".tr,
                             icon: Images.servicemanImage,
                             description: 'accept_booking_hint_text'.tr,
+                            extraWidget: AcceptBookingAddressPreview(
+                              serviceLocation: booking.serviceLocation,
+                              address: BookingContactHelper.resolveCustomerAddressFromRequest(booking),
+                            ),
                             onYesPressed: (){
                               Get.find<BookingDetailsController>().acceptBookingRequest(booking.id!);
                               Get.back();

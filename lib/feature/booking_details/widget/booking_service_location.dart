@@ -104,15 +104,15 @@ class BookingServiceLocation extends StatelessWidget {
 
                 Row(spacing: Dimensions.paddingSizeDefault ,children: [
                   Expanded(child: Text(
-                    !BookingContactHelper.canShowContactDetails(bookingDetails) && serviceLocation == "customer"
-                        ? 'accept_booking_to_view_contact_details'.tr
-                        : serviceLocation == "customer"
-                        ? bookingDetails.serviceAddress?.address ?? bookingDetails.subBooking?.serviceAddress?.address ?? 'address_not_found'.tr
+                    serviceLocation == "customer"
+                        ? (BookingContactHelper.canShowAddress(bookingDetails)
+                            ? BookingContactHelper.resolveCustomerAddress(bookingDetails) ?? 'address_not_found'.tr
+                            : 'accept_booking_to_view_contact_details'.tr)
                         : Get.find<UserProfileController>().providerModel?.content?.providerInfo?.companyAddress ?? 'address_not_found'.tr,
                     maxLines: 4, overflow: TextOverflow.ellipsis,
                   )),
 
-                  if(serviceLocation == "customer" && BookingContactHelper.canShowContactDetails(bookingDetails))InkWell(
+                  if(serviceLocation == "customer" && BookingContactHelper.canShowAddress(bookingDetails))InkWell(
                     onTap: () async {
                       _checkPermission(() async {
                         if(bookingDetails.serviceAddress!= null  || bookingDetails.subBooking?.serviceAddress != null){
