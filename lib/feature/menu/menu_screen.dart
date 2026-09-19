@@ -28,7 +28,6 @@ class MenuScreen extends StatelessWidget {
       MenuModel(icon: Images.notificationSetup, title: 'notification_channel_setup'.tr, route: RouteHelper.getNotificationScreen()),
       MenuModel(icon: Images.help, title: 'help_&_support'.tr, route: RouteHelper.getHelpAndSupportScreen()),
       MenuModel(icon: Images.reportFilterIcon, title: 'reports_&_analytics'.tr, route: RouteHelper.getReportingPageRoute('menu')),
-      MenuModel(icon: Images.serviceMan, title: 'serviceman'.tr, route: RouteHelper.serviceManSetup),
       MenuModel(icon: Images.mySubscriptions, title: 'subscriptions'.tr, route: RouteHelper.getMySubscriptionRoute()),
       if (config?.biddingStatus == 1)
         MenuModel(icon: Images.customPost, title: 'custom_booking_request'.tr, route: 'custom_post'),

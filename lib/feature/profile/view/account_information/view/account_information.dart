@@ -47,6 +47,9 @@ class _AccountInformationState extends State<AccountInformation> {
             final cashCollection = double.tryParse(account?.cashCollection ?? '0') ?? 0;
             final transactionAmount = userController.getTransactionAmountAmount(payableAmount, receivableAmount);
             final transactionType = userController.getTransactionType(payableAmount, receivableAmount);
+            final showReceivableSettlement = payableAmount <= receivableAmount;
+            final showAdjustOnlyForPayable =
+                !showReceivableSettlement && transactionType == TransactionType.adjustAndPayable;
 
             return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -61,12 +64,6 @@ class _AccountInformationState extends State<AccountInformation> {
                     ),
                   if(cashCollection > 0)
                     const SizedBox(height: Dimensions.paddingSizeDefault),
-                  _AccountInfoCard(
-                    title: 'account_payable'.tr,
-                    amount: payableAmount,
-                    infoText: 'account_payable_info'.tr,
-                  ),
-                  const SizedBox(height: Dimensions.paddingSizeDefault),
                   _AccountInfoCard(
                     title: 'account_receivable'.tr,
                     amount: receivableAmount,
@@ -84,70 +81,83 @@ class _AccountInformationState extends State<AccountInformation> {
                     amount: totalWithdrawn,
                     infoText: 'already_withdrawn_info'.tr,
                   ),
-                  const SizedBox(height: Dimensions.paddingSizeLarge),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                      border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.15)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          transactionType == TransactionType.none
-                              ? 'payable_balance'.tr
-                              : 'final_payable_balance'.tr,
-                          style: robotoMedium,
-                        ),
-                        const SizedBox(height: Dimensions.paddingSizeSmall),
-                        Text(
-                          PriceConverter.convertPrice(transactionAmount),
-                          style: robotoBold.copyWith(
-                            fontSize: Dimensions.fontSizeOverLarge,
-                            color: Theme.of(context).primaryColor,
+                  if (showReceivableSettlement) ...[
+                    const SizedBox(height: Dimensions.paddingSizeLarge),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.15)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            transactionType == TransactionType.none
+                                ? 'payable_balance'.tr
+                                : 'final_payable_balance'.tr,
+                            style: robotoMedium,
                           ),
-                        ),
-                        const SizedBox(height: Dimensions.paddingSizeSmall),
-                        Text(
-                          _getBalanceDescription(transactionType),
-                          style: robotoRegular.copyWith(
-                            fontSize: Dimensions.fontSizeSmall,
-                            color: Theme.of(context).hintColor,
+                          const SizedBox(height: Dimensions.paddingSizeSmall),
+                          Text(
+                            PriceConverter.convertPrice(transactionAmount),
+                            style: robotoBold.copyWith(
+                              fontSize: Dimensions.fontSizeOverLarge,
+                              color: Theme.of(context).primaryColor,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: Dimensions.paddingSizeSmall),
+                          Text(
+                            _getBalanceDescription(transactionType),
+                            style: robotoRegular.copyWith(
+                              fontSize: Dimensions.fontSizeSmall,
+                              color: Theme.of(context).hintColor,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: Dimensions.paddingSizeLarge),
-                  if (transactionType != TransactionType.none)
+                    const SizedBox(height: Dimensions.paddingSizeLarge),
+                    if (transactionType != TransactionType.none)
+                      GetBuilder<TransactionController>(
+                        builder: (transactionController) {
+                          return Column(
+                            children: [
+                              if (_shouldShowAdjustButton(transactionType))
+                                CustomButton(
+                                  btnTxt: 'adjust'.tr,
+                                  isLoading: transactionController.isLoading,
+                                  onPressed: transactionController.adjustTransaction,
+                                ),
+                              if (_shouldShowAdjustButton(transactionType))
+                                const SizedBox(height: Dimensions.paddingSizeDefault),
+                              CustomButton(
+                                btnTxt: _getPrimaryActionText(transactionType),
+                                isLoading: transactionController.isLoading,
+                                onPressed: () => _handlePrimaryAction(
+                                  transactionType,
+                                  transactionAmount,
+                                  transactionController,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                  ] else if (showAdjustOnlyForPayable) ...[
+                    const SizedBox(height: Dimensions.paddingSizeLarge),
                     GetBuilder<TransactionController>(
                       builder: (transactionController) {
-                        return Column(
-                          children: [
-                            if (_shouldShowAdjustButton(transactionType))
-                              CustomButton(
-                                btnTxt: 'adjust'.tr,
-                                isLoading: transactionController.isLoading,
-                                onPressed: transactionController.adjustTransaction,
-                              ),
-                            if (_shouldShowAdjustButton(transactionType))
-                              const SizedBox(height: Dimensions.paddingSizeDefault),
-                            CustomButton(
-                              btnTxt: _getPrimaryActionText(transactionType),
-                              isLoading: transactionController.isLoading,
-                              onPressed: () => _handlePrimaryAction(
-                                transactionType,
-                                transactionAmount,
-                                transactionController,
-                              ),
-                            ),
-                          ],
+                        return CustomButton(
+                          btnTxt: 'adjust'.tr,
+                          isLoading: transactionController.isLoading,
+                          onPressed: transactionController.adjustTransaction,
                         );
                       },
                     ),
+                  ],
                   const SizedBox(height: Dimensions.paddingSizeDefault),
                   CustomButton(
                     btnTxt: 'see_withdraw_history'.tr,
@@ -165,9 +175,6 @@ class _AccountInformationState extends State<AccountInformation> {
 
   String _getBalanceDescription(TransactionType transactionType) {
     switch (transactionType) {
-      case TransactionType.payable:
-      case TransactionType.adjustAndPayable:
-        return 'payable_balance_text'.tr;
       case TransactionType.withdrawAble:
       case TransactionType.adjustWithdrawAble:
         return 'account_receivable_info'.tr;
@@ -175,28 +182,29 @@ class _AccountInformationState extends State<AccountInformation> {
         return 'adjustable_balance_text'.tr;
       case TransactionType.none:
         return 'adjustable_balance_text'.tr;
+      case TransactionType.payable:
+      case TransactionType.adjustAndPayable:
+        return '';
     }
   }
 
   bool _shouldShowAdjustButton(TransactionType transactionType) {
     return transactionType == TransactionType.adjust ||
-        transactionType == TransactionType.adjustAndPayable ||
         transactionType == TransactionType.adjustWithdrawAble;
   }
 
   String _getPrimaryActionText(TransactionType transactionType) {
     switch (transactionType) {
-      case TransactionType.payable:
-        return 'pay_now'.tr;
       case TransactionType.withdrawAble:
         return 'withdraw'.tr;
       case TransactionType.adjust:
         return 'adjust'.tr;
-      case TransactionType.adjustAndPayable:
-        return 'adjust_and_pay'.tr;
       case TransactionType.adjustWithdrawAble:
         return 'adjust_and_withdraw'.tr;
       case TransactionType.none:
+        return 'empty_balance'.tr;
+      case TransactionType.payable:
+      case TransactionType.adjustAndPayable:
         return 'empty_balance'.tr;
     }
   }
@@ -207,36 +215,21 @@ class _AccountInformationState extends State<AccountInformation> {
     TransactionController transactionController,
   ) async {
     switch (transactionType) {
-      case TransactionType.payable:
-        _openPaymentDialog(transactionAmount);
-        break;
       case TransactionType.withdrawAble:
         Get.to(() => WithdrawRequestScreen(amount: transactionAmount));
         break;
       case TransactionType.adjust:
         await transactionController.adjustTransaction();
         break;
-      case TransactionType.adjustAndPayable:
-        await transactionController.adjustTransaction();
-        _openPaymentDialog(transactionAmount);
-        break;
       case TransactionType.adjustWithdrawAble:
         await transactionController.adjustTransaction();
         Get.to(() => WithdrawRequestScreen(amount: transactionAmount));
         break;
       case TransactionType.none:
+      case TransactionType.payable:
+      case TransactionType.adjustAndPayable:
         break;
     }
-  }
-
-  void _openPaymentDialog(double amount) {
-    showModalBottomSheet(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => PaymentMethodDialog(amount: amount),
-    );
   }
 }
 
