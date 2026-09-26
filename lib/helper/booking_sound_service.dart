@@ -13,6 +13,35 @@ class BookingSoundService {
 
   static bool get isPlaying => _activeBookingIds.isNotEmpty;
 
+  static Future<void> _configurePlayer() async {
+    _player ??= AudioPlayer();
+    try {
+      await _player!.setReleaseMode(ReleaseMode.loop);
+      await _player!.setAudioContext(
+        AudioContext(
+          android: AudioContextAndroid(
+            isSpeakerphoneOn: true,
+            stayAwake: true,
+            contentType: AndroidContentType.sonification,
+            usageType: AndroidUsageType.alarm,
+            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+          ),
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+            options: {
+              AVAudioSessionOptions.mixWithOthers,
+              AVAudioSessionOptions.duckOthers,
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('BookingSoundService._configurePlayer: $e');
+      }
+    }
+  }
+
   static Future<void> playBookingAlert(String bookingId) async {
     if (bookingId.isEmpty) {
       return;
@@ -21,8 +50,7 @@ class BookingSoundService {
     _activeBookingIds.add(bookingId);
 
     try {
-      _player ??= AudioPlayer();
-      await _player!.setReleaseMode(ReleaseMode.loop);
+      await _configurePlayer();
       await _player!.stop();
       await _player!.play(AssetSource(AppAudios.requestSound));
       _startPendingPoll();
