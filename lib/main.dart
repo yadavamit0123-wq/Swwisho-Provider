@@ -68,6 +68,9 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // Must be registered ASAP so background booking alerts with sound work.
+  FirebaseMessaging.onBackgroundMessage(myBackgroundMessageHandler);
+
   await FlutterDownloader.initialize(debug: true); // ✅ fixed
 
   if (defaultTargetPlatform == TargetPlatform.android) {
@@ -88,8 +91,6 @@ Future<void> main() async {
       }
 
       await NotificationHelper.initialize(flutterLocalNotificationsPlugin);
-
-      FirebaseMessaging.onBackgroundMessage(myBackgroundMessageHandler);
     }
   } catch (e) {}
 
