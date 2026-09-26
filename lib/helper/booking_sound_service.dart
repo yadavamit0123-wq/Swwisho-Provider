@@ -17,6 +17,7 @@ class BookingSoundService {
     _player ??= AudioPlayer();
     try {
       await _player!.setReleaseMode(ReleaseMode.loop);
+      await _player!.setVolume(1.0);
       await _player!.setAudioContext(
         AudioContext(
           android: AudioContextAndroid(
@@ -24,7 +25,8 @@ class BookingSoundService {
             stayAwake: true,
             contentType: AndroidContentType.sonification,
             usageType: AndroidUsageType.alarm,
-            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+            audioFocus: AndroidAudioFocus.gain,
+            audioMode: AndroidAudioMode.ringtone,
           ),
           iOS: AudioContextIOS(
             category: AVAudioSessionCategory.playback,
@@ -102,10 +104,21 @@ class BookingSoundService {
   }
 
   static bool isBookingNotification(String? type) {
-    return type == 'booking' || type == 'servicerequest';
+    final normalized = (type ?? '').toLowerCase().trim();
+    return normalized == 'booking' ||
+        normalized == 'servicerequest' ||
+        normalized == 'service_request' ||
+        normalized == 'new_booking' ||
+        normalized == 'booking_request';
   }
 
   static String? extractBookingId(Map<String, dynamic> data) {
-    return data['booking_id']?.toString();
+    final id = data['booking_id']?.toString() ??
+        data['bookingId']?.toString() ??
+        data['id']?.toString();
+    if (id == null || id.isEmpty || id == 'null') {
+      return null;
+    }
+    return id;
   }
 }
