@@ -30,7 +30,7 @@
 
     <application
         android:label="Swwisho Provider"
-        android:name="${applicationName}"
+        android:name=".ProviderApplication"
         android:enableOnBackInvokedCallback = "true"
         android:extractNativeLibs="true"
         android:icon="@mipmap/ic_launcher">
@@ -57,16 +57,24 @@
                 android:resource="@drawable/launch_background"
                 />
 
-            <meta-data
-                android:name="com.google.firebase.messaging.default_notification_channel_id"
-                android:value="swwisho_booking_alert" />
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
         </activity>
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="swwisho_booking_alert_v2" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_sound"
+            android:resource="@raw/booking_ring" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/notification_icon" />
 
         <meta-data
             android:name="flutterEmbedding"
