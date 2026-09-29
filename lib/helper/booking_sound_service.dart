@@ -13,37 +13,6 @@ class BookingSoundService {
 
   static bool get isPlaying => _activeBookingIds.isNotEmpty;
 
-  static Future<void> _configurePlayer() async {
-    _player ??= AudioPlayer();
-    try {
-      await _player!.setReleaseMode(ReleaseMode.loop);
-      await _player!.setVolume(1.0);
-      await _player!.setAudioContext(
-        AudioContext(
-          android: AudioContextAndroid(
-            isSpeakerphoneOn: true,
-            stayAwake: true,
-            contentType: AndroidContentType.sonification,
-            usageType: AndroidUsageType.alarm,
-            audioFocus: AndroidAudioFocus.gain,
-            audioMode: AndroidAudioMode.ringtone,
-          ),
-          iOS: AudioContextIOS(
-            category: AVAudioSessionCategory.playback,
-            options: {
-              AVAudioSessionOptions.mixWithOthers,
-              AVAudioSessionOptions.duckOthers,
-            },
-          ),
-        ),
-      );
-    } catch (e) {
-      if (kDebugMode) {
-        print('BookingSoundService._configurePlayer: $e');
-      }
-    }
-  }
-
   static Future<void> playBookingAlert(String bookingId) async {
     if (bookingId.isEmpty) {
       return;
@@ -52,13 +21,20 @@ class BookingSoundService {
     _activeBookingIds.add(bookingId);
 
     try {
-      await _configurePlayer();
+      _player ??= AudioPlayer();
+      await _player!.setReleaseMode(ReleaseMode.loop);
+      await _player!.setVolume(1.0);
       await _player!.stop();
       await _player!.play(AssetSource(AppAudios.requestSound));
       _startPendingPoll();
     } catch (e) {
-      if (kDebugMode) {
-        print('BookingSoundService.playBookingAlert: $e');
+      // Fallback to a one-shot player if loop player fails.
+      try {
+        await AudioPlayer().play(AssetSource(AppAudios.requestSound));
+      } catch (_) {
+        if (kDebugMode) {
+          print('BookingSoundService.playBookingAlert: $e');
+        }
       }
     }
   }

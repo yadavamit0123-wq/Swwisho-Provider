@@ -7,7 +7,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <queries>
         <intent>
@@ -30,7 +31,7 @@
 
     <application
         android:label="Swwisho Provider"
-        android:name=".ProviderApplication"
+        android:name="${applicationName}"
         android:enableOnBackInvokedCallback = "true"
         android:extractNativeLibs="true"
         android:icon="@mipmap/ic_launcher">
@@ -57,6 +58,10 @@
                 android:resource="@drawable/launch_background"
                 />
 
+            <meta-data
+                android:name="com.google.firebase.messaging.default_notification_channel_id"
+                android:value="demandium_sound_v3" />
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -65,12 +70,8 @@
         </activity>
 
         <meta-data
-            android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="swwisho_booking_alert_v2" />
-
-        <meta-data
             android:name="com.google.firebase.messaging.default_notification_sound"
-            android:resource="@raw/booking_ring" />
+            android:resource="@raw/notification" />
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
