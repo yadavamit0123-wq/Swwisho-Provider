@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:get/get.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 
 class NotificationSetupController extends GetxController with GetSingleTickerProviderStateMixin implements GetxService{
