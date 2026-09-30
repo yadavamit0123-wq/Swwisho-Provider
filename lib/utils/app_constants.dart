@@ -127,6 +127,8 @@ class AppConstants {
   static const String userNumber = 'provider_user_number';
   static const String notification = 'provider_notification';
   static const String notificationCount = 'provider_notification_count';
+  static const String localNotificationInbox = 'provider_local_notification_inbox';
+  static const String localNotificationSetup = 'provider_local_notification_setup';
   static const String initialLanguage = 'provider_initial_language';
   static const String isRememberActive = 'provider_is_remember_active';
   static const String providerProfileCache = 'provider_profile_cache';

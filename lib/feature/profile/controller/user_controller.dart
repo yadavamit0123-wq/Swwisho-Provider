@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 import 'package:demandium_provider/feature/profile/model/provider_model.dart';
+import 'package:demandium_provider/helper/zone_list_helper.dart';
 import 'package:intl/intl.dart';
 import '../../../utils/availability_controller.dart';
 
@@ -173,7 +174,9 @@ class UserProfileController extends GetxController implements GetxService{
       _providerId = providerInfo.id ?? '';
       myZoneId = providerInfo.zoneId ?? '';
       _selectedZoneID = myZoneId ?? '';
-      _selectedZoneName = '';
+      if (_selectedZoneName.isEmpty) {
+        _selectedZoneName = myZone;
+      }
 
       if (zoneList.isEmpty) {
         getZoneList();
@@ -441,44 +444,34 @@ class UserProfileController extends GetxController implements GetxService{
   }
 
   Future<void> getZoneList() async {
-    _selectedZoneName ='';
+    try {
+      zoneList = await ZoneListHelper.fetch(
+        apiClient: userRepo.apiClient,
+        latitude: latitude,
+        longitude: longitude,
+        currentZoneId: myZoneId ?? _selectedZoneID,
+        currentZoneName: myZone.isNotEmpty ? myZone : _selectedZoneName,
+      );
 
-    if(zoneList.isEmpty){
-      Response? response = await userRepo.getZonesDataList();
-      if (response!.statusCode == 200)
-      {
-        zoneList=[];
-
-        List<dynamic>? list = response.body['content']['data'];
-
-        if(zoneList.isEmpty){
-          for (var element in list!) {
-            zoneList.add(ZoneData.fromJson(element));
-          }
-        }
-
-        if(zoneList.isNotEmpty && _providerModel!=null){
-
-          for (var element in zoneList) {
-            if(element.id==_providerModel!.content!.providerInfo!.zoneId!){
-              myZone = element.name!;
+      if (zoneList.isNotEmpty) {
+        final selectedId = (_selectedZoneID.isNotEmpty ? _selectedZoneID : myZoneId) ?? '';
+        for (final element in zoneList) {
+          if (selectedId.isNotEmpty && element.id == selectedId) {
+            myZone = element.name ?? myZone;
+            _selectedZoneID = element.id ?? _selectedZoneID;
+            if (_selectedZoneName.isEmpty) {
+              _selectedZoneName = element.name ?? '';
             }
+            break;
           }
         }
-      }
-      else {
-      }
-    }else{
-      if(_providerModel!=null){
-        for (var element in zoneList) {
-          if(element.id==_providerModel!.content!.providerInfo!.zoneId!){
-            myZone = element.name!;
-          }
+        if (_selectedZoneName.isEmpty && zoneList.first.name != null) {
+          _selectedZoneName = zoneList.first.name!;
+          _selectedZoneID = zoneList.first.id ?? _selectedZoneID;
         }
       }
-    }
-
-      update();
+    } catch (_) {}
+    update();
   }
 
   void setNewZoneValue(String zoneName,zoneId){

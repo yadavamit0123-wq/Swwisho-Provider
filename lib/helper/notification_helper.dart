@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:demandium_provider/common/widgets/demo_reset_dialog_widget.dart';
 import 'package:demandium_provider/helper/booking_sound_service.dart';
-import 'package:demandium_provider/utils/app_audios.dart';
+import 'package:demandium_provider/feature/notifications/repository/local_notification_inbox.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -109,6 +109,12 @@ class NotificationHelper {
         print("Notification Body => ${message.data.toString()}");
       }
 
+      final type = message.data['type']?.toString();
+      bool pushEnabled = true;
+      if (Get.isRegistered<NotificationSetupController>()) {
+        pushEnabled = Get.find<NotificationSetupController>().isPushEnabledFor(type);
+      }
+
 
       if(message.data['type']=='bidding'){
         if(message.data['post_id']!="" &&  message.data['post_id']!=null){
@@ -117,7 +123,9 @@ class NotificationHelper {
           Get.find<PostController>().getPostDetailsForNotification(message.data['post_id']);
           Get.find<DashboardController>().getDashboardData(reload: true);
         }else{
-          NotificationHelper.showNotification(message, false,flutterLocalNotificationsPlugin);
+          if (pushEnabled) {
+            NotificationHelper.showNotification(message, false,flutterLocalNotificationsPlugin);
+          }
         }
       }
 
@@ -130,23 +138,31 @@ class NotificationHelper {
           }else if(Get.currentRoute.contains(RouteHelper.chatInbox)
               || Get.currentRoute.contains(RouteHelper.chatScreen)){
 
-            NotificationHelper.showNotification(message, false,flutterLocalNotificationsPlugin);
+            if (pushEnabled) {
+              NotificationHelper.showNotification(message, false,flutterLocalNotificationsPlugin);
+            }
             if(message.data['user_type'] == 'customer'){
               Get.find<ConversationController>().getChannelList(1);
             }else{
               Get.find<ConversationController>().getChannelList(1, type: "serviceman");
             }
           }else{
-            NotificationHelper.showNotification(message, false,flutterLocalNotificationsPlugin);
+            if (pushEnabled) {
+              NotificationHelper.showNotification(message, false,flutterLocalNotificationsPlugin);
+            }
           }
 
         } else{
-          NotificationHelper.showNotification(message, false,flutterLocalNotificationsPlugin);
+          if (pushEnabled) {
+            NotificationHelper.showNotification(message, false,flutterLocalNotificationsPlugin);
+          }
         }
       }
       
       else if(message.data['type']=='general'){
-        NotificationHelper.showNotification(message, false,flutterLocalNotificationsPlugin);
+        if (pushEnabled) {
+          NotificationHelper.showNotification(message, false,flutterLocalNotificationsPlugin);
+        }
         Get.find<NotificationController>().getNotifications(1, saveNotificationCount: false);
       }
       else if(message.data['type'] == 'logout'){
@@ -166,18 +182,22 @@ class NotificationHelper {
       else if(BookingSoundService.isBookingNotification(message.data['type']?.toString()) ||
           (BookingSoundService.extractBookingId(message.data) ?? '').isNotEmpty) {
         final bookingId = BookingSoundService.extractBookingId(message.data) ?? '';
-        if (bookingId.isNotEmpty) {
-          BookingSoundService.playBookingAlert(bookingId);
-        } else {
-          AudioPlayer().play(AssetSource(AppAudios.requestSound));
+        if (pushEnabled) {
+          if (bookingId.isNotEmpty) {
+            BookingSoundService.playBookingAlert(bookingId);
+          } else {
+            AudioPlayer().play(AssetSource(AppAudios.requestSound));
+          }
+          NotificationHelper.showNotification(message, false, flutterLocalNotificationsPlugin, forceSound: true);
         }
-        NotificationHelper.showNotification(message, false, flutterLocalNotificationsPlugin, forceSound: true);
         if (Get.isRegistered<BookingRequestController>()) {
           Get.find<BookingRequestController>().getBookingRequestList('pending', 1, reload: true);
         }
       }
       else{
-        NotificationHelper.showNotification(message, false,flutterLocalNotificationsPlugin);
+        if (pushEnabled) {
+          NotificationHelper.showNotification(message, false,flutterLocalNotificationsPlugin);
+        }
       }
     });
 
@@ -334,6 +354,13 @@ class NotificationHelper {
             ? message.data['image'].toString().startsWith('http') ? message.data['image'].toString()
             : '${AppConstants.baseUrl}/storage/app/public/notification/${message.data['image']}' : null;
 
+      try {
+        await LocalNotificationInbox.saveFromRemote(message);
+        if (Get.isRegistered<NotificationController>()) {
+          Get.find<NotificationController>().getNotifications(1, saveNotificationCount: false);
+        }
+      } catch (_) {}
+
       final safeTitle = (title == null || title.isEmpty) ? AppConstants.appName : title;
 
       if(image != null && image.isNotEmpty) {
@@ -471,6 +498,10 @@ Future<dynamic> myBackgroundMessageHandler(RemoteMessage message) async {
       fln: fln,
       forceSound: true,
     );
+
+    try {
+      await LocalNotificationInbox.saveFromRemote(message);
+    } catch (_) {}
 
     final bookingId = BookingSoundService.extractBookingId(message.data) ?? '';
     if (bookingId.isNotEmpty) {

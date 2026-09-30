@@ -46,15 +46,12 @@ class NotificationItemWidget extends StatelessWidget {
 
                     Row( mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
 
-                      if(notificationSetup.value?.notification != null) CustomCheckBox(title:  "push_notification".tr,
-                        value: notificationSetup.value?.notification == 1
-                            ? (notificationSetup.providerNotifications?.value?.notification == 1 || notificationSetup.providerNotifications?.value?.notification == null)
-                            ? true : false : false,
-                        onTap: notificationSetup.value?.notification == 1 ? (){
-                          var value = notificationSetup.providerNotifications?.value?.notification ?? notificationSetup.value?.notification ?? 0;
+                      CustomCheckBox(title:  "push_notification".tr,
+                        value: (notificationSetup.providerNotifications?.value?.notification ??
+                            notificationSetup.value?.notification ?? 1) == 1,
+                        onTap: (){
+                          var value = notificationSetup.providerNotifications?.value?.notification ?? notificationSetup.value?.notification ?? 1;
                           controller.toggleCheckbox(userType: userType,type: "notification", value: value, index: index);
-                        } : (){
-                        showCustomSnackBar("this_option_is_disabled_from_admin".tr,type: ToasterMessageType.info);
                         },
                       ),
                       if (notificationSetup.value?.sms != null) CustomCheckBox(title:  "sms".tr,

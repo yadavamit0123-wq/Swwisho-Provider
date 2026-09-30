@@ -365,6 +365,28 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
   }
 
   Widget _buildZoneDropdown(UserProfileController userController) {
+    if (userController.zoneList.isEmpty) {
+      return Container(
+        width: Get.width,
+        height: 40,
+        alignment: Alignment.centerLeft,
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: userController.isZoneValid
+                  ? Theme.of(context).hintColor
+                  : Theme.of(context).colorScheme.error,
+            ),
+          ),
+        ),
+        child: Text(
+          userController.selectedZoneName.isEmpty ? 'select_your_zone'.tr : userController.selectedZoneName,
+          style: robotoRegular.copyWith(
+            color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.7),
+          ),
+        ),
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:demandium_provider/helper/zone_list_helper.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 
 
@@ -163,15 +164,10 @@ class SignUpController extends GetxController {
   }
 
   Future<void> getZoneList() async {
-    Response? response = await authRepo.getZonesDataList();
-    if (response!.statusCode == 200)
-    {
-      zoneList=[];
-      response.body['content']['data'].forEach((element){
-        zoneList.add(ZoneData.fromJson(element));
-      });
-    }
-    else {
+    try {
+      zoneList = await ZoneListHelper.fetch(apiClient: authRepo.apiClient);
+    } catch (_) {
+      zoneList = [];
     }
     update();
   }

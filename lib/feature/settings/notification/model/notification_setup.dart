@@ -25,18 +25,25 @@ class NotificationSetup {
     key = json['key']?.toString();
     if (json['value'] is Map) {
       value = Value.fromJson(Map<String, dynamic>.from(json['value']));
+    } else {
+      value = Value(notification: 1);
     }
     if (json['provider_notifications'] is Map) {
       providerNotifications = ProviderNotifications.fromJson(Map<String, dynamic>.from(json['provider_notifications']));
     } else {
-      providerNotifications = ProviderNotifications.fromJson({
-        "value" : {
-          "notification" : null,
-          "sms" : null,
-          "email" : null
-        }
-      });
+      providerNotifications = ProviderNotifications(
+        value: Value(
+          notification: value?.notification ?? 1,
+          sms: value?.sms,
+          email: value?.email,
+        ),
+      );
     }
+    providerNotifications?.value ??= Value(
+      notification: value?.notification ?? 1,
+      sms: value?.sms,
+      email: value?.email,
+    );
   }
 
   Map<String, dynamic> toJson() {

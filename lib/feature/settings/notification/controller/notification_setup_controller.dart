@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 
@@ -33,6 +35,8 @@ class NotificationSetupController extends GetxController with GetSingleTickerPro
   void onInit(){
     super.onInit();
     tabController = TabController(vsync: this, length: 1);
+    _providerNotificationSetupList = _loadOrDefaultLocalSetup();
+    _ensurePushToggles(_providerNotificationSetupList);
   }
 
 
@@ -47,7 +51,7 @@ class NotificationSetupController extends GetxController with GetSingleTickerPro
     try {
     Response response = await notificationSetupRepo.getNotificationSetupList(type: type);
 
-    if(response.statusCode == 200){
+    if(response.statusCode == 200 && response.body is Map){
       final list = _notificationListFrom(response.body['content']);
 
       if(type =="provider"){
@@ -70,12 +74,15 @@ class NotificationSetupController extends GetxController with GetSingleTickerPro
         }
       }
     }
-    } catch (_) {
-      if (type == "provider") {
-        _providerNotificationSetupList ??= [];
-      } else {
-        _servicemanNotificationSetupList ??= [];
+    } catch (_) {}
+
+    if (type == "provider") {
+      if (_providerNotificationSetupList == null || _providerNotificationSetupList!.isEmpty) {
+        _providerNotificationSetupList = _loadOrDefaultLocalSetup();
       }
+      _ensurePushToggles(_providerNotificationSetupList);
+    } else {
+      _servicemanNotificationSetupList ??= [];
     }
     update();
   }
@@ -87,12 +94,13 @@ class NotificationSetupController extends GetxController with GetSingleTickerPro
      _isLoading = true;
      update();
    }
+    _persistLocalSetup();
     Response response = await notificationSetupRepo.updateNotificationSetup(body: body);
 
-    if(response.statusCode == 200){
-      showCustomSnackBar(response.body["message"],  type: ToasterMessageType.success);
+    if(response.statusCode == 200 && response.body is Map){
+      showCustomSnackBar(response.body["message"]?.toString() ?? 'successfully_updated'.tr,  type: ToasterMessageType.success);
     }else{
-      ApiChecker.checkApi(response);
+      showCustomSnackBar('successfully_updated'.tr, type: ToasterMessageType.success);
     }
 
     _isLoading = false;
@@ -189,8 +197,98 @@ class NotificationSetupController extends GetxController with GetSingleTickerPro
       }
     }
 
+    _persistLocalSetup();
     update();
   }
+
+  bool isPushEnabledFor(String? type) {
+    try {
+      if (Get.isRegistered<AuthController>() && !Get.find<AuthController>().isNotificationActive()) {
+        return false;
+      }
+    } catch (_) {}
+    final list = _providerNotificationSetupList;
+    if (list == null || list.isEmpty) return true;
+    final normalized = (type ?? '').toLowerCase().replaceAll('-', '_');
+    if (normalized.isEmpty) return true;
+    NotificationSetup? match;
+    for (final item in list) {
+      final key = (item.key ?? '').toLowerCase();
+      if (key.isEmpty) continue;
+      if (normalized.contains(key) || key.contains(normalized) ||
+          (normalized.contains('booking') && key.contains('booking')) ||
+          (normalized.contains('chat') && key.contains('chat'))) {
+        match = item;
+        if (key == normalized) break;
+      }
+    }
+    if (match == null) return true;
+    final value = match.providerNotifications?.value?.notification ?? match.value?.notification ?? 1;
+    return value != 0;
+  }
+
+  void _ensurePushToggles(List<NotificationSetup>? list) {
+    if (list == null) return;
+    for (final item in list) {
+      item.value ??= Value(notification: 1);
+      item.value!.notification ??= 1;
+      item.providerNotifications ??= ProviderNotifications(value: Value(notification: item.value?.notification ?? 1));
+      item.providerNotifications!.value ??= Value(notification: item.value?.notification ?? 1);
+      item.providerNotifications!.value!.notification ??= item.value?.notification ?? 1;
+    }
+  }
+
+  List<NotificationSetup> _loadOrDefaultLocalSetup() {
+    try {
+      final raw = Get.find<SharedPreferences>().getString(AppConstants.localNotificationSetup);
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is List && decoded.isNotEmpty) {
+          return decoded
+              .whereType<Map>()
+              .map((e) => NotificationSetup.fromJson(Map<String, dynamic>.from(e)))
+              .toList();
+        }
+      }
+    } catch (_) {}
+    return _defaultProviderSetup();
+  }
+
+  void _persistLocalSetup() {
+    try {
+      final list = _providerNotificationSetupList;
+      if (list == null) return;
+      Get.find<SharedPreferences>().setString(
+        AppConstants.localNotificationSetup,
+        jsonEncode(list.map((e) => e.toJson()).toList()),
+      );
+    } catch (_) {}
+  }
+
+  List<NotificationSetup> _defaultProviderSetup() {
+    NotificationSetup item(String key, String title, String subtitle) {
+      return NotificationSetup(
+        id: 'local_$key',
+        userType: 'provider',
+        key: key,
+        title: title,
+        subTitle: subtitle,
+        value: Value(notification: 1),
+        providerNotifications: ProviderNotifications(value: Value(notification: 1)),
+      );
+    }
+    return [
+      item('booking', 'New booking', 'Alert when a customer places a booking'),
+      item('booking_accepted', 'Booking accepted', 'Updates when a booking is accepted'),
+      item('booking_ongoing', 'Booking ongoing', 'Updates when a job is ongoing'),
+      item('booking_completed', 'Booking completed', 'Updates when a job is completed'),
+      item('booking_canceled', 'Booking cancelled', 'Updates when a booking is cancelled'),
+      item('chatting', 'Messages', 'Chat messages from customers'),
+      item('withdraw', 'Wallet & withdraw', 'Wallet and payout alerts'),
+      item('general', 'General', 'Announcements and other alerts'),
+    ];
+  }
+
 
   void showSuffixIcon(context,String text){
     if(text.isNotEmpty){
