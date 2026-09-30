@@ -1,3 +1,4 @@
+import 'package:demandium_provider/feature/menu/widgets/notification_diagnostics_dialog.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 
 class MenuModel {
@@ -64,9 +65,13 @@ class MenuScreen extends StatelessWidget {
               itemBuilder: (context, index) => _MenuButton(menu: menuList[index]),
             ),
             const SizedBox(height: Dimensions.paddingSizeSmall),
-            Text(
-              '${'app_version'.tr} ${AppConstants.appVersion}',
-              style: robotoMedium.copyWith(color: Theme.of(context).colorScheme.primary),
+            GestureDetector(
+              // Hidden diagnostics: long-press app version.
+              onLongPress: () => Get.dialog(const NotificationDiagnosticsDialog()),
+              child: Text(
+                '${'app_version'.tr} ${AppConstants.appVersion}',
+                style: robotoMedium.copyWith(color: Theme.of(context).colorScheme.primary),
+              ),
             ),
             const SizedBox(height: Dimensions.paddingSizeDefault),
           ],

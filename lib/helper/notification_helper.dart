@@ -17,7 +17,10 @@ class NotificationHelper {
     var androidInitialize = const AndroidInitializationSettings('notification_icon');
     var iOSInitialize = const DarwinInitializationSettings();
     var initializationsSettings = InitializationSettings(android: androidInitialize, iOS: iOSInitialize);
-    await flutterLocalNotificationsPlugin.initialize(initializationsSettings, onDidReceiveNotificationResponse: (NotificationResponse? notificationResponse) async {
+    // Not awaited on purpose: FCM listeners below must register even if local
+    // notification init fails for any reason on a device.
+    try {
+      flutterLocalNotificationsPlugin.initialize(initializationsSettings, onDidReceiveNotificationResponse: (NotificationResponse? notificationResponse) async {
       try{
         if(notificationResponse!.payload!=null && notificationResponse.payload!=''){
           NotificationBody notificationBody = NotificationBody.fromJson(jsonDecode(notificationResponse.payload!));
@@ -96,10 +99,8 @@ class NotificationHelper {
         }
           }
           return;
-        });
-
-    await _ensureAndroidChannels(flutterLocalNotificationsPlugin);
-    await _requestAndroidNotificationPermission(flutterLocalNotificationsPlugin);
+        }).catchError((_) => null);
+    } catch (_) {}
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
 
@@ -255,6 +256,15 @@ class NotificationHelper {
         }
       }
     });
+
+    // Channel + permission setup runs last so a failure here can never block
+    // the FCM listeners registered above.
+    try {
+      await _ensureAndroidChannels(flutterLocalNotificationsPlugin);
+    } catch (_) {}
+    try {
+      await _requestAndroidNotificationPermission(flutterLocalNotificationsPlugin);
+    } catch (_) {}
   }
 
   static Future<void> _ensureAndroidChannels(FlutterLocalNotificationsPlugin fln) async {
@@ -427,6 +437,10 @@ class NotificationHelper {
 
 @pragma('vm:entry-point')
 Future<dynamic> myBackgroundMessageHandler(RemoteMessage message) async {
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+  } catch (_) {}
+
   // Same proven approach as pre-live APK: play alert sound immediately.
   try {
     await AudioPlayer().play(AssetSource(AppAudios.requestSound));
@@ -434,7 +448,6 @@ Future<dynamic> myBackgroundMessageHandler(RemoteMessage message) async {
 
   // Also show a local tray notification with sound (helps when FCM uses silent channel).
   try {
-    WidgetsFlutterBinding.ensureInitialized();
     final FlutterLocalNotificationsPlugin fln = FlutterLocalNotificationsPlugin();
     await fln.initialize(
       const InitializationSettings(
