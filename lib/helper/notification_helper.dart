@@ -102,7 +102,7 @@ class NotificationHelper {
         }).catchError((_) => null);
     } catch (_) {}
 
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
 
       if (kDebugMode) {
         print("onMessage: Notification Type => ${message.data["type"]}/ Title => ${message.data['title']} ${message.notification?.title}/${message.notification?.body}/${message.notification?.titleLocKey}");
