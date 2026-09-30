@@ -46,6 +46,15 @@ class _NotificationDiagnosticsDialogState extends State<NotificationDiagnosticsD
     } catch (e) {
       buffer.writeln('notification-setup → error: $e');
     }
+    buffer.writeln('');
+    try {
+      final zoneRes = await Get.find<UserProfileController>().userRepo.getZonesDataList();
+      final isJson = zoneRes?.body is Map;
+      buffer.writeln('zone-list → HTTP ${zoneRes?.statusCode} (${isJson ? 'JSON' : 'HTML/route missing'})');
+      buffer.writeln(_short(zoneRes?.body ?? zoneRes?.statusText ?? 'no response'));
+    } catch (e) {
+      buffer.writeln('zone-list → error: $e');
+    }
     if (mounted) setState(() => _serverResult = buffer.toString());
   }
 
