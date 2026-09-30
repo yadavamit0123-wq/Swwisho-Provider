@@ -141,14 +141,22 @@ class _DashBoardScreenState extends State<DashBoardScreen>{
   Widget build(BuildContext context) {
 
     return GetBuilder<UserProfileController>(initState: (_) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
             final userProfileController = Get.find<UserProfileController>();
-
-            if (!userProfileController.hasShownWalletDialog) {
-              double balance = userProfileController.walletBalance;
-              checkWallet(balance, context);
-              userProfileController.hasShownWalletDialog = true;
+            if (userProfileController.hasShownWalletDialog) {
+              return;
             }
+
+            // Wait for provider/wallet data so popup does not show false 0.00.
+            if (userProfileController.providerModel == null) {
+              await userProfileController.getProviderInfo(reload: true);
+            }
+            if (userProfileController.providerModel == null || !mounted) {
+              return;
+            }
+
+            userProfileController.hasShownWalletDialog = true;
+            checkWallet(userProfileController.walletBalance, context);
           });
         }, builder: (userProfileController){
 

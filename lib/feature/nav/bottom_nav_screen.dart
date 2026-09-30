@@ -8,13 +8,17 @@ class BottomNavScreen extends StatefulWidget {
 
   static Future<void> loadData({int pageIndex = 0}) async {
     Get.find<LocalizationController>().filterLanguage(shouldUpdate: false);
-    Get.find<AuthController>().updateToken();
     Get.find<DashboardController>().getDashboardData(reload: true);
 
     final userController = Get.find<UserProfileController>();
-    if (userController.providerModel == null) {
-      userController.getProviderInfo(reload: true);
+    if (userController.providerModel == null ||
+        userController.myZoneId == null ||
+        userController.myZoneId!.isEmpty) {
+      await userController.getProviderInfo(reload: true);
     }
+
+    // Subscribe FCM topics only after zone/profile is available.
+    await Get.find<AuthController>().updateToken();
 
     Future.microtask(() {
       userController.refreshProviderInfoIfStale();

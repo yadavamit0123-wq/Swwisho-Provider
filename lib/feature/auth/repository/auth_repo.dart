@@ -100,8 +100,23 @@ class AuthRepo {
       deviceToken = await _saveDeviceToken();
     }
 
+    // Ensure provider zone is loaded before topic subscribe.
+    // Booking pushes go to "provider-{zoneId}"; empty zone breaks notifications.
+    String zoneId = '';
+    try {
+      final userProfileController = Get.find<UserProfileController>();
+      if (userProfileController.myZoneId == null || userProfileController.myZoneId!.isEmpty) {
+        await userProfileController.getProviderInfo(
+          reload: userProfileController.providerModel == null,
+        );
+      }
+      zoneId = userProfileController.myZoneId?.trim() ?? '';
+    } catch (_) {}
+
     FirebaseMessaging.instance.subscribeToTopic(AppConstants.topic);
-    FirebaseMessaging.instance.subscribeToTopic('${AppConstants.topic}-${Get.find<UserProfileController>().myZoneId}');
+    if (zoneId.isNotEmpty) {
+      FirebaseMessaging.instance.subscribeToTopic('${AppConstants.topic}-$zoneId');
+    }
     return await apiClient.postData(AppConstants.tokenUrl, {"_method": "put", "fcm_token": deviceToken});
   }
 

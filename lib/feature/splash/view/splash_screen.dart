@@ -77,7 +77,8 @@ class SplashScreenState extends State<SplashScreen> {
             }
             else{
               if (Get.find<AuthController>().isLoggedIn()) {
-                Get.find<AuthController>().updateToken();
+                // Zone must be ready before FCM topic subscribe (handled inside updateToken).
+                await Get.find<AuthController>().updateToken();
                 Get.offNamed(RouteHelper.getInitialRoute());
               } else {
                 if( Get.find<SplashController>().showInitialLanguageScreen()){
