@@ -31,32 +31,52 @@ class ServiceDetailsController extends GetxController with GetSingleTickerProvid
 
   Future<void> getServiceDetailsData(String serviceId) async {
     _isLoading = true;
+    serviceDetailsModel = null;
+    _variantList = [];
     update();
-    Response response = await serviceDetailsRepo.getServiceDetailsData(serviceId);
-    if(response.statusCode==200){
-      serviceDetailsModel = ServiceDetailsModel.fromJson(response.body);
-      _variantList=[];
-      for (var element in serviceDetailsModel!.content!.variations!) {
+    try {
+      Response response = await serviceDetailsRepo.getServiceDetailsData(serviceId);
+      if(response.statusCode==200 && response.body is Map){
+        serviceDetailsModel = ServiceDetailsModel.fromJson(Map<String, dynamic>.from(response.body));
+        _variantList = [];
+        final variations = serviceDetailsModel?.content?.variations ?? [];
+        for (var element in variations) {
+          if (element.variant == null || element.price == null) continue;
           _variantList.add(VariantModel(variantName: element.variant!, price: element.price!));
-          _variantList.sort((a, b) => a.price.compareTo(b.price));
-
+        }
+        if (_variantList.isEmpty) {
+          final react = serviceDetailsModel?.content?.variationsReactFormat ?? [];
+          for (final element in react) {
+            _variantList.add(VariantModel(
+              variantName: element.variationName ?? '',
+              price: element.variationPrice ?? 0,
+            ));
+          }
+        }
+        if (_variantList.isEmpty && (serviceDetailsModel?.content?.minBiddingPrice ?? 0) > 0) {
+          _variantList.add(VariantModel(
+            variantName: serviceDetailsModel?.content?.name ?? '',
+            price: serviceDetailsModel!.content!.minBiddingPrice!,
+          ));
+        }
+        _variantList.sort((a, b) => a.price.compareTo(b.price));
       }
-      _isLoading = false;
-      update();
-    }
-    else{
+    } catch (_) {
+      serviceDetailsModel = null;
+    } finally {
       _isLoading = false;
       update();
     }
   }
 
   Future<void> getServiceFAQData(String serviceId) async {
-    Response response = await serviceDetailsRepo.getServiceFAQData(serviceId);
-    if(response.statusCode==200){
-      serviceFaqModel = ServiceFaqModel.fromJson(response.body);
-    }
-    else{
-    }
+    try {
+      Response response = await serviceDetailsRepo.getServiceFAQData(serviceId);
+      if(response.statusCode==200 && response.body is Map){
+        serviceFaqModel = ServiceFaqModel.fromJson(Map<String, dynamic>.from(response.body));
+        update();
+      }
+    } catch (_) {}
   }
 
   void updateServicePageCurrentState(ServiceTabControllerState serviceDetailsTabControllerState, {bool shouldUpdate = true}){

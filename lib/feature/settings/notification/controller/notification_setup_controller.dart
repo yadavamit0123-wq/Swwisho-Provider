@@ -201,11 +201,6 @@ class NotificationSetupController extends GetxController with GetSingleTickerPro
   }
 
   bool isPushEnabledFor(String? type) {
-    try {
-      if (Get.isRegistered<AuthController>() && !Get.find<AuthController>().isNotificationActive()) {
-        return false;
-      }
-    } catch (_) {}
     final list = _providerNotificationSetupList;
     if (list == null || list.isEmpty) return true;
     final normalized = (type ?? '').toLowerCase().replaceAll('-', '_');

@@ -188,10 +188,10 @@ class NotificationHelper {
         if (pushEnabled) {
           if (bookingId.isNotEmpty) {
             BookingSoundService.playBookingAlert(bookingId);
-          } else {
+          } else if (NotificationHelper._isNotificationSoundEnabled()) {
             AudioPlayer().play(AssetSource(AppAudios.requestSound));
           }
-          NotificationHelper.showNotification(message, false, flutterLocalNotificationsPlugin, forceSound: true);
+          NotificationHelper.showNotification(message, false, flutterLocalNotificationsPlugin);
         }
         if (Get.isRegistered<BookingRequestController>()) {
           Get.find<BookingRequestController>().getBookingRequestList('pending', 1, reload: true);
@@ -297,22 +297,22 @@ class NotificationHelper {
     if (androidPlugin == null) return;
 
     await androidPlugin.createNotificationChannel(
-      const AndroidNotificationChannel(
+      AndroidNotificationChannel(
         soundChannelId,
-        'Swwisho Notifications',
-        description: 'Booking and general alerts with sound',
+        '${AppConstants.appName} with sound',
+        description: 'description',
         importance: Importance.max,
         playSound: true,
-        sound: RawResourceAndroidNotificationSound('notification'),
+        sound: const RawResourceAndroidNotificationSound('notification'),
         enableVibration: true,
       ),
     );
 
     await androidPlugin.createNotificationChannel(
-      const AndroidNotificationChannel(
+      AndroidNotificationChannel(
         silentChannelId,
-        'Swwisho without sound',
-        description: 'Notifications without sound',
+        '${AppConstants.appName} without sound',
+        description: 'description',
         importance: Importance.max,
         playSound: false,
       ),
@@ -399,7 +399,7 @@ class NotificationHelper {
     }
     else {
       AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
-        soundChannelId, 'Swwisho Notifications', channelDescription:"Booking and general alerts with sound",
+        soundChannelId, '${AppConstants.appName} with sound', channelDescription:"description",
         playSound: true,
         sound: const RawResourceAndroidNotificationSound('notification'),
         importance: Importance.max,
@@ -436,7 +436,7 @@ class NotificationHelper {
 
     }else{
       AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
-        soundChannelId, 'Swwisho Notifications', channelDescription:"Booking and general alerts with sound",
+        soundChannelId, '${AppConstants.appName} with sound', channelDescription:"description",
         playSound: true,
         sound: const RawResourceAndroidNotificationSound('notification'),
         largeIcon: FilePathAndroidBitmap(largeIconPath), priority: Priority.max,

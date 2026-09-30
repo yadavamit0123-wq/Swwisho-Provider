@@ -31,10 +31,15 @@ class SubCategoryView extends StatelessWidget {
             shrinkWrap: true,
             itemBuilder: (context, index) {
               int totalService = 0;
-              for (var element in subCategoryList[index].services!) {
-                if(element.isActive==1){
-                  totalService ++;
+              final services = subCategoryList[index].services;
+              if (services != null && services.isNotEmpty) {
+                for (var element in services) {
+                  if(element.isActive==1){
+                    totalService ++;
+                  }
                 }
+              } else {
+                totalService = subCategoryList[index].servicesCount ?? 0;
               }
               return GetBuilder<ServiceCategoryController>(
                 builder: (allServiceController) {
@@ -46,8 +51,8 @@ class SubCategoryView extends StatelessWidget {
                     borderRadius: const BorderRadius.all(Radius.circular(Dimensions.paddingSizeExtraSmall))),
                     child: InkWell(
                       onTap: (){
-                        Get.to(ServicesScreen(
-                          subcategoryModel: allServiceController.serviceSubCategoryList[index],
+                        Get.to(() => ServicesScreen(
+                          subcategoryModel: subCategoryList[index],
                           fromPage: 'category',
                           index: index,
                         ));
@@ -114,8 +119,8 @@ class SubCategoryView extends StatelessWidget {
                                       minimumSize: const Size(1, 40),
                                       backgroundColor: Colors.transparent
                                   ),
-                                  onPressed: () => Get.to(ServicesScreen(
-                                    subcategoryModel: allServiceController.serviceSubCategoryList[index],
+                                  onPressed: () => Get.to(() => ServicesScreen(
+                                    subcategoryModel: subCategoryList[index],
                                     fromPage: 'category',
                                     index: index,
                                   )),
@@ -134,7 +139,9 @@ class SubCategoryView extends StatelessWidget {
                                   builder: (allService) {
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
-                                      child: ElevatedButton(
+                                      child: IgnorePointer(
+                                        ignoring: subCategoryList[index].isSubscribed == 1 || subCategoryList[index].isSubscribed == 3,
+                                        child: ElevatedButton(
                                         style: ElevatedButton.styleFrom(
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
@@ -173,6 +180,7 @@ class SubCategoryView extends StatelessWidget {
                                           ),
                                           maxLines: 1, overflow: TextOverflow.ellipsis,
                                         ),
+                                      ),
                                       ),
                                     );
                                   },

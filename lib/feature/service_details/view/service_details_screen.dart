@@ -35,6 +35,10 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
 
           return serviceDetailsController.isLoading?
           const ServiceDetailsShimmer() :
+          serviceDetailsController.serviceDetailsModel?.content == null ?
+          Center(
+            child: NoDataScreen(text: 'no_data_found'.tr, type: NoDataType.service),
+          ) :
           Container(color: Theme.of(context).primaryColor.withValues(alpha:0.002),
             child: CustomScrollView(slivers: [
 
@@ -79,7 +83,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                               .start, children: [
 
 
-                            Text(serviceDetailsController.serviceDetailsModel!.content!.name!,
+                            Text(serviceDetailsController.serviceDetailsModel?.content?.name ?? '',
                               style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge),
                             ),
 
@@ -156,7 +160,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                         const SizedBox(height:Dimensions.paddingSizeSmall),
 
 
-                        Text(serviceDetailsController.serviceDetailsModel!.content!.shortDescription!,
+                        Text(serviceDetailsController.serviceDetailsModel?.content?.shortDescription ?? '',
                             textAlign: TextAlign.justify,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
@@ -192,9 +196,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                      }else if(serviceController.servicePageCurrentState == ServiceTabControllerState.priceTable){
                        return const PriceTableScreen();
                      }else if(serviceController.servicePageCurrentState == ServiceTabControllerState.faq){
-                       return FaqScreen(faqList: serviceDetailsController.serviceFaqModel!=null
-                           ?serviceDetailsController.serviceFaqModel!.content!.data!:[]
-                       );
+                       return FaqScreen(faqList: serviceDetailsController.serviceFaqModel?.content?.data ?? []);
                      }else if(serviceController.servicePageCurrentState == ServiceTabControllerState.review){
                        return ServiceDetailsReview(
                          reviewList: reviewController.serviceReviewList ?? [],

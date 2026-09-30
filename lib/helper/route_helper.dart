@@ -44,6 +44,7 @@ class RouteHelper {
   static const String notificationSetup = '/notification-screen';
   static const String reviewReply = '/review-reply';
   static const String helpAndSupport = '/help-and-support';
+  static const String settings = '/settings';
 
 
   static String getInitialRoute({int pageIndex = 0}) => '$initial?pageIndex=$pageIndex';
@@ -107,6 +108,7 @@ class RouteHelper {
   }
 
   static String getHelpAndSupportScreen() => helpAndSupport;
+  static String getSettingRoute() => settings;
 
   static List<GetPage> routes = [
     GetPage( name: initial, page: () {
@@ -225,6 +227,7 @@ class RouteHelper {
     }),
 
     GetPage(name: helpAndSupport, page: () => SupportScreen()),
+    GetPage(name: settings, page: () => const SettingScreen()),
 
   ];
   static getRoute(Widget navigateTo) {

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:demandium_provider/feature/auth/controller/auth_controller.dart';
 import 'package:demandium_provider/feature/booking_requests/controller/booking_request_controller.dart';
 import 'package:demandium_provider/feature/notifications/repository/local_notification_inbox.dart';
 import 'package:demandium_provider/utils/app_audios.dart';
@@ -13,6 +14,15 @@ class BookingSoundService {
   static Timer? _pollTimer;
 
   static bool get isPlaying => _activeBookingIds.isNotEmpty;
+
+  static bool _isNotificationSoundEnabled() {
+    try {
+      if (Get.isRegistered<AuthController>()) {
+        return Get.find<AuthController>().isNotificationActive();
+      }
+    } catch (_) {}
+    return true;
+  }
 
   static void startWatchingPending() {
     if (_pollTimer != null && _pollTimer!.isActive) return;
@@ -32,11 +42,17 @@ class BookingSoundService {
     _activeBookingIds.add(bookingId);
 
     try {
-      _player ??= AudioPlayer();
-      await _player!.setReleaseMode(ReleaseMode.loop);
-      await _player!.setVolume(1.0);
-      await _player!.stop();
-      await _player!.play(AssetSource(AppAudios.requestSound));
+      if (_isNotificationSoundEnabled()) {
+        _player ??= AudioPlayer();
+        await _player!.setReleaseMode(ReleaseMode.loop);
+        await _player!.setVolume(1.0);
+        await _player!.stop();
+        await _player!.play(AssetSource(AppAudios.requestSound));
+      } else {
+        try {
+          await _player?.stop();
+        } catch (_) {}
+      }
       startWatchingPending();
       try {
         await LocalNotificationInbox.addSimple(
@@ -48,7 +64,9 @@ class BookingSoundService {
     } catch (e) {
       // Fallback to a one-shot player if loop player fails.
       try {
-        await AudioPlayer().play(AssetSource(AppAudios.requestSound));
+        if (_isNotificationSoundEnabled()) {
+          await AudioPlayer().play(AssetSource(AppAudios.requestSound));
+        }
       } catch (_) {
         if (kDebugMode) {
           print('BookingSoundService.playBookingAlert: $e');

@@ -85,7 +85,7 @@ class SubscriptionItem extends StatelessWidget {
                 offset: const Offset(0, 40),
                 onSelected: (value) {
                   if(value == 1) {
-                    Get.to(ServicesScreen(
+                    Get.to(() => ServicesScreen(
                       subscriptionModelData: subscriptionModelData,
                       fromPage: 'subscription_details',
                       index: index,

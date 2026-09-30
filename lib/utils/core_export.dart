@@ -449,6 +449,7 @@ export 'package:demandium_provider/feature/settings/notification/widgets/notific
 export 'package:demandium_provider/feature/settings/notification/widgets/notification_setup_shimmer.dart';
 export 'package:demandium_provider/feature/settings/notification/widgets/provider_notification_setup.dart';
 export 'package:demandium_provider/feature/settings/notification/widgets/serviceman_notification_setup.dart';
+export 'package:demandium_provider/feature/settings/view/setting_screen.dart';
 export 'package:demandium_provider/feature/splash/controller/splash_controller.dart';
 export 'package:demandium_provider/feature/splash/controller/theme_controller.dart';
 export 'package:demandium_provider/feature/splash/repository/splash_repo.dart';

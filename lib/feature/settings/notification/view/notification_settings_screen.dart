@@ -68,35 +68,6 @@ class _NotificationSettingScreenState extends State<NotificationSettingScreen> {
             ),
           ),
           const SizedBox(height: Dimensions.paddingSizeDefault,),
-          GetBuilder<AuthController>(builder: (authController) {
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
-              padding: const EdgeInsets.symmetric(
-                horizontal: Dimensions.paddingSizeDefault,
-                vertical: Dimensions.paddingSizeSmall,
-              ),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text('push_notification'.tr, style: robotoMedium),
-                  ),
-                  FlutterSwitch(
-                    width: 45, height: 24, padding: 2, toggleSize: 20,
-                    value: authController.isNotificationActive(),
-                    activeColor: Theme.of(context).primaryColor,
-                    onToggle: (bool value) {
-                      authController.toggleNotificationSound();
-                    },
-                  ),
-                ],
-              ),
-            );
-          }),
-          const SizedBox(height: Dimensions.paddingSizeDefault,),
           NotificationSetupSearchWidget(tabController: businessSettingController.tabController,),
 
           const SizedBox(height: Dimensions.paddingSizeSmall,),

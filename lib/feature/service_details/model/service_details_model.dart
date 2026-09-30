@@ -77,47 +77,63 @@ class ServiceModel {
         this.campaignDiscount});
 
   ServiceModel.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    name = json['name'];
-    shortDescription = json['short_description'];
-    description = json['description'];
-    coverImage = json['cover_image'];
-    coverImageFullPath = json['cover_image_full_path'];
-    thumbnail = json['thumbnail'];
-    thumbnailFullPath = json['thumbnail_full_path'];
-    categoryId = json['category_id'];
-    subCategoryId = json['sub_category_id'];
+    id = json['id']?.toString();
+    name = json['name']?.toString();
+    shortDescription = json['short_description']?.toString();
+    description = json['description']?.toString();
+    coverImage = json['cover_image']?.toString();
+    coverImageFullPath = json['cover_image_full_path']?.toString();
+    thumbnail = json['thumbnail']?.toString();
+    thumbnailFullPath = json['thumbnail_full_path']?.toString();
+    categoryId = json['category_id']?.toString();
+    subCategoryId = json['sub_category_id']?.toString();
     tax = double.tryParse(json['tax'].toString());
     orderCount = int.tryParse(json['order_count'].toString());
     isActive = int.tryParse(json['is_active'].toString());
     ratingCount = int.tryParse(json['rating_count'].toString());
     avgRating = double.tryParse(json['avg_rating'].toString());
     minBiddingPrice = double.tryParse(json['min_bidding_price'].toString());
-    deletedAt = json['deleted_at'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
-    if (json['variations_react_format'] != null) {
+    deletedAt = json['deleted_at']?.toString();
+    createdAt = json['created_at']?.toString();
+    updatedAt = json['updated_at']?.toString();
+    if (json['variations_react_format'] is List) {
       variationsReactFormat = <VariationsReactFormat>[];
-      json['variations_react_format'].forEach((v) {
-        variationsReactFormat!.add(VariationsReactFormat.fromJson(v));
-      });
+      for (final v in json['variations_react_format']) {
+        try {
+          if (v is Map) {
+            variationsReactFormat!.add(VariationsReactFormat.fromJson(Map<String, dynamic>.from(v)));
+          }
+        } catch (_) {}
+      }
     }
-    if (json['variations'] != null) {
+    if (json['variations'] is List) {
       variations = <Variations>[];
-      json['variations'].forEach((v) {
-        variations!.add(Variations.fromJson(v));
-      });
+      for (final v in json['variations']) {
+        try {
+          if (v is Map) {
+            variations!.add(Variations.fromJson(Map<String, dynamic>.from(v)));
+          }
+        } catch (_) {}
+      }
     }
-    if (json['service_discount'] != null) {
+    if (json['service_discount'] is List) {
       serviceDiscount = <ServiceDiscount>[];
       json['service_discount'].forEach((v) {
-        serviceDiscount!.add(ServiceDiscount.fromJson(v));
+        try {
+          if (v is Map) {
+            serviceDiscount!.add(ServiceDiscount.fromJson(Map<String, dynamic>.from(v)));
+          }
+        } catch (_) {}
       });
     }
-    if (json['campaign_discount'] != null) {
+    if (json['campaign_discount'] is List) {
       campaignDiscount = <ServiceDiscount>[];
       json['campaign_discount'].forEach((v) {
-        campaignDiscount!.add(ServiceDiscount.fromJson(v));
+        try {
+          if (v is Map) {
+            campaignDiscount!.add(ServiceDiscount.fromJson(Map<String, dynamic>.from(v)));
+          }
+        } catch (_) {}
       });
     }
   }

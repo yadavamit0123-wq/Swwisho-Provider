@@ -116,11 +116,25 @@ class ServiceCategoryController extends GetxController implements GetxService{
         serviceSubCategoryList = [];
       }
 
-      List<dynamic> list = response.body['content']['data'];
-      for (var subCategory in list) {
-        serviceSubCategoryList.add(ServiceSubCategoryModel.fromJson(subCategory));
-      }
-      _pageSize = response.body['content']['last_page'];
+      try {
+        dynamic list;
+        final content = response.body['content'];
+        if (content is Map) {
+          list = content['data'];
+          _pageSize = int.tryParse('${content['last_page']}') ?? _pageSize;
+        } else if (content is List) {
+          list = content;
+        }
+        if (list is List) {
+          for (var subCategory in list) {
+            try {
+              if (subCategory is Map) {
+                serviceSubCategoryList.add(ServiceSubCategoryModel.fromJson(Map<String, dynamic>.from(subCategory)));
+              }
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
     }
     else {
       ApiChecker.checkApi(response);
@@ -182,16 +196,33 @@ class ServiceCategoryController extends GetxController implements GetxService{
       update();
     }
 
-    Response response = await serviceRepo.getServiceListBasedOnSubcategory(subCategoryId);
-    if(response.statusCode == 200){
-      List<dynamic> list = response.body['content']['data'];
-      _serviceList = [];
-      for (var service in list) {
-        _serviceList?.add(ServiceModel.fromJson(service));
+    try {
+      Response response = await serviceRepo.getServiceListBasedOnSubcategory(subCategoryId);
+      if(response.statusCode == 200){
+        dynamic list;
+        final content = response.body['content'];
+        if (content is Map) {
+          list = content['data'];
+        } else if (content is List) {
+          list = content;
+        }
+        _serviceList = [];
+        if (list is List) {
+          for (var service in list) {
+            try {
+              if (service is Map) {
+                _serviceList?.add(ServiceModel.fromJson(Map<String, dynamic>.from(service)));
+              }
+            } catch (_) {}
+          }
+        }
       }
-    }
-    else {
-      ApiChecker.checkApi(response);
+      else {
+        _serviceList = [];
+        ApiChecker.checkApi(response);
+      }
+    } catch (_) {
+      _serviceList = [];
     }
 
     update();
@@ -203,16 +234,33 @@ class ServiceCategoryController extends GetxController implements GetxService{
     _isSearchComplete = false;
     update();
 
-    Response response = await serviceRepo.getServiceListBasedOnSubcategory(subCategoryId,queryText: queryText ?? "");
-    if(response.statusCode == 200){
-      List<dynamic> list = response.body['content']['data'];
-      _searchServiceList = [];
-      for (var service in list) {
-        _searchServiceList?.add(ServiceModel.fromJson(service));
+    try {
+      Response response = await serviceRepo.getServiceListBasedOnSubcategory(subCategoryId,queryText: queryText ?? "");
+      if(response.statusCode == 200){
+        dynamic list;
+        final content = response.body['content'];
+        if (content is Map) {
+          list = content['data'];
+        } else if (content is List) {
+          list = content;
+        }
+        _searchServiceList = [];
+        if (list is List) {
+          for (var service in list) {
+            try {
+              if (service is Map) {
+                _searchServiceList?.add(ServiceModel.fromJson(Map<String, dynamic>.from(service)));
+              }
+            } catch (_) {}
+          }
+        }
       }
-    }
-    else {
-      ApiChecker.checkApi(response);
+      else {
+        _searchServiceList = [];
+        ApiChecker.checkApi(response);
+      }
+    } catch (_) {
+      _searchServiceList = [];
     }
 
     _isSearchComplete = true;

@@ -10,18 +10,25 @@ class ServiceItem extends StatelessWidget {
 
     num lowestPrice = 0.0;
     if(service.variations != null && service.variations!.isNotEmpty){
-      lowestPrice = service.variations ![0].price!;
+      lowestPrice = service.variations![0].price ?? 0;
       for (var i = 0; i < service.variations!.length; i++) {
-        if (service.variations ![i].price! < lowestPrice) {
-          lowestPrice = service.variations ![i].price!;
+        final price = service.variations![i].price ?? 0;
+        if (price < lowestPrice) {
+          lowestPrice = price;
         }
       }
+    } else if ((service.minBiddingPrice ?? 0) > 0) {
+      lowestPrice = service.minBiddingPrice!;
     }
 
     return Padding(
       padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
       child: InkWell(
-        onTap: () => Get.to(ServiceDetailsScreen(serviceId: service.id!, discount: discount)),
+        onTap: () {
+          final serviceId = service.id;
+          if (serviceId == null || serviceId.isEmpty) return;
+          Get.to(() => ServiceDetailsScreen(serviceId: serviceId, discount: discount));
+        },
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 3),
           decoration: BoxDecoration(
