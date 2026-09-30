@@ -66,99 +66,28 @@ class LocalizationController extends GetxController implements GetxService {
 
 
   void filterLanguage({bool shouldUpdate = true, bool isChooseLanguage = false, bool isInitial = false}) {
+    _localLanguages = [];
+    _localLanguages.addAll(AppConstants.languages);
 
-    List<Language> adminLanguageList = isInitial ? [] : Get.find<SplashController>().configModel.content?.languageList?.where((element)=> element.status ==1 ).toList() ?? [];
-
-    bool showAllLocalLanguage = (AppConstants.languageCode.length == 1 || adminLanguageList.isEmpty) ? true : false;
-
-    String? defaultLanguageCode;
-
-    List<String> localLanguageCode = [];
-    for (var element in AppConstants.languages) {
-      localLanguageCode.add(element.languageCode!);
+    _selectedIndex = 0;
+    final savedCode = sharedPreferences.getString(AppConstants.languageCode);
+    for (int index = 0; index < _localLanguages.length; index++) {
+      if (_localLanguages[index].languageCode == savedCode) {
+        _selectedIndex = index;
+        break;
+      }
     }
 
-    if( (isChooseLanguage || isInitial ) && adminLanguageList.length == 1 && localLanguageCode.contains(adminLanguageList[0].languageCode)){
-
-      int index = AppConstants.languages.indexWhere((element) => element.languageCode == adminLanguageList[0].languageCode);
-
-      if(index != -1){
-        _locale = Locale( AppConstants.languages[index].languageCode!,AppConstants.languages[index].countryCode);
-        _isLtr = _locale.languageCode != 'ar';
-
-        Future.delayed(const Duration(milliseconds: 5), (){
-          Get.offAllNamed(RouteHelper.getSignInRoute("LogIn"));
-          setLanguage(_locale, isInitial: true);
-        });
-      }
-
-    }
-
-    else{
-      for (var defaultLanguage in adminLanguageList) {
-        if(!localLanguageCode.contains(defaultLanguage.languageCode)){
-          showAllLocalLanguage = true;
-          break;
-        }
-        if(defaultLanguage.isDefault == true){
-          defaultLanguageCode = defaultLanguage.languageCode;
-        }
-      }
-
-      if(!showAllLocalLanguage){
-        _localLanguages = [];
-        _selectedIndex = 0;
-        for (var element in adminLanguageList) {
-          int index = AppConstants.languages.indexWhere((language) => language.languageCode == element.languageCode);
-          if(index > -1){
-            _localLanguages.add(AppConstants.languages[index]);
-          }
-        }
-
-
-
-        if(isChooseLanguage){
-          if(_localLanguages.indexWhere((e) => e.languageCode == defaultLanguageCode) != -1){
-            _selectedIndex = _localLanguages.indexWhere((e) => e.languageCode == defaultLanguageCode);
-          }else{
-            _selectedIndex = 0;
-          }
-        }else{
-          for(int index = 0; index< _localLanguages.length; index++) {
-            if(_localLanguages[index].languageCode == sharedPreferences.getString(AppConstants.languageCode)) {
-              _selectedIndex = index;
-              break;
-            }
-          }
-        }
-
-      } else{
-
-        if(defaultLanguageCode !=null && isChooseLanguage){
-          for(int index = 0; index< _localLanguages.length; index++) {
-            if(_localLanguages[index].languageCode == defaultLanguageCode) {
-              _selectedIndex = index;
-              break;
-            }
-          }
-
-        }else if(isChooseLanguage){
-          _selectedIndex = 0;
-        }else{
-          for(int index = 0; index< _localLanguages.length; index++) {
-            if(_localLanguages[index].languageCode == sharedPreferences.getString(AppConstants.languageCode)) {
-              _selectedIndex = index;
-              break;
-            }
-          }
-        }
-      }
-      _locale = Locale( _localLanguages[_selectedIndex].languageCode!, _localLanguages[_selectedIndex].countryCode);
+    if (_localLanguages.isNotEmpty) {
+      _locale = Locale(
+        _localLanguages[_selectedIndex].languageCode!,
+        _localLanguages[_selectedIndex].countryCode,
+      );
       _isLtr = _locale.languageCode != 'ar';
+    }
 
-      Future.delayed(const Duration(milliseconds: 10), (){
-        setLanguage(_locale, isInitial: true);
-      });
+    if (shouldUpdate) {
+      update();
     }
   }
 }

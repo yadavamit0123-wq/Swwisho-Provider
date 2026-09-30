@@ -114,6 +114,9 @@ class NotificationHelper {
       if (Get.isRegistered<NotificationSetupController>()) {
         pushEnabled = Get.find<NotificationSetupController>().isPushEnabledFor(type);
       }
+      try {
+        await LocalNotificationInbox.saveFromRemote(message);
+      } catch (_) {}
 
 
       if(message.data['type']=='bidding'){
@@ -342,24 +345,23 @@ class NotificationHelper {
     FlutterLocalNotificationsPlugin fln, {
     bool forceSound = false,
   }) async {
+    try {
+      await LocalNotificationInbox.saveFromRemote(message);
+      if (Get.isRegistered<NotificationController>()) {
+        Get.find<NotificationController>().getNotifications(1, saveNotificationCount: false);
+      }
+    } catch (_) {}
     if(!GetPlatform.isIOS) {
       String? title;
       String? body;
       String? image;
       String playLoad = jsonEncode(message.data);
 
-        title = message.data['title']?.toString() ?? message.notification?.title;
-        body = message.data['body']?.toString() ?? message.notification?.body ?? '';
-        image = (message.data['image'] != null && message.data['image'].toString().isNotEmpty)
-            ? message.data['image'].toString().startsWith('http') ? message.data['image'].toString()
-            : '${AppConstants.baseUrl}/storage/app/public/notification/${message.data['image']}' : null;
-
-      try {
-        await LocalNotificationInbox.saveFromRemote(message);
-        if (Get.isRegistered<NotificationController>()) {
-          Get.find<NotificationController>().getNotifications(1, saveNotificationCount: false);
-        }
-      } catch (_) {}
+      title = message.data['title']?.toString() ?? message.notification?.title;
+      body = message.data['body']?.toString() ?? message.notification?.body ?? '';
+      image = (message.data['image'] != null && message.data['image'].toString().isNotEmpty)
+          ? message.data['image'].toString().startsWith('http') ? message.data['image'].toString()
+          : '${AppConstants.baseUrl}/storage/app/public/notification/${message.data['image']}' : null;
 
       final safeTitle = (title == null || title.isEmpty) ? AppConstants.appName : title;
 

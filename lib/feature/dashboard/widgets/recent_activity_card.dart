@@ -18,7 +18,7 @@ class RecentActivityCardItem extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
             child: CustomImage(height: 60, width: 60, fit: BoxFit.cover,
-              image: "${dashboardRecentActivityModel.detail![0].service!=null?dashboardRecentActivityModel.detail![0].service!.thumbnailFullPath:""}",
+              image: "${(dashboardRecentActivityModel.detail != null && dashboardRecentActivityModel.detail!.isNotEmpty) ? dashboardRecentActivityModel.detail!.first.service?.thumbnailFullPath ?? "" : ""}",
             )
           ),
 
@@ -28,7 +28,7 @@ class RecentActivityCardItem extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
 
                   Row(children: [
-                    Text("${'booking'.tr}#  ${dashboardRecentActivityModel.readableId}",
+                    Text("${'booking'.tr}#  ${dashboardRecentActivityModel.readableId ?? ''}",
                       style: robotoBold.copyWith(
                           fontWeight: FontWeight.w700,
                           color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha:0.6)
@@ -43,7 +43,7 @@ class RecentActivityCardItem extends StatelessWidget {
                   ]),
                   const SizedBox(height: Dimensions.paddingSizeExtraSmall),
                   Text(DateConverter.dateMonthYearTime(DateConverter
-                      .isoUtcStringToLocalDate(dashboardRecentActivityModel.createdAt!)),
+                      .isoUtcStringToLocalDate(dashboardRecentActivityModel.createdAt ?? DateTime.now().toIso8601String())),
                     style: robotoRegular.copyWith(
                       fontSize: Dimensions.fontSizeSmall,
                       color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha:0.6),),
@@ -62,7 +62,7 @@ class RecentActivityCardItem extends StatelessWidget {
               ColorResources.buttonBackgroundColorMap[dashboardRecentActivityModel.bookingStatus],
             ),
             child: Text(
-              dashboardRecentActivityModel.bookingStatus!.tr,
+              dashboardRecentActivityModel.bookingStatus?.tr ?? '',
               style:robotoMedium.copyWith(fontWeight: FontWeight.w500, fontSize: Dimensions.fontSizeSmall,
                   color:Get.isDarkMode?Theme.of(context).primaryColorLight :ColorResources.buttonTextColorMap[dashboardRecentActivityModel.bookingStatus]
               ),

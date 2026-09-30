@@ -98,6 +98,15 @@ class BookingDetailsController extends GetxController implements GetxService{
        dropDownValue = bookingDetails?.content?.bookingStatus ?? "";
         if(response.body is Map && response.body["response_code"] == "default_204"){
           Get.find<BookingRequestController>().removeBookingItemFromList(bookingID, bookingStatus: "", shouldUpdate: true);
+        } else {
+          final status = (_bookingDetails?.content?.bookingStatus ?? '').toLowerCase();
+          if (status == 'canceled' || status == 'cancelled' || status == 'completed') {
+            Get.find<BookingRequestController>().removeBookingItemFromList(
+              bookingID,
+              bookingStatus: status,
+              shouldUpdate: true,
+            );
+          }
         }
       }  else{
        ApiChecker.checkApi(response);
@@ -132,32 +141,54 @@ class BookingDetailsController extends GetxController implements GetxService{
               ? _subBookingDetails?.content
               : null;
 
-      final tdsPercent = Get.find<SplashController>().customerConfigModel.content?.tds ?? 1;
-      final requiredWallet = bookingContent != null
-          ? BookingHelper.getWalletDeductionRequired(bookingContent, tdsPercent: tdsPercent)
-          : double.tryParse(userProfile?.providerCharge ?? '0') ?? 0;
+      int tdsPercent = 1;
+      try {
+        tdsPercent = Get.find<SplashController>().customerConfigModel.content?.tds ?? 1;
+      } catch (_) {}
 
-      if (requiredWallet <= 0 || walletBalance >= requiredWallet) {
+      double requiredWallet = 0;
+      try {
+        requiredWallet = bookingContent != null
+            ? BookingHelper.getWalletDeductionRequired(bookingContent, tdsPercent: tdsPercent)
+            : double.tryParse(userProfile?.providerCharge ?? '0') ?? 0;
+      } catch (_) {
+        requiredWallet = double.tryParse(userProfile?.providerCharge ?? '0') ?? 0;
+      }
+
+      if (requiredWallet > 0 && walletBalance < requiredWallet) {
+        showCustomSnackBar('Your wallet balance is low. Recharge wallet to accept booking', type: ToasterMessageType.error);
+      } else {
         Response response = await bookingDetailsRepo.acceptBookingRequest(bookingId);
         final code = response.body is Map ? response.body['response_code']?.toString() ?? '' : '';
         final accepted = response.statusCode == 200 &&
-            (code == "status_update_success_200" || code == "default_200" || code.contains("success"));
+            response.body is Map &&
+            (code == "status_update_success_200" ||
+                code == "default_200" ||
+                code.contains("success") ||
+                code.endsWith('_200'));
         if (accepted) {
           BookingSoundService.stopAlert(bookingId: bookingId);
           showCustomSnackBar(
             response.body is Map ? (response.body["message"] ?? "Booking accepted") : "Booking accepted",
             type: ToasterMessageType.success,
           );
+          Get.find<BookingRequestController>().removeBookingItemFromList(
+            bookingId,
+            bookingStatus: 'accepted',
+            shouldUpdate: true,
+          );
           getBookingDetails(bookingId, reload: false);
           Get.find<BookingRequestController>().getBookingRequestList(
             Get.find<BookingRequestController>().bookingStatus,
             1,
+            reload: true,
           );
+          if (Get.isRegistered<DashboardController>()) {
+            Get.find<DashboardController>().getDashboardData();
+          }
         } else {
           ApiChecker.checkApi(response);
         }
-      } else {
-        showCustomSnackBar('Your wallet balance is low. Recharge wallet to accept booking', type: ToasterMessageType.error);
       }
     } catch (_) {
       showCustomSnackBar('Failed to accept booking'.tr, type: ToasterMessageType.error);
@@ -172,15 +203,33 @@ class BookingDetailsController extends GetxController implements GetxService{
     update();
     try {
       Response response = await bookingDetailsRepo.ignoreBookingRequest(bookingId);
-      if(response.statusCode==200 ) {
+      final ignored = response.statusCode == 200 &&
+          response.body is Map &&
+          ((response.body['response_code']?.toString() ?? '').contains('success') ||
+              (response.body['response_code']?.toString() ?? '').endsWith('_200'));
+      if (ignored) {
         BookingSoundService.stopAlert(bookingId: bookingId);
-        showCustomSnackBar(response.body["message"],  type: ToasterMessageType.success);
-        Get.find<BookingRequestController>().getBookingRequestList(Get.find<BookingRequestController>().bookingStatus, 1);
-      }
-      else{
+        final message = response.body["message"]?.toString() ?? 'successfully_updated'.tr;
+        showCustomSnackBar(message, type: ToasterMessageType.success);
+        Get.find<BookingRequestController>().removeBookingItemFromList(
+          bookingId,
+          bookingStatus: 'canceled',
+          shouldUpdate: true,
+        );
+        Get.find<BookingRequestController>().getBookingRequestList(
+          Get.find<BookingRequestController>().bookingStatus,
+          1,
+          reload: true,
+        );
+        if (Get.isRegistered<DashboardController>()) {
+          Get.find<DashboardController>().getDashboardData();
+        }
+      } else {
         ApiChecker.checkApi(response);
       }
-    } catch (_) {}
+    } catch (_) {
+      showCustomSnackBar('something_went_wrong'.tr, type: ToasterMessageType.error);
+    }
     _isIgnoreButtonLoading = false;
     update();
   }

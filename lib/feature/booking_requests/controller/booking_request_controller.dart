@@ -71,29 +71,50 @@ class BookingRequestController extends GetxController with GetSingleTickerProvid
     }
     Response response = await bookingRequestRepo.getBookingRequestData(requestType.toLowerCase(), offset, selectedServiceType);
 
-    if(response.statusCode == 200){
+    if(response.statusCode == 200 && response.body is Map){
+      try {
+      final content = response.body['content'];
+      if (content is Map && content['bookings_count'] is Map) {
+        _bookingCount = BookingCount.fromJson(Map<String, dynamic>.from(content['bookings_count']));
+      }
 
-      _bookingCount = BookingCount.fromJson(response.body['content']['bookings_count']);
-
+      dynamic bookingsNode = content is Map ? content['bookings'] : null;
+      List<dynamic> bookingList = const [];
+      if (bookingsNode is Map && bookingsNode['data'] is List) {
+        bookingList = bookingsNode['data'];
+        _pageSize = int.tryParse(bookingsNode['last_page']?.toString() ?? '') ?? 1;
+      } else if (bookingsNode is List) {
+        bookingList = bookingsNode;
+        _pageSize = 1;
+      }
 
       if(_offset == 1){
         _bookingRequestList = [];
-        List<dynamic> bookingList = response.body['content']['bookings']['data'];
-        for (var bookingRequest in bookingList) {
-          bookingRequestList!.add(BookingRequestModel.fromJson(bookingRequest));
-        }
-      }else{
-        List<dynamic> bookingList = response.body['content']['bookings']['data'];
-        for (var bookingRequest in bookingList) {
-          bookingRequestList!.add(BookingRequestModel.fromJson(bookingRequest));
-        }
       }
-      _pageSize = response.body['content']['bookings']['last_page'];
+      _bookingRequestList ??= [];
+      for (var bookingRequest in bookingList) {
+        try {
+          if (bookingRequest is Map) {
+            _bookingRequestList!.add(BookingRequestModel.fromJson(Map<String, dynamic>.from(bookingRequest)));
+          }
+        } catch (_) {}
+      }
 
       if (requestType.toLowerCase() == 'pending') {
+        _bookingRequestList!.removeWhere((booking) {
+          final status = (booking.bookingStatus ?? '').toLowerCase();
+          return status == 'canceled' ||
+              status == 'cancelled' ||
+              status == 'completed' ||
+              status == 'accepted' ||
+              status == 'ongoing';
+        });
         BookingSoundService.onPendingListUpdated(
           _bookingRequestList?.map((booking) => booking.id ?? '').where((id) => id.isNotEmpty).toList() ?? [],
         );
+      }
+      } catch (_) {
+        _bookingRequestList ??= [];
       }
     }
     else{
@@ -107,6 +128,39 @@ class BookingRequestController extends GetxController with GetSingleTickerProvid
     }
   }
 
+  Future<void> syncPendingAlerts() async {
+    try {
+      final response = await bookingRequestRepo.getBookingRequestData('pending', 1, selectedServiceType);
+      if (response.statusCode != 200 || response.body is! Map) return;
+      final content = response.body['content'];
+      dynamic bookingsNode = content is Map ? content['bookings'] : null;
+      List<dynamic> bookingList = const [];
+      if (bookingsNode is Map && bookingsNode['data'] is List) {
+        bookingList = bookingsNode['data'];
+      } else if (bookingsNode is List) {
+        bookingList = bookingsNode;
+      }
+      final pending = <BookingRequestModel>[];
+      for (final item in bookingList) {
+        if (item is! Map) continue;
+        try {
+          final booking = BookingRequestModel.fromJson(Map<String, dynamic>.from(item));
+          final status = (booking.bookingStatus ?? '').toLowerCase();
+          if (status.isEmpty || status == 'pending') {
+            pending.add(booking);
+          }
+        } catch (_) {}
+      }
+      BookingSoundService.onPendingListUpdated(
+        pending.map((booking) => booking.id ?? '').where((id) => id.isNotEmpty).toList(),
+      );
+      if (bookingStatus.toLowerCase() == 'pending') {
+        _bookingRequestList = pending;
+        update();
+      }
+    } catch (_) {}
+  }
+
 
   void updateBookingRequestIndex(int index){
     _selectedIndex = index;
@@ -116,9 +170,7 @@ class BookingRequestController extends GetxController with GetSingleTickerProvid
 
   removeBookingItemFromList(String bookingId,  {bool shouldUpdate = false, required String bookingStatus}){
 
-    if(bookingRequestStatusList[currentIndex] != "all"){
-      _bookingRequestList?.removeWhere((element) => element.id == bookingId);
-    }
+    _bookingRequestList?.removeWhere((element) => element.id == bookingId);
     if(shouldUpdate){
       update();
     }

@@ -17,11 +17,48 @@ class BookingDetailsRepo{
   }
 
   Future<Response> acceptBookingRequest(String bookingID) async {
-    return await apiClient.putData("${AppConstants.acceptBookingRequestUrl}/$bookingID",{'method':'put'});
+    Response response = await apiClient.putData(
+      "${AppConstants.acceptBookingRequestUrl}/$bookingID",
+      {'_method': 'put'},
+    );
+    if (_isSuccess(response)) return response;
+    response = await apiClient.postData(
+      "${AppConstants.acceptBookingRequestUrl}/$bookingID",
+      {'_method': 'put'},
+    );
+    if (_isSuccess(response)) return response;
+    return await apiClient.postData(AppConstants.acceptBookingRequestUrl, {
+      '_method': 'put',
+      'booking_id': bookingID,
+    });
   }
 
   Future<Response> ignoreBookingRequest(String bookingID) async {
-    return await apiClient.postData("${AppConstants.ignoreBookingRequestUrl}/$bookingID", {});
+    Response response = await apiClient.postData(
+      "${AppConstants.ignoreBookingRequestUrl}/$bookingID",
+      {},
+    );
+    if (_isSuccess(response)) return response;
+    response = await apiClient.putData(
+      "${AppConstants.ignoreBookingRequestUrl}/$bookingID",
+      {'_method': 'put'},
+    );
+    if (_isSuccess(response)) return response;
+    return await apiClient.postData(AppConstants.ignoreBookingRequestUrl, {
+      '_method': 'put',
+      'booking_id': bookingID,
+    });
+  }
+
+  bool _isSuccess(Response response) {
+    if (response.statusCode != 200 || response.body is! Map) return false;
+    final code = response.body['response_code']?.toString() ?? '';
+    final errors = response.body['errors'];
+    if (errors is List && errors.isNotEmpty) return false;
+    return code.contains('success') ||
+        code == 'default_200' ||
+        code == 'status_update_success_200' ||
+        code.endsWith('_200');
   }
 
   Future<Response> cancelSubBooking(String subBookingId) async {

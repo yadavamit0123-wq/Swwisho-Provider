@@ -80,6 +80,7 @@ class NotificationController extends GetxController implements GetxService{
       final incoming = <Data>[];
       if (offset == 1) {
         try {
+          await _seedFromBookings();
           incoming.addAll(await LocalNotificationInbox.load());
         } catch (_) {}
       }
@@ -136,5 +137,49 @@ class NotificationController extends GetxController implements GetxService{
   }
   void setNotificationCount(int count){
     notificationRepo.setNotificationCount(count);
+  }
+
+  Future<void> _seedFromBookings() async {
+    try {
+      if (Get.isRegistered<BookingRequestRepo>()) {
+        final response = await Get.find<BookingRequestRepo>().getBookingRequestData('pending', 1, ServiceType.all);
+        if (response.statusCode == 200 && response.body is Map) {
+          final content = response.body['content'];
+          dynamic bookingsNode = content is Map ? content['bookings'] : null;
+          List<dynamic> bookingList = const [];
+          if (bookingsNode is Map && bookingsNode['data'] is List) {
+            bookingList = bookingsNode['data'];
+          } else if (bookingsNode is List) {
+            bookingList = bookingsNode;
+          }
+          for (final item in bookingList) {
+            if (item is! Map) continue;
+            try {
+              final booking = BookingRequestModel.fromJson(Map<String, dynamic>.from(item));
+              final status = (booking.bookingStatus ?? 'pending').toLowerCase();
+              if (status.isNotEmpty && status != 'pending') continue;
+              await LocalNotificationInbox.addSimple(
+                id: 'booking_${booking.id}',
+                title: 'New booking #${booking.readableId ?? ''}',
+                body: booking.subCategory?.name ?? 'You have a new booking request',
+                createdAt: booking.createdAt,
+              );
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (_) {}
+    try {
+      if (Get.isRegistered<DashboardController>()) {
+        for (final recent in Get.find<DashboardController>().dashboardRecentActivityList) {
+          await LocalNotificationInbox.addSimple(
+            id: 'recent_${recent.id}',
+            title: 'Booking #${recent.readableId ?? ''}',
+            body: (recent.bookingStatus ?? 'pending').toString(),
+            createdAt: recent.createdAt,
+          );
+        }
+      }
+    } catch (_) {}
   }
 }

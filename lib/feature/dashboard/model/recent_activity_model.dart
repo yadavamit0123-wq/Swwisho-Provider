@@ -55,35 +55,39 @@ class DashboardRecentActivityModel {
       });
 
   DashboardRecentActivityModel.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    readableId = json['readable_id'];
-    customerId = json['customer_id'];
-    providerId = json['provider_id'];
-    zoneId = json['zone_id'];
-    bookingStatus = json['booking_status'];
-    isPaid = json['is_paid'];
-    paymentMethod = json['payment_method'];
-    transactionId = json['transaction_id'];
-    totalBookingAmount = json['total_booking_amount'].toString();
-    totalTaxAmount = json['total_tax_amount'].toString();
-    totalDiscountAmount = json['total_discount_amount'].toString();
-    serviceSchedule = json['service_schedule'];
-    serviceAddressId = json['service_address_id'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
-    categoryId = json['category_id'];
-    subCategoryId = json['sub_category_id'];
-    servicemanId = json['serviceman_id'];
-    totalCampaignDiscountAmount = json['total_campaign_discount_amount'].toString();
-    totalCouponDiscountAmount = json['total_coupon_discount_amount'].toString();
-    couponCode = json['coupon_code'];
-    if (json['detail'] != null) {
+    id = json['id']?.toString();
+    readableId = int.tryParse(json['readable_id']?.toString() ?? '');
+    customerId = json['customer_id']?.toString();
+    providerId = json['provider_id']?.toString();
+    zoneId = json['zone_id']?.toString();
+    bookingStatus = json['booking_status']?.toString();
+    isPaid = int.tryParse(json['is_paid']?.toString() ?? '');
+    paymentMethod = json['payment_method']?.toString();
+    transactionId = json['transaction_id']?.toString();
+    totalBookingAmount = json['total_booking_amount']?.toString();
+    totalTaxAmount = json['total_tax_amount']?.toString();
+    totalDiscountAmount = json['total_discount_amount']?.toString();
+    serviceSchedule = json['service_schedule']?.toString();
+    serviceAddressId = json['service_address_id']?.toString();
+    createdAt = json['created_at']?.toString();
+    updatedAt = json['updated_at']?.toString();
+    categoryId = json['category_id']?.toString();
+    subCategoryId = json['sub_category_id']?.toString();
+    servicemanId = json['serviceman_id']?.toString();
+    totalCampaignDiscountAmount = json['total_campaign_discount_amount']?.toString();
+    totalCouponDiscountAmount = json['total_coupon_discount_amount']?.toString();
+    couponCode = json['coupon_code']?.toString();
+    if (json['detail'] is List) {
       detail = <Detail>[];
-      json['detail'].forEach((v) {
-        detail!.add(Detail.fromJson(v));
-      });
+      for (final v in json['detail']) {
+        try {
+          if (v is Map) {
+            detail!.add(Detail.fromJson(Map<String, dynamic>.from(v)));
+          }
+        } catch (_) {}
+      }
     }
-    isRepeatBooking = int.tryParse(json['is_repeated'].toString());
+    isRepeatBooking = int.tryParse(json['is_repeated']?.toString() ?? '');
   }
 
   Map<String, dynamic> toJson() {

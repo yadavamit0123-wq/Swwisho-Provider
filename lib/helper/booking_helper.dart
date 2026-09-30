@@ -4,7 +4,7 @@ import 'package:demandium_provider/feature/booking_requests/model/request_model.
 class BookingHelper{
   static double getSubTotalCost(BookingDetailsContent booking) {
     double subTotal = 0;
-    for (var element in booking.details!) {
+    for (var element in booking.details ?? []) {
       subTotal = subTotal + ((element.serviceCost ?? 1) * (element.quantity ?? 1));
     }
     return subTotal;

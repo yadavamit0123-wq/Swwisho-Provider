@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:demandium_provider/feature/booking_requests/controller/booking_request_controller.dart';
+import 'package:demandium_provider/feature/notifications/repository/local_notification_inbox.dart';
 import 'package:demandium_provider/utils/app_audios.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -12,6 +13,16 @@ class BookingSoundService {
   static Timer? _pollTimer;
 
   static bool get isPlaying => _activeBookingIds.isNotEmpty;
+
+  static void startWatchingPending() {
+    if (_pollTimer != null && _pollTimer!.isActive) return;
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 25), (_) {
+      if (Get.isRegistered<BookingRequestController>()) {
+        Get.find<BookingRequestController>().syncPendingAlerts();
+      }
+    });
+  }
 
   static Future<void> playBookingAlert(String bookingId) async {
     if (bookingId.isEmpty) {
@@ -26,7 +37,14 @@ class BookingSoundService {
       await _player!.setVolume(1.0);
       await _player!.stop();
       await _player!.play(AssetSource(AppAudios.requestSound));
-      _startPendingPoll();
+      startWatchingPending();
+      try {
+        await LocalNotificationInbox.addSimple(
+          id: 'booking_$bookingId',
+          title: 'New booking',
+          body: 'You have a new booking request',
+        );
+      } catch (_) {}
     } catch (e) {
       // Fallback to a one-shot player if loop player fails.
       try {
@@ -39,19 +57,6 @@ class BookingSoundService {
     }
   }
 
-  static void _startPendingPoll() {
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 20), (_) {
-      if (_activeBookingIds.isEmpty) {
-        _pollTimer?.cancel();
-        return;
-      }
-      if (Get.isRegistered<BookingRequestController>()) {
-        Get.find<BookingRequestController>().getBookingRequestList('pending', 1, reload: true);
-      }
-    });
-  }
-
   static Future<void> stopAlert({String? bookingId}) async {
     if (bookingId != null && bookingId.isNotEmpty) {
       _activeBookingIds.remove(bookingId);
@@ -60,15 +65,26 @@ class BookingSoundService {
     }
 
     if (_activeBookingIds.isEmpty) {
-      _pollTimer?.cancel();
-      _pollTimer = null;
       try {
         await _player?.stop();
       } catch (_) {}
     }
   }
 
+  static Set<String> _knownPendingIds = {};
+  static bool _pendingSnapshotReady = false;
+
   static void onPendingListUpdated(List<String> pendingBookingIds) {
+    final incoming = pendingBookingIds.where((id) => id.isNotEmpty).toSet();
+    if (_pendingSnapshotReady) {
+      final newIds = incoming.difference(_knownPendingIds);
+      for (final id in newIds) {
+        playBookingAlert(id);
+      }
+    }
+    _pendingSnapshotReady = true;
+    _knownPendingIds = incoming;
+
     if (_activeBookingIds.isEmpty) {
       return;
     }

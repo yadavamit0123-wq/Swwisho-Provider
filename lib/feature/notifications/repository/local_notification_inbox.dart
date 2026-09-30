@@ -52,13 +52,33 @@ class LocalNotificationInbox {
     await add(item);
   }
 
+  static Future<void> addSimple({
+    required String id,
+    required String title,
+    String? body,
+    String? createdAt,
+    String? image,
+  }) async {
+    if (id.isEmpty || title.isEmpty) return;
+    await add(Data(
+      id: id,
+      title: title,
+      description: body ?? '',
+      coverImageFullPath: image,
+      createdAt: createdAt ?? DateTime.now().toIso8601String(),
+      updatedAt: DateTime.now().toIso8601String(),
+      isActive: 1,
+    ));
+  }
+
   static Future<void> add(Data item) async {
     try {
       final items = await load();
       final duplicate = items.any((existing) =>
-          existing.title == item.title &&
-          existing.description == item.description &&
-          _isRecent(existing.createdAt));
+          existing.id == item.id ||
+          (existing.title == item.title &&
+              existing.description == item.description &&
+              _isRecent(existing.createdAt)));
       if (duplicate) return;
       items.insert(0, item);
       if (items.length > _maxItems) {

@@ -79,40 +79,73 @@ class  DashboardController extends GetxController with GetSingleTickerProviderSt
       dashboardTopCards = null;
     }
 
+    try {
     Response response = await dashBoardRepo.getDashBoardData();
 
-    if(response.statusCode==200){
-      dashboardTopCards = DashboardTopCards.fromJson(response.body['content'][0]['top_cards']);
+    if(response.statusCode==200 && response.body is Map){
+      final contentList = _asList(response.body['content']);
 
-      dashboardRecentActivityList = [];
-      List<dynamic> resentList = response.body['content'][3]['recent_bookings'];
-      for (var element in resentList) {
-        dashboardRecentActivityList.add(DashboardRecentActivityModel.fromJson(element));
+      final topCards = _section(contentList, 'top_cards');
+      if (topCards != null && topCards['top_cards'] is Map) {
+        try {
+          dashboardTopCards = DashboardTopCards.fromJson(Map<String, dynamic>.from(topCards['top_cards']));
+        } catch (_) {}
       }
 
+      dashboardRecentActivityList = [];
+      final recentSection = _section(contentList, 'recent_bookings');
+      final resentList = _asList(recentSection?['recent_bookings']);
+      for (var element in resentList) {
+        try {
+          if (element is Map) {
+            dashboardRecentActivityList.add(
+              DashboardRecentActivityModel.fromJson(Map<String, dynamic>.from(element)),
+            );
+          }
+        } catch (_) {}
+      }
 
       dashboardSubscriptionList=[];
-      List<dynamic> subscriptionList = response.body['content'][4]['subscriptions'];
+      final subscriptionSection = _section(contentList, 'subscriptions');
+      final subscriptionList = _asList(subscriptionSection?['subscriptions']);
       for (var element in subscriptionList) {
-        dashboardSubscriptionList.add(SubscriptionModelData.fromJson(element));
+        try {
+          if (element is Map) {
+            dashboardSubscriptionList.add(SubscriptionModelData.fromJson(Map<String, dynamic>.from(element)));
+          }
+        } catch (_) {}
       }
 
       dashboardServicemanList = [];
-      List<dynamic> servicemanList = response.body['content'][5]['serviceman_list'];
+      final servicemanSection = _section(contentList, 'serviceman_list');
+      final servicemanList = _asList(servicemanSection?['serviceman_list']);
       for (var element in servicemanList) {
-        {
-        if(element['user']['is_active']==1){
-          dashboardServicemanList.add(DashboardServicemanModel.fromJson(element));
-        }
-      }
-      }
-      dashboardCustomizedPostList = [];
-      List<dynamic> customizedPost = response.body['content'][6]['customized_post'];
-      for (var element in customizedPost) {
-        dashboardCustomizedPostList.add(PostData.fromJson(element));
+        try {
+          if (element is Map && element['user'] is Map && element['user']['is_active']==1){
+            dashboardServicemanList.add(DashboardServicemanModel.fromJson(Map<String, dynamic>.from(element)));
+          }
+        } catch (_) {}
       }
 
-      additionalInfoCount = AdditionalInfoCount.fromJson(response.body['content'][7]['additional_info_count']);
+      dashboardCustomizedPostList = [];
+      final postSection = _section(contentList, 'customized_post');
+      final customizedPost = _asList(postSection?['customized_post']);
+      for (var element in customizedPost) {
+        try {
+          if (element is Map) {
+            dashboardCustomizedPostList.add(PostData.fromJson(Map<String, dynamic>.from(element)));
+          }
+        } catch (_) {}
+      }
+
+      final extraSection = _section(contentList, 'additional_info_count');
+      if (extraSection != null && extraSection['additional_info_count'] is Map) {
+        try {
+          additionalInfoCount = AdditionalInfoCount.fromJson(
+            Map<String, dynamic>.from(extraSection['additional_info_count']),
+          );
+        } catch (_) {}
+      }
 
       if(dashboardRecentActivityList.isEmpty && dashboardCustomizedPostList.isNotEmpty){
         tabController?.index = 1;
@@ -123,8 +156,23 @@ class  DashboardController extends GetxController with GetSingleTickerProviderSt
     else{
       ApiChecker.checkApi(response);
     }
+    } catch (_) {}
 
     update();
+  }
+
+  List<dynamic> _asList(dynamic value) {
+    if (value is List) return value;
+    return const [];
+  }
+
+  Map<String, dynamic>? _section(List<dynamic> content, String key) {
+    for (final item in content) {
+      if (item is Map && item.containsKey(key)) {
+        return Map<String, dynamic>.from(item);
+      }
+    }
+    return null;
   }
 
 
