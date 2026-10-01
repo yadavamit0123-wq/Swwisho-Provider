@@ -6,7 +6,13 @@ import 'package:demandium_provider/utils/core_export.dart';
 class ServiceDetailsScreen extends StatefulWidget {
   final String serviceId;
   final Discount discount;
-  const ServiceDetailsScreen({super.key,required this.serviceId, required this.discount});
+  final ServiceModel? summaryService;
+  const ServiceDetailsScreen({
+    super.key,
+    required this.serviceId,
+    required this.discount,
+    this.summaryService,
+  });
 
   @override
   State<ServiceDetailsScreen> createState() => _ServiceDetailsScreenState();
@@ -29,7 +35,10 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       appBar: CustomAppBar(title: "service_details".tr,),
       body: GetBuilder<ServiceDetailsController>(
         initState: (state)  {
-          Get.find<ServiceDetailsController>().getServiceDetailsData(widget.serviceId);
+          Get.find<ServiceDetailsController>().getServiceDetailsData(
+            widget.serviceId,
+            summaryService: widget.summaryService,
+          );
           },
           builder: (serviceDetailsController){
 

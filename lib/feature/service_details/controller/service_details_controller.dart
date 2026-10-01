@@ -29,44 +29,101 @@ class ServiceDetailsController extends GetxController with GetSingleTickerProvid
   TabController? controller;
   var servicePageCurrentState = ServiceTabControllerState.serviceOverview;
 
-  Future<void> getServiceDetailsData(String serviceId) async {
+  Future<void> getServiceDetailsData(String serviceId, {ServiceModel? summaryService}) async {
     _isLoading = true;
     serviceDetailsModel = null;
     _variantList = [];
     update();
     try {
-      Response response = await serviceDetailsRepo.getServiceDetailsData(serviceId);
-      if(response.statusCode==200 && response.body is Map){
-        serviceDetailsModel = ServiceDetailsModel.fromJson(Map<String, dynamic>.from(response.body));
-        _variantList = [];
-        final variations = serviceDetailsModel?.content?.variations ?? [];
-        for (var element in variations) {
-          if (element.variant == null || element.price == null) continue;
-          _variantList.add(VariantModel(variantName: element.variant!, price: element.price!));
-        }
-        if (_variantList.isEmpty) {
-          final react = serviceDetailsModel?.content?.variationsReactFormat ?? [];
-          for (final element in react) {
-            _variantList.add(VariantModel(
-              variantName: element.variationName ?? '',
-              price: element.variationPrice ?? 0,
-            ));
+      final resolvedId = serviceId.trim().isNotEmpty
+          ? serviceId.trim()
+          : (summaryService?.id?.trim() ?? '');
+      if (resolvedId.isNotEmpty) {
+        Response response = await serviceDetailsRepo.getServiceDetailsData(resolvedId);
+        if (response.statusCode == 200 && response.body is Map) {
+          final body = Map<String, dynamic>.from(response.body as Map);
+          final content = _parseServiceContent(body);
+          if (content != null) {
+            serviceDetailsModel = ServiceDetailsModel(
+              responseCode: body['response_code']?.toString(),
+              message: body['message']?.toString(),
+              content: content,
+            );
+            _buildVariantList(content);
+          } else {
+            try {
+              serviceDetailsModel = ServiceDetailsModel.fromJson(body);
+              if (serviceDetailsModel?.content != null) {
+                _buildVariantList(serviceDetailsModel!.content!);
+              }
+            } catch (_) {}
           }
         }
-        if (_variantList.isEmpty && (serviceDetailsModel?.content?.minBiddingPrice ?? 0) > 0) {
-          _variantList.add(VariantModel(
-            variantName: serviceDetailsModel?.content?.name ?? '',
-            price: serviceDetailsModel!.content!.minBiddingPrice!,
-          ));
-        }
-        _variantList.sort((a, b) => a.price.compareTo(b.price));
+      }
+      if (serviceDetailsModel?.content == null && summaryService != null) {
+        serviceDetailsModel = ServiceDetailsModel(content: summaryService);
+        _buildVariantList(summaryService);
       }
     } catch (_) {
-      serviceDetailsModel = null;
+      if (summaryService != null) {
+        serviceDetailsModel = ServiceDetailsModel(content: summaryService);
+        _buildVariantList(summaryService);
+      } else {
+        serviceDetailsModel = null;
+      }
     } finally {
       _isLoading = false;
       update();
     }
+  }
+
+  ServiceModel? _parseServiceContent(Map<String, dynamic> body) {
+    dynamic node = body['content'];
+    if (node is Map) {
+      final map = Map<String, dynamic>.from(node);
+      if (map['data'] is Map) {
+        node = map['data'];
+      } else if (map['service'] is Map) {
+        node = map['service'];
+      } else {
+        node = map;
+      }
+    } else if (body['data'] is Map) {
+      node = body['data'];
+    } else if (body.containsKey('id') || body.containsKey('name')) {
+      node = body;
+    }
+    if (node is! Map) return null;
+    try {
+      return ServiceModel.fromJson(Map<String, dynamic>.from(node));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _buildVariantList(ServiceModel content) {
+    _variantList = [];
+    final variations = content.variations ?? [];
+    for (var element in variations) {
+      if (element.variant == null || element.price == null) continue;
+      _variantList.add(VariantModel(variantName: element.variant!, price: element.price!));
+    }
+    if (_variantList.isEmpty) {
+      final react = content.variationsReactFormat ?? [];
+      for (final element in react) {
+        _variantList.add(VariantModel(
+          variantName: element.variationName ?? '',
+          price: element.variationPrice ?? 0,
+        ));
+      }
+    }
+    if (_variantList.isEmpty && (content.minBiddingPrice ?? 0) > 0) {
+      _variantList.add(VariantModel(
+        variantName: content.name ?? '',
+        price: content.minBiddingPrice!,
+      ));
+    }
+    _variantList.sort((a, b) => a.price.compareTo(b.price));
   }
 
   Future<void> getServiceFAQData(String serviceId) async {

@@ -162,6 +162,15 @@ class BookingDetailsController extends GetxController implements GetxService{
           id,
           alternateId: alternateBookingId,
         );
+        if (!BookingDetailsRepo.isActionSuccess(response)) {
+          response = await bookingDetailsRepo.changeBookingStatus(
+            id,
+            'accepted',
+            '',
+            null,
+            false,
+          );
+        }
         if (BookingDetailsRepo.isActionSuccess(response)) {
           BookingSoundService.stopAlert(bookingId: id);
           showCustomSnackBar(
@@ -213,6 +222,15 @@ class BookingDetailsController extends GetxController implements GetxService{
         id,
         alternateId: alternateBookingId,
       );
+      if (!BookingDetailsRepo.isActionSuccess(response)) {
+        response = await bookingDetailsRepo.changeBookingStatus(
+          id,
+          'canceled',
+          '',
+          null,
+          false,
+        );
+      }
       if (BookingDetailsRepo.isActionSuccess(response)) {
         BookingSoundService.stopAlert(bookingId: id);
         final message = response.body is Map

@@ -20,6 +20,11 @@ class ApiChecker {
       }
     } else if (response.statusCode == 429) {
       showCustomSnackBar("too_many_request".tr, showDefaultSnackBar: showDefaultToaster);
+    } else if (response.statusCode == 405) {
+      showCustomSnackBar(
+        _messageFromBody(response.body) ?? 'something_went_wrong'.tr,
+        showDefaultSnackBar: showDefaultToaster,
+      );
     } else {
       showCustomSnackBar(
         _messageFromBody(response.body) ?? response.statusText ?? 'something_went_wrong'.tr,

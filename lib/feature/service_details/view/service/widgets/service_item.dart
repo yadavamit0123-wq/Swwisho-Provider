@@ -25,9 +25,13 @@ class ServiceItem extends StatelessWidget {
       padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
       child: InkWell(
         onTap: () {
-          final serviceId = service.id;
-          if (serviceId == null || serviceId.isEmpty) return;
-          Get.to(() => ServiceDetailsScreen(serviceId: serviceId, discount: discount));
+          final serviceId = (service.id ?? '').trim();
+          if (serviceId.isEmpty) return;
+          Get.to(() => ServiceDetailsScreen(
+                serviceId: serviceId,
+                discount: discount,
+                summaryService: service,
+              ));
         },
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 3),

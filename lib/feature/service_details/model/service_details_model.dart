@@ -77,7 +77,7 @@ class ServiceModel {
         this.campaignDiscount});
 
   ServiceModel.fromJson(Map<String, dynamic> json) {
-    id = json['id']?.toString();
+    id = json['id']?.toString() ?? json['service_id']?.toString();
     name = json['name']?.toString();
     shortDescription = json['short_description']?.toString();
     description = json['description']?.toString();
