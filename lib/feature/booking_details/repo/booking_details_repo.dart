@@ -29,14 +29,22 @@ class BookingDetailsRepo{
     if (_bodyLooksLikeHtml(response.body)) return false;
     if (response.body is! Map) return false;
     final body = Map<String, dynamic>.from(response.body as Map);
-    final code = body['response_code']?.toString() ?? '';
+    final code = body['response_code']?.toString().trim() ?? '';
     final errors = body['errors'];
     if (errors is List && errors.isNotEmpty) return false;
     if (code.isEmpty) return true;
-    return code.contains('success') ||
-        code == 'default_200' ||
-        code == 'status_update_success_200' ||
-        code.endsWith('_200');
+    final lower = code.toLowerCase();
+    if (lower.contains('fail') ||
+        lower.contains('_400') ||
+        lower.contains('_403') ||
+        lower.contains('_404') ||
+        lower.contains('_500')) {
+      return false;
+    }
+    return lower.contains('success') ||
+        lower.endsWith('_200') ||
+        lower.contains('_201') ||
+        code == 'status_update_success_200';
   }
 
   List<String> _distinctBookingIds(String bookingID, {String? alternateId}) {
@@ -51,8 +59,30 @@ class BookingDetailsRepo{
     return ids;
   }
 
-  Future<Response> acceptBookingRequest(String bookingID, {String? alternateId}) async {
+  Future<List<String>> _resolveBookingIds(String bookingID, {String? alternateId}) async {
     final ids = _distinctBookingIds(bookingID, alternateId: alternateId);
+    void append(String? raw) {
+      final value = raw?.toString().trim() ?? '';
+      if (value.isEmpty || value == 'null' || ids.contains(value)) return;
+      ids.add(value);
+    }
+    for (final id in List<String>.from(ids)) {
+      try {
+        final response = await getBookingDetails(id);
+        if (response.statusCode != 200 || response.body is! Map) continue;
+        final body = Map<String, dynamic>.from(response.body as Map);
+        final content = body['content'];
+        if (content is! Map) continue;
+        final map = Map<String, dynamic>.from(content);
+        append(map['id']?.toString());
+        append(map['readable_id']?.toString());
+      } catch (_) {}
+    }
+    return ids;
+  }
+
+  Future<Response> acceptBookingRequest(String bookingID, {String? alternateId}) async {
+    final ids = await _resolveBookingIds(bookingID, alternateId: alternateId);
     Response last = Response(statusCode: 0, statusText: 'No booking id');
     for (final id in ids) {
       last = await _acceptBookingOnce(id);
@@ -75,21 +105,27 @@ class BookingDetailsRepo{
     );
     if (isActionSuccess(response)) return response;
 
-    return await apiClient.postData(
+    response = await apiClient.postData(
+      "${AppConstants.changeBookingStatus}/$id",
+      fields,
+    );
+    if (isActionSuccess(response)) return response;
+
+    return await apiClient.putData(
       "${AppConstants.changeBookingStatus}/$id",
       fields,
     );
   }
 
   Future<Response> _acceptBookingOnce(String id) async {
-    // Live server often returns 405 on /request/accept* — status/update is the working path.
-    Response response = await _postBookingStatus(id, 'accepted');
-    if (isActionSuccess(response)) return response;
-
-    response = await apiClient.putData(
+    // RC / Play Store path first.
+    Response response = await apiClient.putData(
       "${AppConstants.acceptBookingRequestUrl}/$id",
       {'method': 'put'},
     );
+    if (isActionSuccess(response)) return response;
+
+    response = await _postBookingStatus(id, 'accepted');
     if (isActionSuccess(response)) return response;
 
     response = await apiClient.postData(
@@ -116,7 +152,7 @@ class BookingDetailsRepo{
   }
 
   Future<Response> ignoreBookingRequest(String bookingID, {String? alternateId}) async {
-    final ids = _distinctBookingIds(bookingID, alternateId: alternateId);
+    final ids = await _resolveBookingIds(bookingID, alternateId: alternateId);
     Response last = Response(statusCode: 0, statusText: 'No booking id');
     for (final id in ids) {
       last = await _ignoreBookingOnce(id);
@@ -126,20 +162,21 @@ class BookingDetailsRepo{
   }
 
   Future<Response> _ignoreBookingOnce(String id) async {
-    Response response = await _postBookingStatus(id, 'canceled');
-    if (isActionSuccess(response)) return response;
-
-    response = await apiClient.postData(
+    Response response = await apiClient.postData(
       "${AppConstants.ignoreBookingRequestUrl}/$id",
       {},
     );
     if (isActionSuccess(response)) return response;
 
-    response = await apiClient.postData(
+    response = await apiClient.postDataWithoutBody(
       "${AppConstants.ignoreBookingRequestUrl}/$id",
-      {'_method': 'put'},
     );
     if (isActionSuccess(response)) return response;
+
+    for (final status in const ['canceled', 'cancelled']) {
+      response = await _postBookingStatus(id, status);
+      if (isActionSuccess(response)) return response;
+    }
 
     response = await apiClient.postData(AppConstants.ignoreBookingRequestUrl, {
       'booking_id': id,
@@ -188,7 +225,7 @@ class BookingDetailsRepo{
   }
 
   Future<Response> removeCartServiceFromServer({CartModel? cart , String? bookingId, String? zoneId}){
-    return apiClient.postData(AppConstants.removeCartServiceFromServer, {
+    return await apiClient.postData(AppConstants.removeCartServiceFromServer, {
       "_method" : "put",
       "booking_id" : bookingId,
       "zone_id" : zoneId,

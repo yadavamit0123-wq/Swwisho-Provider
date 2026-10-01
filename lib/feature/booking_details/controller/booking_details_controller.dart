@@ -129,6 +129,12 @@ class BookingDetailsController extends GetxController implements GetxService{
     update();
   }
 
+  bool _matchesBookingContext(BookingDetailsContent? content, String id) {
+    if (content == null || id.isEmpty) return false;
+    return content.id?.toString() == id ||
+        content.readableId?.toString() == id;
+  }
+
   Future<void> acceptBookingRequest(String bookingId, {String? alternateBookingId}) async {
     _isAcceptButtonLoading = true;
     update();
@@ -141,11 +147,24 @@ class BookingDetailsController extends GetxController implements GetxService{
       final walletBalance = userProfile?.walletBalance ?? 0;
       final providerCharge = double.tryParse(userProfile?.providerCharge ?? '0') ?? 0;
 
-      BookingDetailsContent? bookingContent = _bookingDetails?.content?.id?.toString() == id
+      BookingDetailsContent? bookingContent = _matchesBookingContext(_bookingDetails?.content, id)
           ? _bookingDetails?.content
-          : _subBookingDetails?.content?.id?.toString() == id
+          : _matchesBookingContext(_subBookingDetails?.content, id)
               ? _subBookingDetails?.content
               : null;
+
+      if (bookingContent == null) {
+        try {
+          final detailsResponse = await bookingDetailsRepo.getBookingDetails(id);
+          if (detailsResponse.statusCode == 200 && detailsResponse.body is Map) {
+            final parsed = BookingDetailsModel.fromJson(
+              Map<String, dynamic>.from(detailsResponse.body as Map),
+            );
+            bookingContent = parsed.content;
+            _bookingDetails = parsed;
+          }
+        } catch (_) {}
+      }
 
       double requiredWallet = providerCharge;
       if (bookingContent != null) {
@@ -162,15 +181,6 @@ class BookingDetailsController extends GetxController implements GetxService{
           id,
           alternateId: alternateBookingId,
         );
-        if (!BookingDetailsRepo.isActionSuccess(response)) {
-          response = await bookingDetailsRepo.changeBookingStatus(
-            id,
-            'accepted',
-            '',
-            null,
-            false,
-          );
-        }
         if (BookingDetailsRepo.isActionSuccess(response)) {
           BookingSoundService.stopAlert(bookingId: id);
           showCustomSnackBar(
@@ -222,15 +232,6 @@ class BookingDetailsController extends GetxController implements GetxService{
         id,
         alternateId: alternateBookingId,
       );
-      if (!BookingDetailsRepo.isActionSuccess(response)) {
-        response = await bookingDetailsRepo.changeBookingStatus(
-          id,
-          'canceled',
-          '',
-          null,
-          false,
-        );
-      }
       if (BookingDetailsRepo.isActionSuccess(response)) {
         BookingSoundService.stopAlert(bookingId: id);
         final message = response.body is Map

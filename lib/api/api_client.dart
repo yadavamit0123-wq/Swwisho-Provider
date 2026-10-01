@@ -98,7 +98,9 @@ class ApiClient extends GetxService {
       //debugPrint('====> API Call: $uri\nHeader: $_mainHeaders');
       // debugPrint('====> API Body: $body');
       http.MultipartRequest request = http.MultipartRequest('POST', Uri.parse(appBaseUrl!+uri!));
-      request.headers.addAll(headers ?? _mainHeaders);
+      final multipartHeaders = Map<String, String>.from(headers ?? _mainHeaders);
+      multipartHeaders.remove('Content-Type');
+      request.headers.addAll(multipartHeaders);
 
 
       if(logo != null){
