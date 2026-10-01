@@ -16,9 +16,18 @@ class BookingDetailsRepo{
     return await apiClient.getData("${AppConstants.subBookingDetailsUrl}$bookingID");
   }
 
+  static bool _bodyLooksLikeHtml(dynamic body) {
+    if (body is! String) return false;
+    final lower = body.trim().toLowerCase();
+    return lower.startsWith('<!doctype') ||
+        lower.startsWith('<html') ||
+        lower.contains('<head>');
+  }
+
   static bool isActionSuccess(Response response) {
     if (response.statusCode != 200) return false;
-    if (response.body is! Map) return true;
+    if (_bodyLooksLikeHtml(response.body)) return false;
+    if (response.body is! Map) return false;
     final body = Map<String, dynamic>.from(response.body as Map);
     final code = body['response_code']?.toString() ?? '';
     final errors = body['errors'];
@@ -53,21 +62,10 @@ class BookingDetailsRepo{
   }
 
   Future<Response> _acceptBookingOnce(String id) async {
-    Response response = await apiClient.putData(
-      "${AppConstants.acceptBookingRequestUrl}/$id",
-      {'method': 'put'},
-    );
-    if (isActionSuccess(response)) return response;
-
-    response = await apiClient.putData(
+    // Server rejects PUT (405 HTML) — POST first, same as live Demandium routes.
+    Response response = await apiClient.postData(
       "${AppConstants.acceptBookingRequestUrl}/$id",
       {},
-    );
-    if (isActionSuccess(response)) return response;
-
-    response = await apiClient.putData(
-      "${AppConstants.acceptBookingRequestUrl}/$id",
-      {'_method': 'put'},
     );
     if (isActionSuccess(response)) return response;
 
@@ -77,10 +75,29 @@ class BookingDetailsRepo{
     );
     if (isActionSuccess(response)) return response;
 
-    return await apiClient.postData(AppConstants.acceptBookingRequestUrl, {
+    response = await apiClient.postData(AppConstants.acceptBookingRequestUrl, {
+      'booking_id': id,
+    });
+    if (isActionSuccess(response)) return response;
+
+    response = await apiClient.postData(AppConstants.acceptBookingRequestUrl, {
       '_method': 'put',
       'booking_id': id,
     });
+    if (isActionSuccess(response)) return response;
+
+    response = await apiClient.postMultipartData(
+      "${AppConstants.changeBookingStatus}/$id",
+      {'booking_status': 'accepted', '_method': 'put', 'booking_otp': ''},
+      null,
+      null,
+    );
+    if (isActionSuccess(response)) return response;
+
+    return await apiClient.putData(
+      "${AppConstants.acceptBookingRequestUrl}/$id",
+      {'method': 'put'},
+    );
   }
 
   Future<Response> ignoreBookingRequest(String bookingID, {String? alternateId}) async {
@@ -100,22 +117,29 @@ class BookingDetailsRepo{
     );
     if (isActionSuccess(response)) return response;
 
-    response = await apiClient.putData(
-      "${AppConstants.ignoreBookingRequestUrl}/$id",
-      {'method': 'put'},
-    );
-    if (isActionSuccess(response)) return response;
-
-    response = await apiClient.putData(
+    response = await apiClient.postData(
       "${AppConstants.ignoreBookingRequestUrl}/$id",
       {'_method': 'put'},
     );
     if (isActionSuccess(response)) return response;
 
-    return await apiClient.postData(AppConstants.ignoreBookingRequestUrl, {
+    response = await apiClient.postData(AppConstants.ignoreBookingRequestUrl, {
+      'booking_id': id,
+    });
+    if (isActionSuccess(response)) return response;
+
+    response = await apiClient.postData(AppConstants.ignoreBookingRequestUrl, {
       '_method': 'put',
       'booking_id': id,
     });
+    if (isActionSuccess(response)) return response;
+
+    return await apiClient.postMultipartData(
+      "${AppConstants.changeBookingStatus}/$id",
+      {'booking_status': 'canceled', '_method': 'put', 'booking_otp': ''},
+      null,
+      null,
+    );
   }
 
   Future<Response> cancelSubBooking(String subBookingId) async {

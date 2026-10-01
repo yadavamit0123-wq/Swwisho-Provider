@@ -34,6 +34,9 @@ class ServiceCategoryController extends GetxController implements GetxService{
   List<ServiceModel>? _searchServiceList;
   List<ServiceModel>? get searchServiceList => _searchServiceList;
 
+  String? _activeServiceSubCategoryId;
+  String? get activeServiceSubCategoryId => _activeServiceSubCategoryId;
+
   bool _isActiveSuffixIcon = false;
   bool get isActiveSuffixIcon => _isActiveSuffixIcon;
 
@@ -241,6 +244,8 @@ class ServiceCategoryController extends GetxController implements GetxService{
   }) async {
 
     final resolvedSubCategoryId = subCategoryId.trim();
+    _activeServiceSubCategoryId =
+        resolvedSubCategoryId.isNotEmpty ? resolvedSubCategoryId : _activeServiceSubCategoryId;
 
     _serviceList = null;
     _searchServiceList = null;
@@ -261,28 +266,7 @@ class ServiceCategoryController extends GetxController implements GetxService{
     try {
       Response response = await serviceRepo.getServiceListBasedOnSubcategory(resolvedSubCategoryId);
       if(response.statusCode == 200){
-        final parsed = <ServiceModel>[];
-        final body = response.body;
-        if (body is Map && body['content'] is Map && body['content']['data'] is List) {
-          for (final service in body['content']['data'] as List) {
-            try {
-              if (service is Map) {
-                parsed.add(ServiceModel.fromJson(Map<String, dynamic>.from(service)));
-              }
-            } catch (_) {}
-          }
-        } else {
-          final list = _extractServiceRows(response.body);
-          if (list != null) {
-            for (var service in list) {
-              try {
-                if (service is Map) {
-                  parsed.add(ServiceModel.fromJson(Map<String, dynamic>.from(service)));
-                }
-              } catch (_) {}
-            }
-          }
-        }
+        final parsed = _parseServiceModelsFromBody(response.body);
         if (parsed.isNotEmpty) {
           _serviceList = parsed;
         } else {
@@ -320,31 +304,67 @@ class ServiceCategoryController extends GetxController implements GetxService{
     _isSearchComplete = false;
     update();
 
+    final resolvedId = subCategoryId.trim().isNotEmpty
+        ? subCategoryId.trim()
+        : (_activeServiceSubCategoryId ?? '');
+
+    if (resolvedId.isEmpty && (_serviceList?.isNotEmpty ?? false)) {
+      _searchServiceList = _filterServicesLocally(_serviceList!, queryText);
+      _isSearchComplete = true;
+      update();
+      return;
+    }
+
     try {
-      Response response = await serviceRepo.getServiceListBasedOnSubcategory(subCategoryId,queryText: queryText ?? "");
-      if(response.statusCode == 200){
-        _searchServiceList = [];
-        final list = _extractServiceRows(response.body);
-        if (list != null) {
-          for (var service in list) {
-            try {
-              if (service is Map) {
-                _searchServiceList?.add(ServiceModel.fromJson(Map<String, dynamic>.from(service)));
-              }
-            } catch (_) {}
-          }
+      if (resolvedId.isNotEmpty) {
+        Response response = await serviceRepo.getServiceListBasedOnSubcategory(
+          resolvedId,
+          queryText: queryText ?? '',
+        );
+        if (response.statusCode == 200) {
+          _searchServiceList = _parseServiceModelsFromBody(response.body);
+        } else {
+          _searchServiceList = [];
+          ApiChecker.checkApi(response);
         }
-      }
-      else {
+      } else {
         _searchServiceList = [];
-        ApiChecker.checkApi(response);
       }
     } catch (_) {
       _searchServiceList = [];
     }
 
+    if ((_searchServiceList == null || _searchServiceList!.isEmpty) &&
+        (_serviceList?.isNotEmpty ?? false)) {
+      _searchServiceList = _filterServicesLocally(_serviceList!, queryText);
+    }
+
     _isSearchComplete = true;
     update();
+  }
+
+  List<ServiceModel> _parseServiceModelsFromBody(dynamic body) {
+    final parsed = <ServiceModel>[];
+    final list = _extractServiceRows(body);
+    if (list == null) return parsed;
+    for (var service in list) {
+      try {
+        if (service is Map) {
+          parsed.add(ServiceModel.fromJson(Map<String, dynamic>.from(service)));
+        }
+      } catch (_) {}
+    }
+    return parsed;
+  }
+
+  List<ServiceModel> _filterServicesLocally(List<ServiceModel> source, String? queryText) {
+    final query = (queryText ?? '').trim().toLowerCase();
+    if (query.isEmpty) return List<ServiceModel>.from(source);
+    return source.where((service) {
+      final name = (service.name ?? '').toLowerCase();
+      final description = (service.shortDescription ?? service.description ?? '').toLowerCase();
+      return name.contains(query) || description.contains(query);
+    }).toList();
   }
 
 

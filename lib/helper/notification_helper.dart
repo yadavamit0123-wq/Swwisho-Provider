@@ -53,7 +53,7 @@ class NotificationHelper {
             Get.to(()=>const CustomerRequestListScreen());
           }
           else if(notificationBody.notificationType=='booking' && notificationBody.bookingId != null && notificationBody.bookingId != ''){
-            BookingSoundService.playBookingAlert(notificationBody.bookingId!);
+            BookingSoundService.stopAlert(bookingId: notificationBody.bookingId!);
 
             if(notificationBody.bookingType == "repeat" && notificationBody.repeatBookingType == "single"){
               Get.toNamed(RouteHelper.getBookingDetailsRoute( subBookingId : notificationBody.bookingId, fromPage : "fromNotification"));
@@ -237,7 +237,7 @@ class NotificationHelper {
           }
 
           else if(notificationBody.notificationType =='booking' && notificationBody.bookingId!=null && notificationBody.bookingId!=''){
-            BookingSoundService.playBookingAlert(notificationBody.bookingId!);
+            BookingSoundService.stopAlert(bookingId: notificationBody.bookingId!);
 
             if(notificationBody.bookingType == "repeat" && notificationBody.repeatBookingType == "single"){
               Get.toNamed(RouteHelper.getBookingDetailsRoute( subBookingId : notificationBody.bookingId, fromPage : "fromNotification"));

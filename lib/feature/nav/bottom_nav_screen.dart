@@ -9,6 +9,7 @@ class BottomNavScreen extends StatefulWidget {
   static Future<void> loadData({int pageIndex = 0}) async {
     Get.find<LocalizationController>().filterLanguage(shouldUpdate: false);
     Get.find<DashboardController>().getDashboardData(reload: true);
+    await BookingSoundService.prepareForAppLaunch();
     Get.find<BookingRequestController>().getBookingRequestList('pending', 1, isFirst: true);
     BookingSoundService.startWatchingPending();
 

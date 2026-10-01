@@ -26,6 +26,14 @@ class BookingSoundService {
     return true;
   }
 
+  /// Call on app launch — stop any loop and treat the next pending fetch as baseline (no replay).
+  static Future<void> prepareForAppLaunch() async {
+    await stopAlert();
+    _pendingSnapshotReady = false;
+    _knownPendingIds = {};
+    _lastImmediateSoundAt = null;
+  }
+
   static void startWatchingPending() {
     if (_pollTimer != null && _pollTimer!.isActive) return;
     _pollTimer?.cancel();
@@ -153,8 +161,9 @@ class BookingSoundService {
         stopAlert(bookingId: id);
       }
     } else {
+      // Existing pendings on cold start / first fetch — track only, do not play sound.
       for (final id in incoming) {
-        playBookingAlert(id);
+        _markRecentAlert(id);
       }
     }
 

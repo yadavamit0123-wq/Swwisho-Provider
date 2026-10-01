@@ -1,6 +1,8 @@
 
+import 'dart:async';
 import 'dart:ui';
 
+import 'package:demandium_provider/helper/booking_sound_service.dart';
 import 'package:get/get.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 
@@ -18,6 +20,7 @@ class _BookingRequestScreenState extends State<BookingRequestScreen>{
   void initState() {
     super.initState();
 
+    unawaited(BookingSoundService.stopAlert());
     Get.find<BookingRequestController>().updateBookingRequestIndex(1);
     Get.find<BookingRequestController>().updateSelectedServiceType();
     Get.find<BookingRequestController>().getBookingRequestList('pending',1,reload: true, isFirst: true);

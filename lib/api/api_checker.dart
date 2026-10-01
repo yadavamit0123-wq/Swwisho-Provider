@@ -35,8 +35,20 @@ class ApiChecker {
         return message.toString();
       }
     } else if (body is String && body.trim().isNotEmpty) {
-      return body.trim();
+      final text = body.trim();
+      if (_looksLikeHtml(text)) {
+        return null;
+      }
+      return text;
     }
     return null;
+  }
+
+  static bool _looksLikeHtml(String text) {
+    final lower = text.toLowerCase();
+    return lower.startsWith('<!doctype') ||
+        lower.startsWith('<html') ||
+        lower.contains('<head>') ||
+        lower.contains('<body');
   }
 }

@@ -81,7 +81,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 ),
               ),
 
-              ServiceSearchWidget(subcategoryId:  widget.subcategoryModel?.id ?? widget.subscriptionModelData?.subCategoryId ??"",),
+              ServiceSearchWidget(
+                subcategoryId: _resolvedSubCategoryId().isNotEmpty
+                    ? _resolvedSubCategoryId()
+                    : (Get.find<ServiceCategoryController>().activeServiceSubCategoryId ?? ''),
+              ),
               const SizedBox(height: Dimensions.paddingSizeDefault,),
 
               allServiceController.searchServiceList == null && !allServiceController.isSearchComplete ?
