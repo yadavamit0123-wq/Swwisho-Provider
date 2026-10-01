@@ -7,7 +7,15 @@ class BookingRequestRepo{
   BookingRequestRepo({required this.apiClient});
 
   Future<Response> getBookingRequestData(String requestType, int offset, ServiceType serviceType) async {
-    return await apiClient.postData(AppConstants.bookingListUrl,
-        {"limit" : 10, "offset" : offset, "booking_status" : requestType, "service_type" : serviceType.name});
+    final limit = Get.find<SplashController>().configModel.content?.paginationLimit ?? 10;
+    final body = <String, dynamic>{
+      'limit': limit,
+      'offset': offset,
+      'booking_status': requestType,
+    };
+    if (serviceType != ServiceType.all) {
+      body['service_type'] = serviceType.name;
+    }
+    return await apiClient.postData(AppConstants.bookingListUrl, body);
   }
 }

@@ -133,32 +133,28 @@ class BookingDetailsController extends GetxController implements GetxService{
     _isAcceptButtonLoading = true;
     update();
     try {
+      final id = bookingId.toString();
       final walletBalance = userProfile?.walletBalance ?? 0;
+      final providerCharge = double.tryParse(userProfile?.providerCharge ?? '0') ?? 0;
 
-      BookingDetailsContent? bookingContent = _bookingDetails?.content?.id == bookingId
+      BookingDetailsContent? bookingContent = _bookingDetails?.content?.id?.toString() == id
           ? _bookingDetails?.content
-          : _subBookingDetails?.content?.id == bookingId
+          : _subBookingDetails?.content?.id?.toString() == id
               ? _subBookingDetails?.content
               : null;
 
-      int tdsPercent = 1;
-      try {
-        tdsPercent = Get.find<SplashController>().customerConfigModel.content?.tds ?? 1;
-      } catch (_) {}
-
-      double requiredWallet = 0;
-      try {
-        requiredWallet = bookingContent != null
-            ? BookingHelper.getWalletDeductionRequired(bookingContent, tdsPercent: tdsPercent)
-            : double.tryParse(userProfile?.providerCharge ?? '0') ?? 0;
-      } catch (_) {
-        requiredWallet = double.tryParse(userProfile?.providerCharge ?? '0') ?? 0;
+      double requiredWallet = providerCharge;
+      if (bookingContent != null) {
+        try {
+          final tdsPercent = Get.find<SplashController>().customerConfigModel.content?.tds ?? 1;
+          requiredWallet = BookingHelper.getWalletDeductionRequired(bookingContent, tdsPercent: tdsPercent);
+        } catch (_) {}
       }
 
-      if (requiredWallet > 0 && walletBalance < requiredWallet) {
+      if (requiredWallet > walletBalance) {
         showCustomSnackBar('Your wallet balance is low. Recharge wallet to accept booking', type: ToasterMessageType.error);
       } else {
-        Response response = await bookingDetailsRepo.acceptBookingRequest(bookingId);
+        Response response = await bookingDetailsRepo.acceptBookingRequest(id);
         final code = response.body is Map ? response.body['response_code']?.toString() ?? '' : '';
         final accepted = response.statusCode == 200 &&
             response.body is Map &&
@@ -167,17 +163,17 @@ class BookingDetailsController extends GetxController implements GetxService{
                 code.contains("success") ||
                 code.endsWith('_200'));
         if (accepted) {
-          BookingSoundService.stopAlert(bookingId: bookingId);
+          BookingSoundService.stopAlert(bookingId: id);
           showCustomSnackBar(
             response.body is Map ? (response.body["message"] ?? "Booking accepted") : "Booking accepted",
             type: ToasterMessageType.success,
           );
           Get.find<BookingRequestController>().removeBookingItemFromList(
-            bookingId,
+            id,
             bookingStatus: 'accepted',
             shouldUpdate: true,
           );
-          getBookingDetails(bookingId, reload: false);
+          getBookingDetails(id, reload: false);
           Get.find<BookingRequestController>().getBookingRequestList(
             Get.find<BookingRequestController>().bookingStatus,
             1,
@@ -202,17 +198,15 @@ class BookingDetailsController extends GetxController implements GetxService{
     _isIgnoreButtonLoading = true;
     update();
     try {
-      Response response = await bookingDetailsRepo.ignoreBookingRequest(bookingId);
-      final ignored = response.statusCode == 200 &&
-          response.body is Map &&
-          ((response.body['response_code']?.toString() ?? '').contains('success') ||
-              (response.body['response_code']?.toString() ?? '').endsWith('_200'));
+      final id = bookingId.toString();
+      Response response = await bookingDetailsRepo.ignoreBookingRequest(id);
+      final ignored = response.statusCode == 200 && response.body is Map;
       if (ignored) {
-        BookingSoundService.stopAlert(bookingId: bookingId);
+        BookingSoundService.stopAlert(bookingId: id);
         final message = response.body["message"]?.toString() ?? 'successfully_updated'.tr;
         showCustomSnackBar(message, type: ToasterMessageType.success);
         Get.find<BookingRequestController>().removeBookingItemFromList(
-          bookingId,
+          id,
           bookingStatus: 'canceled',
           shouldUpdate: true,
         );

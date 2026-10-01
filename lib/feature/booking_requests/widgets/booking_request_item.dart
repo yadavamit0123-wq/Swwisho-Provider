@@ -217,7 +217,12 @@ class BookingRequestItem extends StatelessWidget {
                               address: BookingContactHelper.resolveCustomerAddressFromRequest(booking),
                             ),
                             onYesPressed: (){
-                              Get.find<BookingDetailsController>().acceptBookingRequest(booking.id!);
+                              final bookingId = booking.id?.toString() ?? '';
+                              if (bookingId.isEmpty) {
+                                showCustomSnackBar('something_went_wrong'.tr, type: ToasterMessageType.error);
+                                return;
+                              }
+                              Get.find<BookingDetailsController>().acceptBookingRequest(bookingId);
                               Get.back();
                             },
                             onNoPressed: () => Get.back(),
@@ -234,7 +239,12 @@ class BookingRequestItem extends StatelessWidget {
                           icon: Images.warning,
                           noButtonText: "cancel",
                           onYesPressed: () {
-                            Get.find<BookingDetailsController>().ignoreBookingRequest(booking.id!);
+                            final bookingId = booking.id?.toString() ?? '';
+                            if (bookingId.isEmpty) {
+                              showCustomSnackBar('something_went_wrong'.tr, type: ToasterMessageType.error);
+                              return;
+                            }
+                            Get.find<BookingDetailsController>().ignoreBookingRequest(bookingId);
                             Get.back();
                             Get.back();
                           },

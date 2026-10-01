@@ -55,6 +55,11 @@ class BookingSoundService {
       }
       startWatchingPending();
       try {
+        if (Get.isRegistered<BookingRequestController>()) {
+          Get.find<BookingRequestController>().syncPendingAlerts();
+        }
+      } catch (_) {}
+      try {
         await LocalNotificationInbox.addSimple(
           id: 'booking_$bookingId',
           title: 'New booking',

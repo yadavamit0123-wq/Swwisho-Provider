@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 import 'package:demandium_provider/feature/notifications/model/notofication_model.dart';
 import 'package:demandium_provider/feature/notifications/repository/local_notification_inbox.dart';
+import 'package:demandium_provider/helper/booking_list_parser.dart';
 
 
 class NotificationController extends GetxController implements GetxService{
@@ -144,14 +145,7 @@ class NotificationController extends GetxController implements GetxService{
       if (Get.isRegistered<BookingRequestRepo>()) {
         final response = await Get.find<BookingRequestRepo>().getBookingRequestData('pending', 1, ServiceType.all);
         if (response.statusCode == 200 && response.body is Map) {
-          final content = response.body['content'];
-          dynamic bookingsNode = content is Map ? content['bookings'] : null;
-          List<dynamic> bookingList = const [];
-          if (bookingsNode is Map && bookingsNode['data'] is List) {
-            bookingList = bookingsNode['data'];
-          } else if (bookingsNode is List) {
-            bookingList = bookingsNode;
-          }
+          final bookingList = BookingListParser.extractBookingRows(response.body);
           for (final item in bookingList) {
             if (item is! Map) continue;
             try {

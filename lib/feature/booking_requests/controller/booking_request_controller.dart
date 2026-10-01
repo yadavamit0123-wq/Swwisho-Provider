@@ -1,3 +1,4 @@
+import 'package:demandium_provider/helper/booking_list_parser.dart';
 import 'package:demandium_provider/helper/booking_sound_service.dart';
 import 'package:get/get.dart';
 import 'package:demandium_provider/utils/core_export.dart';
@@ -73,20 +74,13 @@ class BookingRequestController extends GetxController with GetSingleTickerProvid
 
     if(response.statusCode == 200 && response.body is Map){
       try {
-      final content = response.body['content'];
-      if (content is Map && content['bookings_count'] is Map) {
-        _bookingCount = BookingCount.fromJson(Map<String, dynamic>.from(content['bookings_count']));
+      final counts = BookingListParser.extractBookingCounts(response.body);
+      if (counts != null) {
+        _bookingCount = BookingCount.fromJson(counts);
       }
 
-      dynamic bookingsNode = content is Map ? content['bookings'] : null;
-      List<dynamic> bookingList = const [];
-      if (bookingsNode is Map && bookingsNode['data'] is List) {
-        bookingList = bookingsNode['data'];
-        _pageSize = int.tryParse(bookingsNode['last_page']?.toString() ?? '') ?? 1;
-      } else if (bookingsNode is List) {
-        bookingList = bookingsNode;
-        _pageSize = 1;
-      }
+      final bookingList = BookingListParser.extractBookingRows(response.body);
+      _pageSize = BookingListParser.extractLastPage(response.body, fallback: _pageSize ?? 1);
 
       if(_offset == 1){
         _bookingRequestList = [];
@@ -102,7 +96,8 @@ class BookingRequestController extends GetxController with GetSingleTickerProvid
 
       if (requestType.toLowerCase() == 'pending') {
         _bookingRequestList!.removeWhere((booking) {
-          final status = (booking.bookingStatus ?? '').toLowerCase();
+          final status = (booking.bookingStatus ?? '').toLowerCase().trim();
+          if (status.isEmpty) return false;
           return status == 'canceled' ||
               status == 'cancelled' ||
               status == 'completed' ||
@@ -132,14 +127,7 @@ class BookingRequestController extends GetxController with GetSingleTickerProvid
     try {
       final response = await bookingRequestRepo.getBookingRequestData('pending', 1, selectedServiceType);
       if (response.statusCode != 200 || response.body is! Map) return;
-      final content = response.body['content'];
-      dynamic bookingsNode = content is Map ? content['bookings'] : null;
-      List<dynamic> bookingList = const [];
-      if (bookingsNode is Map && bookingsNode['data'] is List) {
-        bookingList = bookingsNode['data'];
-      } else if (bookingsNode is List) {
-        bookingList = bookingsNode;
-      }
+      final bookingList = BookingListParser.extractBookingRows(response.body);
       final pending = <BookingRequestModel>[];
       for (final item in bookingList) {
         if (item is! Map) continue;
@@ -170,7 +158,7 @@ class BookingRequestController extends GetxController with GetSingleTickerProvid
 
   removeBookingItemFromList(String bookingId,  {bool shouldUpdate = false, required String bookingStatus}){
 
-    _bookingRequestList?.removeWhere((element) => element.id == bookingId);
+    _bookingRequestList?.removeWhere((element) => element.id?.toString() == bookingId.toString());
     if(shouldUpdate){
       update();
     }

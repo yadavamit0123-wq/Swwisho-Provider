@@ -17,36 +17,48 @@ class BookingDetailsRepo{
   }
 
   Future<Response> acceptBookingRequest(String bookingID) async {
+    final id = bookingID.toString();
     Response response = await apiClient.putData(
-      "${AppConstants.acceptBookingRequestUrl}/$bookingID",
+      "${AppConstants.acceptBookingRequestUrl}/$id",
+      {'method': 'put'},
+    );
+    if (_isSuccess(response)) return response;
+    response = await apiClient.putData(
+      "${AppConstants.acceptBookingRequestUrl}/$id",
       {'_method': 'put'},
     );
     if (_isSuccess(response)) return response;
     response = await apiClient.postData(
-      "${AppConstants.acceptBookingRequestUrl}/$bookingID",
+      "${AppConstants.acceptBookingRequestUrl}/$id",
       {'_method': 'put'},
     );
     if (_isSuccess(response)) return response;
     return await apiClient.postData(AppConstants.acceptBookingRequestUrl, {
       '_method': 'put',
-      'booking_id': bookingID,
+      'booking_id': id,
     });
   }
 
   Future<Response> ignoreBookingRequest(String bookingID) async {
+    final id = bookingID.toString();
     Response response = await apiClient.postData(
-      "${AppConstants.ignoreBookingRequestUrl}/$bookingID",
+      "${AppConstants.ignoreBookingRequestUrl}/$id",
       {},
     );
-    if (_isSuccess(response)) return response;
+    if (response.statusCode == 200) return response;
     response = await apiClient.putData(
-      "${AppConstants.ignoreBookingRequestUrl}/$bookingID",
+      "${AppConstants.ignoreBookingRequestUrl}/$id",
+      {'method': 'put'},
+    );
+    if (response.statusCode == 200) return response;
+    response = await apiClient.putData(
+      "${AppConstants.ignoreBookingRequestUrl}/$id",
       {'_method': 'put'},
     );
-    if (_isSuccess(response)) return response;
+    if (response.statusCode == 200) return response;
     return await apiClient.postData(AppConstants.ignoreBookingRequestUrl, {
       '_method': 'put',
-      'booking_id': bookingID,
+      'booking_id': id,
     });
   }
 

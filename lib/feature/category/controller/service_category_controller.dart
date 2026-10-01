@@ -70,11 +70,15 @@ class ServiceCategoryController extends GetxController implements GetxService{
     if(response.statusCode == 200){
       serviceCategoryList = [];
       dynamic list;
-      final content = response.body['content'];
-      if (content is Map) {
-        list = content['data'];
-      } else if (content is List) {
-        list = content;
+      final body = response.body;
+      if (body is Map) {
+        final content = body['content'];
+        if (content is Map) {
+          list = content['data'] ?? content['categories'];
+        } else if (content is List) {
+          list = content;
+        }
+        list ??= body['data'];
       }
       if (list is List) {
         for (var category in list) {
@@ -118,12 +122,16 @@ class ServiceCategoryController extends GetxController implements GetxService{
 
       try {
         dynamic list;
-        final content = response.body['content'];
-        if (content is Map) {
-          list = content['data'];
-          _pageSize = int.tryParse('${content['last_page']}') ?? _pageSize;
-        } else if (content is List) {
-          list = content;
+        final body = response.body;
+        if (body is Map) {
+          final content = body['content'];
+          if (content is Map) {
+            list = content['data'] ?? content['sub_categories'] ?? content['childes'];
+            _pageSize = int.tryParse('${content['last_page']}') ?? _pageSize;
+          } else if (content is List) {
+            list = content;
+          }
+          list ??= body['data'];
         }
         if (list is List) {
           for (var subCategory in list) {
@@ -199,15 +207,9 @@ class ServiceCategoryController extends GetxController implements GetxService{
     try {
       Response response = await serviceRepo.getServiceListBasedOnSubcategory(subCategoryId);
       if(response.statusCode == 200){
-        dynamic list;
-        final content = response.body['content'];
-        if (content is Map) {
-          list = content['data'];
-        } else if (content is List) {
-          list = content;
-        }
         _serviceList = [];
-        if (list is List) {
+        final list = _extractServiceRows(response.body);
+        if (list != null) {
           for (var service in list) {
             try {
               if (service is Map) {
@@ -228,6 +230,20 @@ class ServiceCategoryController extends GetxController implements GetxService{
     update();
   }
 
+  List<dynamic>? _extractServiceRows(dynamic body) {
+    if (body is! Map) return null;
+    final content = body['content'];
+    dynamic list;
+    if (content is Map) {
+      list = content['data'] ?? content['services'] ?? content['service'];
+    } else if (content is List) {
+      list = content;
+    }
+    list ??= body['data'];
+    if (list is List) return list;
+    return null;
+  }
+
   Future<void> getSearchedServiceListBasedOnSubcategory({required String subCategoryId, bool shouldUpdate = false, String? queryText}) async {
 
     _searchServiceList = null;
@@ -237,15 +253,9 @@ class ServiceCategoryController extends GetxController implements GetxService{
     try {
       Response response = await serviceRepo.getServiceListBasedOnSubcategory(subCategoryId,queryText: queryText ?? "");
       if(response.statusCode == 200){
-        dynamic list;
-        final content = response.body['content'];
-        if (content is Map) {
-          list = content['data'];
-        } else if (content is List) {
-          list = content;
-        }
         _searchServiceList = [];
-        if (list is List) {
+        final list = _extractServiceRows(response.body);
+        if (list != null) {
           for (var service in list) {
             try {
               if (service is Map) {

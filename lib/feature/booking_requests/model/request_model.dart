@@ -50,10 +50,10 @@ class BookingRequestModel {
   });
 
   BookingRequestModel.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    readableId = json['readable_id'].toString();
-    zoneId = json['zone_id'];
-    bookingStatus = json['booking_status'];
+    id = json['id']?.toString();
+    readableId = json['readable_id']?.toString();
+    zoneId = json['zone_id']?.toString();
+    bookingStatus = json['booking_status']?.toString();
     isPaid = json['is_paid'];
     paymentMethod = json['payment_method'];
     totalBookingAmount = double.tryParse(json['total_booking_amount'].toString());
@@ -61,7 +61,7 @@ class BookingRequestModel {
     totalDiscountAmount = double.tryParse(json['total_discount_amount'].toString());
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
-    subCategoryId = json['sub_category_id'];
+    subCategoryId = json['sub_category_id']?.toString();
     totalCampaignDiscountAmount = double.tryParse(json['total_campaign_discount_amount'].toString());
     totalCouponDiscountAmount = double.tryParse(json['total_coupon_discount_amount'].toString());
     isGuest = int.tryParse(json['is_guest'].toString());
@@ -73,9 +73,15 @@ class BookingRequestModel {
         repeatBookingList!.add(RepeatBooking.fromJson(v));
       });
     }
-    subCategory = json['sub_category'] != null
-        ? SubCategory.fromJson(json['sub_category'])
-        : null;
+    if (json['sub_category'] is Map) {
+      try {
+        subCategory = SubCategory.fromJson(
+          Map<String, dynamic>.from(json['sub_category'] as Map),
+        );
+      } catch (_) {
+        subCategory = null;
+      }
+    }
     serviceLocation = json['service_location'];
     serviceAddress = json['service_address'] is Map
         ? ServiceAddress.fromJson(Map<String, dynamic>.from(json['service_address']))

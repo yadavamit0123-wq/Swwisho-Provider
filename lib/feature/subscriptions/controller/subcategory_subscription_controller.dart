@@ -60,7 +60,7 @@ class  SubcategorySubscriptionController extends GetxController implements GetxS
     }
     try {
       Response response = await subscriptionRepo.getSubcategorySubscriptionList(offset, categoryId: categoryId);
-      if(response.statusCode==200 && response.body['response_code']=="default_200"){
+      if(response.statusCode==200 && response.body is Map){
         dynamic list;
         final content = response.body['content'];
         if (content is Map) {
@@ -74,10 +74,9 @@ class  SubcategorySubscriptionController extends GetxController implements GetxS
         }
         if (list is List) {
           for (var element in list) {
+            if (element is! Map) continue;
             try {
-              if (element is Map && element['sub_category'] != null) {
-                _subscriptionList.add(SubscriptionModelData.fromJson(Map<String, dynamic>.from(element)));
-              }
+              _subscriptionList.add(SubscriptionModelData.fromJson(Map<String, dynamic>.from(element)));
             } catch (_) {}
           }
         }
