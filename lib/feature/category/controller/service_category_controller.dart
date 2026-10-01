@@ -158,41 +158,79 @@ class ServiceCategoryController extends GetxController implements GetxService{
   }
 
 
+  bool _subscriptionApiSuccess(Response response) {
+    if (response.statusCode != 200) return false;
+    if (response.body is! Map) return true;
+    final code = response.body['response_code']?.toString() ?? '';
+    if (code.isEmpty) return true;
+    return code == 'default_200' || code.contains('success') || code.endsWith('_200');
+  }
+
+  String _responseMessage(Response response, {required bool success}) {
+    if (response.body is Map && response.body['message'] != null) {
+      return response.body['message'].toString();
+    }
+    return success ? 'successfully_updated'.tr : 'something_went_wrong'.tr;
+  }
+
+  Future<void> _refreshSubscriptionsAfterChange() async {
+    try {
+      if (Get.isRegistered<SubcategorySubscriptionController>()) {
+        await Get.find<SubcategorySubscriptionController>().getMySubscriptionData(1, false);
+      }
+      if (Get.isRegistered<DashboardController>()) {
+        Get.find<DashboardController>().getDashboardData();
+      }
+    } catch (_) {}
+  }
+
   Future<ResponseModel> changeSubscriptionStatus(String id, int index,{String fromPage = ""}) async {
       _isSubscriptionLoading = true;
       update();
+      try {
       Response response  = await serviceRepo.changeSubscriptionStatus(id);
+      final success = _subscriptionApiSuccess(response);
 
-      if(response.statusCode==200){
+      if(success){
+        final unsubscribing = fromPage == "category"
+            ? serviceSubCategoryList[index].isSubscribed == 1
+            : true;
+
         if(fromPage == "category"){
-          int statusValue = serviceSubCategoryList[index].isSubscribed == 1 ? 0 : 1;
-          serviceSubCategoryList[index].isSubscribed = statusValue;
-          Get.find<DashboardController>().getDashboardData();
-          Get.find<SubcategorySubscriptionController>().removeSubscriptionItem(id);
+          serviceSubCategoryList[index].isSubscribed = unsubscribing ? 0 : 1;
+        }
 
-        }else if(fromPage == "dashboard"){
+        if (unsubscribing) {
+          if(fromPage == "dashboard"){
             Get.find<DashboardController>().removeSubscriptionItem(id);
             Get.find<SubcategorySubscriptionController>().removeSubscriptionItem(id);
             Get.back();
-        }else if (fromPage == "subscription_list"){
-          Get.find<SubcategorySubscriptionController>().removeSubscriptionItem(id);
-          Get.find<DashboardController>().removeSubscriptionItem(id);
+          } else if (fromPage == "subscription_list"){
+            Get.find<SubcategorySubscriptionController>().removeSubscriptionItem(id);
+            Get.find<DashboardController>().removeSubscriptionItem(id);
+          } else if (fromPage == "subscription_details"){
+            Get.find<SubcategorySubscriptionController>().removeSubscriptionItem(id);
+            Get.find<DashboardController>().removeSubscriptionItem(id);
+            Get.back();
+          } else {
+            await _refreshSubscriptionsAfterChange();
+          }
+        } else {
+          await _refreshSubscriptionsAfterChange();
         }
-        else if (fromPage == "subscription_details"){
-          Get.find<SubcategorySubscriptionController>().removeSubscriptionItem(id);
-          Get.find<DashboardController>().removeSubscriptionItem(id);
-          Get.back();
-        }
-        changeSubscriptionIndex(-1);
-        _isSubscriptionLoading = false;
-        update();
 
-        return ResponseModel(true, "${response.body['message']}");
+        changeSubscriptionIndex(-1);
+        return ResponseModel(true, _responseMessage(response, success: true));
       } else{
         changeSubscriptionIndex(-1);
+        ApiChecker.checkApi(response);
+        return ResponseModel(false, _responseMessage(response, success: false));
+      }
+      } catch (_) {
+        return ResponseModel(false, 'something_went_wrong'.tr);
+      } finally {
         _isSubscriptionLoading = false;
         update();
-        return ResponseModel(false, "${response.body['message']}");
       }
   }
 

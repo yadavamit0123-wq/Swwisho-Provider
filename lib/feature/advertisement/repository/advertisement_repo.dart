@@ -43,8 +43,14 @@ class AdvertisementRepo {
 
 
   Future<Response> changeAdvertisementStatus ({required String id, required String status, required Map<String, String> body }) async {
-    return await apiClient.putData(
-      '${AppConstants.changeAdvertisementStatus}/$id/$status', body
+    final uri = '${AppConstants.changeAdvertisementStatus}/$id/$status';
+    Response response = await apiClient.putData(uri, body);
+    if (response.statusCode == 200) return response;
+    response = await apiClient.postData(uri, {...body, '_method': 'put'});
+    if (response.statusCode == 200) return response;
+    return await apiClient.postData(
+      AppConstants.changeAdvertisementStatus,
+      {...body, '_method': 'put', 'advertisement_id': id, 'status': status},
     );
   }
 

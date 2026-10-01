@@ -55,11 +55,39 @@ class _BusinessPlanScreenState extends State<BusinessPlanScreen> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: CustomAppBar(title: "business_plan".tr, elevation: 0,),
         body: GetBuilder<UserProfileController>(builder: (userProfileController){
-          if (userProfileController.providerModel?.content?.subscriptionInfo == null) {
+          final content = userProfileController.providerModel?.content;
+          if (userProfileController.isLoading && content == null) {
             return const Center(child: CircularProgressIndicator());
-          } else {
-            return userProfileController.providerModel?.content?.subscriptionInfo != null && userProfileController.providerModel?.content?.subscriptionInfo?.status == "commission_base" &&  userProfileController.providerModel?.content?.subscriptionInfo?.totalSubscription == 0 ?
-            const CommissionInfoWidget() : DefaultTabController(
+          }
+          if (content == null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('something_went_wrong'.tr, style: robotoRegular),
+                  const SizedBox(height: Dimensions.paddingSizeDefault),
+                  CustomButton(
+                    btnTxt: 'retry'.tr,
+                    width: 140,
+                    onPressed: () {
+                      userProfileController.getProviderInfo(reload: true);
+                      Get.find<BusinessSubscriptionController>().getSubscriptionPackageList(reload: true);
+                    },
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final subscriptionInfo = content.effectiveSubscriptionInfo;
+          final isCommissionOnly = subscriptionInfo.status == "commission_base" &&
+              (subscriptionInfo.totalSubscription ?? 0) == 0;
+
+          if (isCommissionOnly) {
+            return const CommissionInfoWidget();
+          }
+
+          return DefaultTabController(
               length: 2,
               child: Column(children: [
 
@@ -97,7 +125,7 @@ class _BusinessPlanScreenState extends State<BusinessPlanScreen> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      userProfileController.providerModel?.content?.subscriptionInfo?.status == "commission_base" ?
+                      subscriptionInfo.status == "commission_base" ?
                       const CommissionInfoWidget() :  BusinessPlanDetailsWidget(tooltipController: tooltipController,),
                       const SubscriptionTransactionListScreen(),
                     ],
@@ -105,7 +133,6 @@ class _BusinessPlanScreenState extends State<BusinessPlanScreen> {
                 ),
               ]),
             );
-          }
         }),
       ),
     );

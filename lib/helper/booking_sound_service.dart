@@ -99,23 +99,26 @@ class BookingSoundService {
 
   static void onPendingListUpdated(List<String> pendingBookingIds) {
     final incoming = pendingBookingIds.where((id) => id.isNotEmpty).toSet();
+
     if (_pendingSnapshotReady) {
       final newIds = incoming.difference(_knownPendingIds);
       for (final id in newIds) {
         playBookingAlert(id);
       }
+      // Stop only when a booking leaves the pending set (accept/ignore/etc.),
+      // not when the API briefly returns empty while FCM already alerted.
+      final removedFromPending = _knownPendingIds.difference(incoming);
+      for (final id in removedFromPending) {
+        stopAlert(bookingId: id);
+      }
+    } else {
+      for (final id in incoming) {
+        playBookingAlert(id);
+      }
     }
+
     _pendingSnapshotReady = true;
     _knownPendingIds = incoming;
-
-    if (_activeBookingIds.isEmpty) {
-      return;
-    }
-
-    _activeBookingIds.removeWhere((id) => !pendingBookingIds.contains(id));
-    if (_activeBookingIds.isEmpty) {
-      stopAlert();
-    }
   }
 
   static bool isBookingNotification(String? type) {
@@ -124,16 +127,48 @@ class BookingSoundService {
         normalized == 'servicerequest' ||
         normalized == 'service_request' ||
         normalized == 'new_booking' ||
-        normalized == 'booking_request';
+        normalized == 'booking_request' ||
+        normalized == 'new_booking_request' ||
+        normalized == 'provider_booking';
   }
 
   static String? extractBookingId(Map<String, dynamic> data) {
-    final id = data['booking_id']?.toString() ??
-        data['bookingId']?.toString() ??
-        data['id']?.toString();
-    if (id == null || id.isEmpty || id == 'null') {
-      return null;
+    for (final key in const [
+      'booking_id',
+      'bookingId',
+      'id',
+      'readable_id',
+      'readableId',
+      'reference_id',
+      'referenceId',
+    ]) {
+      final raw = data[key]?.toString();
+      if (raw != null && raw.isNotEmpty && raw != 'null') {
+        return raw;
+      }
     }
-    return id;
+    return null;
+  }
+
+  /// Booking alert sound (Settings toggle). Independent of per-type push setup.
+  static Future<void> playBookingAlertFromMessage(Map<String, dynamic> data) async {
+    final bookingId = extractBookingId(data);
+    if (bookingId != null && bookingId.isNotEmpty) {
+      await playBookingAlert(bookingId);
+      return;
+    }
+    if (!_isNotificationSoundEnabled()) return;
+    try {
+      _player ??= AudioPlayer();
+      await _player!.setReleaseMode(ReleaseMode.loop);
+      await _player!.setVolume(1.0);
+      await _player!.stop();
+      await _player!.play(AssetSource(AppAudios.requestSound));
+      startWatchingPending();
+    } catch (_) {
+      try {
+        await AudioPlayer().play(AssetSource(AppAudios.requestSound));
+      } catch (_) {}
+    }
   }
 }

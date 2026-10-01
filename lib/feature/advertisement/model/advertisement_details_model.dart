@@ -11,10 +11,14 @@ class AdvertisementDetailsModel {
 
 
   AdvertisementDetailsModel.fromJson(Map<String, dynamic> json) {
-    responseCode = json['response_code'];
-    message = json['message'];
-    advertisementData =
-    json['content'] != null ? AdvertisementData.fromJson(json['content']) : null;
+    responseCode = json['response_code']?.toString();
+    message = json['message']?.toString();
+    final content = json['content'];
+    if (content is Map) {
+      try {
+        advertisementData = AdvertisementData.fromJson(Map<String, dynamic>.from(content));
+      } catch (_) {}
+    }
   }
 
   Map<String, dynamic> toJson() {

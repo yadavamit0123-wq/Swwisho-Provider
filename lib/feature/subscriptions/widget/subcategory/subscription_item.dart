@@ -9,9 +9,11 @@ class SubscriptionItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    int totalNumberOfServices = 0;
-    if(subscriptionModelData.subCategory!=null) {
-      for (var element in subscriptionModelData.subCategory!.services!) {
+    int totalNumberOfServices = subscriptionModelData.servicesCount ?? 0;
+    final services = subscriptionModelData.subCategory?.services;
+    if (services != null && services.isNotEmpty) {
+      totalNumberOfServices = 0;
+      for (var element in services) {
         if(element.isActive==1){
           totalNumberOfServices++;
         }

@@ -86,6 +86,9 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  bool _isLoadingDetails = false;
+  bool get isLoadingDetails => _isLoadingDetails;
+
 
   DateTimeRange? dateTimeRange;
 
@@ -141,7 +144,8 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
 
     scrollController.addListener(() {
       if(scrollController.position.maxScrollExtent == scrollController.position.pixels) {
-        if(_offset < _pageSize! ) {
+        final lastPage = _pageSize ?? 1;
+        if(_offset < lastPage) {
           getAdvertisementList(advertisementStatus,offset+1, paginationLoading: true);
         }
       }
@@ -187,36 +191,27 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
       update();
     }
 
+    try {
     Response response = await advertisementRepo.getAdvertisementList(requestType: requestType.toLowerCase(), offset: offset);
-    if(response.statusCode == 200 && response.body is Map && response.body['response_code'] == 'default_200'){
-      try {
-        dynamic advertisementList;
-        final content = response.body['content'];
-        if (content is Map) {
-          advertisementList = content['data'];
-          _pageSize = int.tryParse('${content['last_page']}') ?? _pageSize;
-        } else if (content is List) {
-          advertisementList = content;
-        }
-        if(_offset == 1){
-          _advertisementDataList = [];
-        }
+    if(response.statusCode == 200 && response.body is Map){
+      final parsed = _parseAdvertisementList(Map<String, dynamic>.from(response.body));
+      if(_offset == 1){
+        _advertisementDataList = parsed.items;
+      } else {
         _advertisementDataList ??= [];
-        if (advertisementList is List) {
-          for(var item in advertisementList){
-            try {
-              if (item is Map) {
-                _advertisementDataList?.add(AdvertisementData.fromJson(Map<String, dynamic>.from(item)));
-              }
-            } catch (_) {}
-          }
-        }
-      } catch (_) {
-        _advertisementDataList ??= [];
+        _advertisementDataList!.addAll(parsed.items);
       }
+      _pageSize = parsed.lastPage ?? _pageSize ?? 1;
+    } else {
+      if (_offset == 1) {
+        _advertisementDataList = [];
+      }
+      ApiChecker.checkApi(response);
     }
-    else{
-     ApiChecker.checkApi(response);
+    } catch (_) {
+      if (_offset == 1) {
+        _advertisementDataList = [];
+      }
     }
     _apiHitCount--;
 
@@ -253,7 +248,7 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
     }
 
     Response response = await advertisementRepo.submitNewAdvertisement(body, selectedFiles);
-    if(response.statusCode == 200 && response.body['response_code'] == 'default_store_200'){
+    if(response.statusCode == 200 && response.body is Map && _isMutationSuccess(response.body)){
       await getAdvertisementList("all", 1);
       _isLoading = false;
       updateAdvertisementTabIndex(0);
@@ -263,7 +258,7 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
     }else{
       _isLoading = false;
       update();
-      showCustomSnackBar(response.body['errors'][0]['message']);
+      _showApiError(response);
     }
 
   }
@@ -303,14 +298,14 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
     }
 
     Response response = await advertisementRepo.editAdvertisement(id: advertisementData.id!, body: body, selectedFile: selectedFiles);
-    if(response.statusCode == 200 && response.body['response_code'] == 'default_update_200'){
+    if(response.statusCode == 200 && response.body is Map && _isMutationSuccess(response.body, updateCode: true)){
       await getAdvertisementList(advertisementStatus, 1);
       updateAdvertisementTabIndex(_selectedIndex);
       if(isFromDetailsPage){
         Get.back();
       }
       Get.back();
-      showCustomSnackBar(response.body['message'],  type: ToasterMessageType.success);
+      showCustomSnackBar(_readMessage(response.body),  type: ToasterMessageType.success);
     }else{
       ApiChecker.checkApi(response);
     }
@@ -323,15 +318,29 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
 
   Future<void> getAdvertisementDetails ({required String id}) async {
     _advertisementDetailsModel = null;
-    Response response = await advertisementRepo.getAdvertisementDetails(id: id);
-    if(response.statusCode == 200 && response.body['response_code'] == 'default_200'){
-      _advertisementDetailsModel = AdvertisementDetailsModel.fromJson(response.body);
-    }else if (response.statusCode == 200 && response.body['response_code'] == 'default_204'){
-      _advertisementDetailsModel = AdvertisementDetailsModel.fromJson(response.body);
-      removeAdvertisementItemFromList(id, shouldUpdate: false);
-    }else{
-      ApiChecker.checkApi(response);
+    _isLoadingDetails = true;
+    update();
+    try {
+      Response response = await advertisementRepo.getAdvertisementDetails(id: id);
+      if(response.statusCode == 200 && response.body is Map){
+        final body = Map<String, dynamic>.from(response.body);
+        final code = body['response_code']?.toString() ?? '';
+        if (code == 'default_204' || code.contains('204')) {
+          _advertisementDetailsModel = AdvertisementDetailsModel.fromJson(body);
+          removeAdvertisementItemFromList(id, shouldUpdate: false);
+        } else if (code.isEmpty || code == 'default_200' || code.endsWith('_200')) {
+          _advertisementDetailsModel = AdvertisementDetailsModel.fromJson(body);
+        } else {
+          _advertisementDetailsModel = AdvertisementDetailsModel(message: body['message']?.toString());
+        }
+      } else {
+        _advertisementDetailsModel = AdvertisementDetailsModel();
+        ApiChecker.checkApi(response);
+      }
+    } catch (_) {
+      _advertisementDetailsModel = AdvertisementDetailsModel();
     }
+    _isLoadingDetails = false;
     update();
   }
 
@@ -341,7 +350,7 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
     update();
 
     Response response = await advertisementRepo.deleteAdvertisement(id: id);
-    if(response.statusCode == 200 && response.body['response_code'] == 'default_delete_200'){
+    if(response.statusCode == 200 && response.body is Map && _isMutationSuccess(response.body, deleteCode: true)){
       await getAdvertisementList(advertisementStatus, 1);
       Get.back();
       showCustomSnackBar("${response.body['message']}", type: ToasterMessageType.success);
@@ -365,7 +374,7 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
     };
 
     Response response = await advertisementRepo.changeAdvertisementStatus(id: id, status: status, body: body);
-    if(response.statusCode == 200 && response.body['response_code'] == 'default_status_update_200'){
+    if(response.statusCode == 200 && response.body is Map && _isMutationSuccess(response.body, statusCode: true)){
       getAdvertisementList(advertisementStatus, 1, reload: true);
       resetNoteController();
       if(isFromDetailsPage){
@@ -417,11 +426,11 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
     }
 
     Response response = await advertisementRepo.reSubmitAdvertisement(advertisementData.id!, body: body, selectedFile: selectedFiles);
-    if(response.statusCode == 200 && response.body['response_code'] == 'default_update_200'){
+    if(response.statusCode == 200 && response.body is Map && _isMutationSuccess(response.body, updateCode: true)){
       await getAdvertisementList(advertisementStatus, 1);
       updateAdvertisementTabIndex(_selectedIndex);
       Get.back();
-      showCustomSnackBar(response.body['message'],  type: ToasterMessageType.success);
+      showCustomSnackBar(_readMessage(response.body),  type: ToasterMessageType.success);
     }else{
       ApiChecker.checkApi(response);
     }
@@ -433,7 +442,7 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
 
 
   removeAdvertisementItemFromList(String advertisementID,  {bool shouldUpdate = false}){
-    _advertisementDataList?.removeWhere((element) => element.id == advertisementID);
+    _advertisementDataList?.removeWhere((element) => element.id?.toString() == advertisementID.toString());
     if(shouldUpdate){
       update();
     }
@@ -707,6 +716,88 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
   }
 
 
+  bool _isMutationSuccess(
+    Map body, {
+    bool updateCode = false,
+    bool deleteCode = false,
+    bool statusCode = false,
+  }) {
+    final code = body['response_code']?.toString() ?? '';
+    if (code.isEmpty) return true;
+    if (deleteCode) {
+      return code == 'default_delete_200' || code.contains('delete') && code.endsWith('_200');
+    }
+    if (statusCode) {
+      return code == 'default_status_update_200' || code.contains('status') && code.endsWith('_200');
+    }
+    if (updateCode) {
+      return code == 'default_update_200' || code.contains('update') && code.endsWith('_200');
+    }
+    return code == 'default_store_200' ||
+        code.contains('success') ||
+        code.endsWith('_200');
+  }
+
+  String _readMessage(dynamic body) {
+    if (body is Map && body['message'] != null) {
+      return body['message'].toString();
+    }
+    return 'successfully_updated'.tr;
+  }
+
+  void _showApiError(Response response) {
+    if (response.body is Map) {
+      final body = response.body as Map;
+      final errors = body['errors'];
+      if (errors is List && errors.isNotEmpty && errors.first is Map) {
+        showCustomSnackBar(errors.first['message']?.toString() ?? 'something_went_wrong'.tr);
+        return;
+      }
+      if (body['message'] != null) {
+        showCustomSnackBar(body['message'].toString());
+        return;
+      }
+    }
+    ApiChecker.checkApi(response);
+  }
+
+  _AdvertisementListParseResult _parseAdvertisementList(Map<String, dynamic> body) {
+    final items = <AdvertisementData>[];
+    int? lastPage;
+
+    try {
+      final model = AdvertisementModel.fromJson(body);
+      final rows = model.advertisementContent?.advertisementData;
+      if (rows != null && rows.isNotEmpty) {
+        return _AdvertisementListParseResult(
+          items: rows,
+          lastPage: model.advertisementContent?.lastPage,
+        );
+      }
+      lastPage = model.advertisementContent?.lastPage;
+    } catch (_) {}
+
+    dynamic content = body['content'];
+    dynamic list;
+    if (content is Map) {
+      list = content['data'] ?? content['advertisements'];
+      lastPage ??= int.tryParse(content['last_page']?.toString() ?? '');
+    } else if (content is List) {
+      list = content;
+    }
+
+    if (list is List) {
+      for (final item in list) {
+        if (item is! Map) continue;
+        try {
+          items.add(AdvertisementData.fromJson(Map<String, dynamic>.from(item)));
+        } catch (_) {}
+      }
+    }
+
+    return _AdvertisementListParseResult(items: items, lastPage: lastPage);
+  }
+
   bool validateTimeRange(){
     bool isBefore = false;
     if(validationController?.text != null){
@@ -723,4 +814,11 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
 
 
 
+}
+
+class _AdvertisementListParseResult {
+  final List<AdvertisementData> items;
+  final int? lastPage;
+
+  _AdvertisementListParseResult({required this.items, this.lastPage});
 }

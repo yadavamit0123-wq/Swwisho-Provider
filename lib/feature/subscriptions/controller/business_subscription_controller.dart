@@ -50,8 +50,9 @@ class  BusinessSubscriptionController extends GetxController implements GetxServ
     super.onInit();
     scrollController.addListener(() {
       if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
-        if (_offset < _pageSize!) {
-          getSubscriptionTransactionList(_offset + 1);
+        final lastPage = _pageSize ?? 1;
+        if (_offset < lastPage) {
+          getSubscriptionTransactionList(_offset + 1, isFromPagination: true);
         }
       }
     });
@@ -61,10 +62,18 @@ class  BusinessSubscriptionController extends GetxController implements GetxServ
   Future<void> getSubscriptionPackageList({bool reload = false}) async {
     if(reload ||  _packageSubscriptionModel == null ){
       _packageSubscriptionModel = null ;
-      Response response = await subscriptionRepo.getSubscriptionPackageList();
-
-      if(response.statusCode == 200){
-        _packageSubscriptionModel = PackageSubscriptionModel.fromJson(response.body);
+      update();
+      try {
+        Response response = await subscriptionRepo.getSubscriptionPackageList();
+        if(response.statusCode == 200 && response.body is Map){
+          _packageSubscriptionModel = PackageSubscriptionModel.fromJson(
+            Map<String, dynamic>.from(response.body),
+          );
+        } else {
+          _packageSubscriptionModel = PackageSubscriptionModel(subscriptionPackages: []);
+        }
+      } catch (_) {
+        _packageSubscriptionModel = PackageSubscriptionModel(subscriptionPackages: []);
       }
       update();
     }
@@ -78,25 +87,47 @@ class  BusinessSubscriptionController extends GetxController implements GetxServ
         update();
       }
     }
-    Response response = await subscriptionRepo.getSubscriptionTransactionList(offset,);
+    if (_offset == 1 && !isFromPagination) {
+      _transactionList = null;
+    }
+    try {
+      Response response = await subscriptionRepo.getSubscriptionTransactionList(offset,);
 
-    if(response.statusCode == 200){
+      if(response.statusCode == 200 && response.body is Map){
+        final body = Map<String, dynamic>.from(response.body);
+        final content = body['content'];
+        dynamic list;
+        if (content is Map) {
+          list = content['data'];
+          _pageSize = int.tryParse(content['last_page']?.toString() ?? '') ?? _pageSize ?? 1;
+        } else if (content is List) {
+          list = content;
+        }
 
-      if(_offset==1){
-        _transactionList = [];
-        response.body['content']['data'].forEach((channel){
-          _transactionList!.add(SubscriptionTransactionModel.fromJson(channel));
-        });
-
+        if(_offset==1){
+          _transactionList = [];
+        }
+        _transactionList ??= [];
+        if (list is List) {
+          for (final channel in list) {
+            if (channel is! Map) continue;
+            try {
+              _transactionList!.add(
+                SubscriptionTransactionModel.fromJson(Map<String, dynamic>.from(channel)),
+              );
+            } catch (_) {}
+          }
+        }
       }else{
-        response.body['content']['data'].forEach((channel){
-          _transactionList!.add(SubscriptionTransactionModel.fromJson(channel));
-        });
+        if (_offset == 1) {
+          _transactionList = [];
+        }
+        ApiChecker.checkApi(response);
       }
-      _pageSize =response.body['content']['last_page'];
-
-    }else{
-      ApiChecker.checkApi(response);
+    } catch (_) {
+      if (_offset == 1) {
+        _transactionList = [];
+      }
     }
 
     _paginationLoading = false;
@@ -113,13 +144,22 @@ class  BusinessSubscriptionController extends GetxController implements GetxServ
 
     Response response = await subscriptionRepo.getSearchedSubscriptionTransactionList(queryText: queryText, startDate: startDate, endDate: endDate);
 
-    if(response.statusCode == 200){
+    if(response.statusCode == 200 && response.body is Map){
       _searchedTransactionList = [];
-      response.body['content']['data'].forEach((channel){
-        _searchedTransactionList!.add(SubscriptionTransactionModel.fromJson(channel));
-      });
-
+      final content = response.body['content'];
+      final list = content is Map ? content['data'] : content is List ? content : null;
+      if (list is List) {
+        for (final channel in list) {
+          if (channel is! Map) continue;
+          try {
+            _searchedTransactionList!.add(
+              SubscriptionTransactionModel.fromJson(Map<String, dynamic>.from(channel)),
+            );
+          } catch (_) {}
+        }
+      }
     }else{
+      _searchedTransactionList = [];
       ApiChecker.checkApi(response);
     }
 
@@ -129,15 +169,19 @@ class  BusinessSubscriptionController extends GetxController implements GetxServ
 
 
   Future<ResponseModel> cancelSubscription({required String packageId}) async {
-
-    Response response = await subscriptionRepo.cancelSubscription(packageId: packageId);
-    if(response.statusCode == 200) {
-      await Get.find<UserProfileController>().getProviderInfo(reload: true);
-      return ResponseModel(true, response.body['message']);
-    } else{
-      return ResponseModel(false, response.statusText);
+    try {
+      Response response = await subscriptionRepo.cancelSubscription(packageId: packageId);
+      if(response.statusCode == 200) {
+        await Get.find<UserProfileController>().getProviderInfo(reload: true);
+        final message = response.body is Map
+            ? response.body['message']?.toString()
+            : null;
+        return ResponseModel(true, message ?? 'successfully_updated'.tr);
+      }
+      return ResponseModel(false, response.statusText ?? 'something_went_wrong'.tr);
+    } catch (_) {
+      return ResponseModel(false, 'something_went_wrong'.tr);
     }
-
   }
 
 
@@ -165,33 +209,40 @@ class  BusinessSubscriptionController extends GetxController implements GetxServ
     _isLoading = true;
     update();
 
-    Map<String, String> body = {
-      "payment_platform" : "app",
-      "package_id" : packageId,
-      "payment_method": paymentMethod,
-      "callback": AppConstants.baseUrl,
-    };
+    try {
+      Map<String, String> body = {
+        "payment_platform" : "app",
+        "package_id" : packageId,
+        "payment_method": paymentMethod,
+        "callback": AppConstants.baseUrl,
+      };
 
-    Response response = await subscriptionRepo.renewOrShiftSubscription(body, packageStatus: packageStatus);
+      Response response = await subscriptionRepo.renewOrShiftSubscription(body, packageStatus: packageStatus);
 
-    if(response.statusCode == 200 && packageStatus == "commission"){
-      Get.back();
-      Get.back();
-      showCustomSnackBar(response.body['message'],  type: ToasterMessageType.success);
-      await Get.find<UserProfileController>().getProviderInfo(reload: true);
+      if(response.statusCode == 200 && packageStatus == "commission"){
+        Get.back();
+        Get.back();
+        final message = response.body is Map ? response.body['message']?.toString() : null;
+        showCustomSnackBar(message ?? 'successfully_updated'.tr,  type: ToasterMessageType.success);
+        await Get.find<UserProfileController>().getProviderInfo(reload: true);
+        await getSubscriptionPackageList(reload: true);
+      }
+      else if(response.statusCode == 200 && response.body is Map && response.body['content'] != null) {
+        Get.back();
+        Get.back();
+        DigitalPaymentHelper.launchFromUrl(
+          paymentUrl: response.body['content'].toString(),
+          fromPage: 'business_plan',
+        );
+      }else{
+        ApiChecker.checkApi(response);
+      }
+    } catch (_) {
+      showCustomSnackBar('something_went_wrong'.tr, type: ToasterMessageType.error);
+    } finally {
+      _isLoading = false;
+      update();
     }
-    else if(response.statusCode == 200 && response.body['content'] !=null) {
-      Get.back();
-      Get.back();
-      DigitalPaymentHelper.launchFromUrl(
-        paymentUrl: response.body['content'],
-        fromPage: 'business_plan',
-      );
-    }else{
-      ApiChecker.checkApi(response);
-    }
-    _isLoading = false;
-    update();
   }
 
   updateSelectedPackageIndex ({int? index, bool shouldUpdate = false}){

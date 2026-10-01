@@ -39,10 +39,10 @@ class _AdvertisementDetailsScreenState extends State<AdvertisementDetailsScreen>
                 }
               },
             ),
-            body: advertisementController.advertisementDetailsModel == null && advertisementController.advertisementDetailsModel?.advertisementData == null ?
+            body: advertisementController.isLoadingDetails ?
             const Center(child: CircularProgressIndicator()) :
 
-            advertisementController.advertisementDetailsModel != null && advertisementController.advertisementDetailsModel?.advertisementData == null ?
+            advertisementController.advertisementDetailsModel?.advertisementData == null ?
             SizedBox(height: Get.height * 0.7, child:  AdvertisementDetailsEmptyScreen (advertisementId: widget.id ?? "")) :
 
             GetBuilder<AdvertisementController>(

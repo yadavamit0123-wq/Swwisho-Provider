@@ -40,12 +40,16 @@ class  SubcategorySubscriptionController extends GetxController implements GetxS
       List<ServiceCategoryModel> ? serviceCategoryList = Get.find<ServiceCategoryController>().serviceCategoryList;
 
       if(scrollController.position.maxScrollExtent == scrollController.position.pixels) {
-        if(_offset < _pageSize! ) {
-          getMySubscriptionData(offset+1, true, categoryId : selectedSubCategory == 0 ? '' : serviceCategoryList?[selectedSubCategory].id.toString());
+        final lastPage = _pageSize ?? 1;
+        if(_offset < lastPage) {
+          getMySubscriptionData(offset+1, true, categoryId : selectedSubCategory == 0 ? null : serviceCategoryList?[selectedSubCategory].id.toString());
         }
       }
     });
   }
+
+  bool _isAllCategoryFilter(String? categoryId) =>
+      categoryId == null || categoryId.trim().isEmpty;
 
   Future<void> getMySubscriptionData(int offset, bool isFormPagination, {String? categoryId}) async {
     _offset = offset;
@@ -61,32 +65,70 @@ class  SubcategorySubscriptionController extends GetxController implements GetxS
     try {
       Response response = await subscriptionRepo.getSubcategorySubscriptionList(offset, categoryId: categoryId);
       if(response.statusCode==200 && response.body is Map){
-        dynamic list;
-        final content = response.body['content'];
-        if (content is Map) {
-          list = content['data'];
-          _pageSize = int.tryParse(content['last_page']?.toString() ?? '');
-          if(categoryId == null){
-            _totalSubscription = int.tryParse(content['total']?.toString() ?? '') ?? _totalSubscription;
-          }
-        } else if (content is List) {
-          list = content;
+        final parsed = _parseSubscriptionPayload(Map<String, dynamic>.from(response.body));
+        if(!isFormPagination){
+          _subscriptionList = parsed.items;
+        } else {
+          _subscriptionList.addAll(parsed.items);
         }
-        if (list is List) {
-          for (var element in list) {
-            if (element is! Map) continue;
-            try {
-              _subscriptionList.add(SubscriptionModelData.fromJson(Map<String, dynamic>.from(element)));
-            } catch (_) {}
-          }
+        _pageSize = parsed.lastPage ?? _pageSize ?? 1;
+        if(_isAllCategoryFilter(categoryId) && parsed.total != null){
+          _totalSubscription = parsed.total!;
         }
       } else if(response.statusCode== 401){
+        ApiChecker.checkApi(response);
+      } else if (response.body is Map) {
         ApiChecker.checkApi(response);
       }
     } catch (_) {}
     _isPaginationLoading = false;
     _isLoading = false;
     update();
+  }
+
+  _SubscriptionParseResult _parseSubscriptionPayload(Map<String, dynamic> body) {
+    final items = <SubscriptionModelData>[];
+    int? lastPage;
+    int? total;
+
+    try {
+      final model = MySubscriptionModel.fromJson(body);
+      final content = model.content;
+      if (content?.data != null) {
+        for (final row in content!.data!) {
+          if (row.subCategory != null || (row.subCategoryId ?? '').isNotEmpty) {
+            items.add(row);
+          }
+        }
+        lastPage = content.lastPage;
+        total = content.total;
+        return _SubscriptionParseResult(items: items, lastPage: lastPage, total: total);
+      }
+    } catch (_) {}
+
+    dynamic content = body['content'];
+    dynamic list;
+    if (content is Map) {
+      list = content['data'] ?? content['subscriptions'];
+      lastPage = int.tryParse(content['last_page']?.toString() ?? '');
+      total = int.tryParse(content['total']?.toString() ?? '');
+    } else if (content is List) {
+      list = content;
+    }
+
+    if (list is List) {
+      for (final element in list) {
+        if (element is! Map) continue;
+        try {
+          final row = SubscriptionModelData.fromJson(Map<String, dynamic>.from(element));
+          if (row.subCategory != null || (row.subCategoryId ?? '').isNotEmpty) {
+            items.add(row);
+          }
+        } catch (_) {}
+      }
+    }
+
+    return _SubscriptionParseResult(items: items, lastPage: lastPage, total: total);
   }
 
 
@@ -108,11 +150,19 @@ class  SubcategorySubscriptionController extends GetxController implements GetxS
   Future<void> unsubscribeCategory(String id,int index) async {
     _isSubscribeButtonLoading = true;
     update();
-    Response response = await subscriptionRepo.changeSubscriptionStatus(id);
-    if(response.statusCode==200){
-      subscriptionList.removeAt(index);
-      _totalSubscription--;
-    }
+    try {
+      Response response = await subscriptionRepo.changeSubscriptionStatus(id);
+      if(response.statusCode==200){
+        if (index >= 0 && index < subscriptionList.length) {
+          subscriptionList.removeAt(index);
+          if (_totalSubscription > 0) {
+            _totalSubscription--;
+          }
+        }
+      } else {
+        ApiChecker.checkApi(response);
+      }
+    } catch (_) {}
     _isSubscribeButtonLoading = false;
     update();
   }
@@ -121,4 +171,16 @@ class  SubcategorySubscriptionController extends GetxController implements GetxS
     _subscriptionIndex = subscriptionIndex;
     update();
   }
+}
+
+class _SubscriptionParseResult {
+  final List<SubscriptionModelData> items;
+  final int? lastPage;
+  final int? total;
+
+  _SubscriptionParseResult({
+    required this.items,
+    this.lastPage,
+    this.total,
+  });
 }

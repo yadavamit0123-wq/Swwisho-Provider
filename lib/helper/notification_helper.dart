@@ -184,13 +184,8 @@ class NotificationHelper {
       }
       else if(BookingSoundService.isBookingNotification(message.data['type']?.toString()) ||
           (BookingSoundService.extractBookingId(message.data) ?? '').isNotEmpty) {
-        final bookingId = BookingSoundService.extractBookingId(message.data) ?? '';
+        await BookingSoundService.playBookingAlertFromMessage(message.data);
         if (pushEnabled) {
-          if (bookingId.isNotEmpty) {
-            BookingSoundService.playBookingAlert(bookingId);
-          } else if (NotificationHelper._isNotificationSoundEnabled()) {
-            AudioPlayer().play(AssetSource(AppAudios.requestSound));
-          }
           NotificationHelper.showNotification(message, false, flutterLocalNotificationsPlugin);
         }
         if (Get.isRegistered<BookingRequestController>()) {
@@ -505,10 +500,7 @@ Future<dynamic> myBackgroundMessageHandler(RemoteMessage message) async {
       await LocalNotificationInbox.saveFromRemote(message);
     } catch (_) {}
 
-    final bookingId = BookingSoundService.extractBookingId(message.data) ?? '';
-    if (bookingId.isNotEmpty) {
-      await BookingSoundService.playBookingAlert(bookingId);
-    }
+    await BookingSoundService.playBookingAlertFromMessage(message.data);
   } catch (e) {
     if (kDebugMode) {
       print('myBackgroundMessageHandler local notification error: $e');

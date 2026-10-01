@@ -56,23 +56,26 @@ class SubscriptionModelContent {
       });
 
   SubscriptionModelContent.fromJson(Map<String, dynamic> json) {
-    currentPage = json['current_page'];
-    if (json['data'] != null) {
+    currentPage = int.tryParse(json['current_page']?.toString() ?? '');
+    if (json['data'] is List) {
       data = <SubscriptionModelData>[];
-      json['data'].forEach((v) {
-        data!.add(SubscriptionModelData.fromJson(v));
-      });
+      for (final v in json['data']) {
+        if (v is! Map) continue;
+        try {
+          data!.add(SubscriptionModelData.fromJson(Map<String, dynamic>.from(v)));
+        } catch (_) {}
+      }
     }
     firstPageUrl = json['first_page_url'];
     from = json['from'];
-    lastPage = json['last_page'];
+    lastPage = int.tryParse(json['last_page']?.toString() ?? '');
     lastPageUrl = json['last_page_url'];
     nextPageUrl = json['next_page_url'];
     path = json['path'];
     perPage = json['per_page'];
     prevPageUrl = json['prev_page_url'];
     to = json['to'];
-    total = json['total'];
+    total = int.tryParse(json['total']?.toString() ?? '');
   }
 
   Map<String, dynamic> toJson() {
@@ -136,11 +139,37 @@ class SubscriptionModelData {
     ongoingBookingCount = int.tryParse(json['ongoing_booking_count']?.toString() ?? '');
     completedBookingCount = int.tryParse(json['completed_booking_count']?.toString() ?? '');
     canceledBookingCount = int.tryParse(json['canceled_booking_count']?.toString() ?? '');
+
+    final dynamic nestedSubCategory =
+        json['sub_category'] ?? json['subcategory'] ?? json['SubCategory'];
+    if (nestedSubCategory is Map) {
+      try {
+        subCategory = ServiceSubCategoryModel.fromJson(
+          Map<String, dynamic>.from(nestedSubCategory),
+        );
+      } catch (_) {}
+    }
+
+    subCategory ??= _fallbackSubCategory(json);
+    subCategoryId ??= subCategory?.id;
+  }
+
+  ServiceSubCategoryModel? _fallbackSubCategory(Map<String, dynamic> json) {
+    final id = json['sub_category_id']?.toString() ?? json['id']?.toString();
+    if (id == null || id.isEmpty) return null;
     try {
-      if (json['sub_category'] is Map) {
-        subCategory = ServiceSubCategoryModel.fromJson(Map<String, dynamic>.from(json['sub_category']));
-      }
-    } catch (_) {}
+      return ServiceSubCategoryModel.fromJson({
+        'id': id,
+        'name': json['sub_category_name'] ?? json['name'] ?? '',
+        'image_full_path': json['sub_category_image_full_path'] ??
+            json['image_full_path'] ??
+            json['image'],
+        'services_count': json['services_count'],
+        'is_subscribed': json['is_subscribed'],
+      });
+    } catch (_) {
+      return null;
+    }
   }
 
   Map<String, dynamic> toJson() {

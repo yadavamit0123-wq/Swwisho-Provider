@@ -49,7 +49,7 @@ class SubscribeUnsubscribeBottomSheet extends StatelessWidget {
                 left: Dimensions.paddingSizeLarge * 1.5,
                 right: Dimensions.paddingSizeLarge * 1.5
             ),
-            child: Text(isSubscribe ? subCategoryModel?.name ?? "" : "not_get_any_notification_for_unsubscription".tr,
+            child: Text(isSubscribe ? (subCategoryModel?.name ?? subscriptionModelData?.subCategory?.name ?? "") : "not_get_any_notification_for_unsubscription".tr,
               maxLines: 2,
               textAlign: TextAlign.center,
             ),

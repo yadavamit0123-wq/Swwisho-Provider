@@ -42,17 +42,20 @@ class AdvertisementContent {
         this.total});
 
   AdvertisementContent.fromJson(Map<String, dynamic> json) {
-    currentPage = json['current_page'];
-    if (json['data'] != null) {
+    currentPage = int.tryParse(json['current_page']?.toString() ?? '');
+    if (json['data'] is List) {
       advertisementData = <AdvertisementData>[];
-      json['data'].forEach((v) {
-        advertisementData!.add(AdvertisementData.fromJson(v));
-      });
+      for (final v in json['data']) {
+        if (v is! Map) continue;
+        try {
+          advertisementData!.add(AdvertisementData.fromJson(Map<String, dynamic>.from(v)));
+        } catch (_) {}
+      }
     }
-    lastPage = json['last_page'];
-    perPage = json['per_page'];
-    to = json['to'];
-    total = json['total'];
+    lastPage = int.tryParse(json['last_page']?.toString() ?? '');
+    perPage = int.tryParse(json['per_page']?.toString() ?? '');
+    to = int.tryParse(json['to']?.toString() ?? '');
+    total = int.tryParse(json['total']?.toString() ?? '');
   }
 
   Map<String, dynamic> toJson() {
@@ -126,11 +129,11 @@ class AdvertisementData {
       });
 
   AdvertisementData.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    readableId = json['readable_id'];
+    id = json['id']?.toString();
+    readableId = json['readable_id']?.toString();
     title = json['title'];
     description = json['description'];
-    providerId = json['provider_id'];
+    providerId = json['provider_id']?.toString();
     priority = int.tryParse(json['priority'].toString());
     type = json['type'];
     isPaid = int.tryParse(json['is_paid'].toString());
@@ -150,11 +153,14 @@ class AdvertisementData {
     additionalNote= json['additional_note'];
     defaultTitle = json['default_title'];
     defaultDescription = json['default_description'];
-    if (json['translations'] != null) {
+    if (json['translations'] is List) {
       translationList = <AdvertisementTranslation>[];
-      json['translations'].forEach((v) {
-        translationList!.add(AdvertisementTranslation.fromJson(v));
-      });
+      for (final v in json['translations']) {
+        if (v is! Map) continue;
+        try {
+          translationList!.add(AdvertisementTranslation.fromJson(Map<String, dynamic>.from(v)));
+        } catch (_) {}
+      }
     }
 
   }

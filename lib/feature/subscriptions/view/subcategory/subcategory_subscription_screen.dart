@@ -94,11 +94,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   children: [
                     ListView.builder(
                       itemBuilder: (context,index){
-                        if(mySubscriptionController.subscriptionList[index].subCategory !=null) {
-                          return SubscriptionItem(subscriptionModelData: mySubscriptionController.subscriptionList[index], index: index);
-                        }else{
-                          return const SizedBox.shrink();
+                        final row = mySubscriptionController.subscriptionList[index];
+                        if(row.subCategory != null || (row.subCategoryId ?? '').isNotEmpty) {
+                          return SubscriptionItem(subscriptionModelData: row, index: index);
                         }
+                        return const SizedBox.shrink();
                       },
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),

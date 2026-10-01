@@ -15,10 +15,11 @@ class BusinessPlanDetailsWidget extends StatelessWidget {
     return GetBuilder<BusinessSubscriptionController>(builder: ( businessSubscriptionController){
       return  GetBuilder<UserProfileController>(builder: (userProfileController){
 
-        if(userProfileController.providerModel !=null && userProfileController.providerModel!.content!.subscriptionInfo !=null){
+        final profileContent = userProfileController.providerModel?.content;
+        if(profileContent != null){
 
-          SubscriptionInfo ? subscriptionInfo = userProfileController.providerModel?.content?.subscriptionInfo;
-          SubscribedPackageDetails ? subscribedPackageDetails = userProfileController.providerModel?.content?.subscriptionInfo?.subscribedPackageDetails;
+          SubscriptionInfo subscriptionInfo = profileContent.effectiveSubscriptionInfo;
+          SubscribedPackageDetails ? subscribedPackageDetails = subscriptionInfo.subscribedPackageDetails;
           int remainingDays =   subscribedPackageDetails !=null ? DateConverter.countDays(endDate : DateTime.tryParse(subscribedPackageDetails.packageEndDate ??"")) : 0;
 
           int duration = (subscribedPackageDetails?.packageStartDate !=null && subscribedPackageDetails?.packageEndDate != null) ? DateConverter.countDays(
@@ -142,20 +143,23 @@ class BusinessPlanDetailsWidget extends StatelessWidget {
 
 
                         ListView.builder(itemBuilder: (context, index){
-
-                          String? limitInString =  subscribedPackageDetails?.featureList?[index] == "booking" ? subscribedPackageDetails?.featureLimit?.booking
-                              : subscribedPackageDetails?.featureList?[index] == "category" ? subscribedPackageDetails?.featureLimit?.category  : null ;
+                          final features = subscribedPackageDetails?.featureList ?? [];
+                          if (index >= features.length) {
+                            return const SizedBox.shrink();
+                          }
+                          String? limitInString =  features[index] == "booking" ? subscribedPackageDetails?.featureLimit?.booking
+                              : features[index] == "category" ? subscribedPackageDetails?.featureLimit?.category  : null ;
                           int? limit = int.tryParse(limitInString ?? "");
 
                           return PackageOverviewItemView(
-                            title: subscribedPackageDetails?.featureList?[index],
-                            subTitle: subscribedPackageDetails?.featureList?[index] == "booking" && subscribedPackageDetails?.featureLimit?.booking?.toLowerCase() != "unlimited" ?  subscribedPackageDetails?.featureLimitLeft?.booking.toString()
-                                :  subscribedPackageDetails?.featureList?[index] == "category" && subscribedPackageDetails?.featureLimit?.category?.toLowerCase() != "unlimited" ? subscribedPackageDetails!.featureLimitLeft?.category?.toString() : null,
+                            title: features[index],
+                            subTitle: features[index] == "booking" && subscribedPackageDetails?.featureLimit?.booking?.toLowerCase() != "unlimited" ?  subscribedPackageDetails?.featureLimitLeft?.booking.toString()
+                                :  features[index] == "category" && subscribedPackageDetails?.featureLimit?.category?.toLowerCase() != "unlimited" ? subscribedPackageDetails?.featureLimitLeft?.category?.toString() : null,
                             limit: limit,
                           );
                         },
                           padding: EdgeInsets.zero,
-                          itemCount: subscribedPackageDetails?.featureList?.length,
+                          itemCount: subscribedPackageDetails?.featureList?.length ?? 0,
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
                         )
@@ -212,8 +216,19 @@ class BusinessPlanDetailsWidget extends StatelessWidget {
               ],),
             ),
           );
+        }else if (businessSubscriptionController.isLoading){
+          return const Center(child: CircularProgressIndicator());
         }else{
-          return const SizedBox();
+          return Center(
+            child: CustomButton(
+              btnTxt: 'retry'.tr,
+              width: 140,
+              onPressed: () {
+                userProfileController.getProviderInfo(reload: true);
+                businessSubscriptionController.getSubscriptionPackageList(reload: true);
+              },
+            ),
+          );
         }
 
       });

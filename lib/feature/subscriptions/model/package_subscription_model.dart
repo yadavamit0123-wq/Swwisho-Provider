@@ -1,5 +1,11 @@
 import 'package:demandium_provider/feature/profile/model/provider_model.dart';
 
+List<String> _packageFeatureList(dynamic value) {
+  if (value == null) return [];
+  if (value is List) return value.map((e) => e.toString()).toList();
+  return [];
+}
+
 class PackageSubscriptionModel {
   String? responseCode;
   String? message;
@@ -8,13 +14,25 @@ class PackageSubscriptionModel {
   PackageSubscriptionModel({this.responseCode, this.message, this.subscriptionPackages});
 
   PackageSubscriptionModel.fromJson(Map<String, dynamic> json) {
-    responseCode = json['response_code'];
-    message = json['message'];
-    if (json['content'] != null) {
-      subscriptionPackages = <SubscriptionPackage>[];
-      json['content'].forEach((v) {
-        subscriptionPackages!.add(SubscriptionPackage.fromJson(v));
-      });
+    responseCode = json['response_code']?.toString();
+    message = json['message']?.toString();
+    subscriptionPackages = <SubscriptionPackage>[];
+    final content = json['content'];
+    dynamic list;
+    if (content is List) {
+      list = content;
+    } else if (content is Map) {
+      list = content['data'] ?? content['packages'];
+    }
+    if (list is List) {
+      for (final v in list) {
+        if (v is! Map) continue;
+        try {
+          subscriptionPackages!.add(
+            SubscriptionPackage.fromJson(Map<String, dynamic>.from(v)),
+          );
+        } catch (_) {}
+      }
     }
   }
 
@@ -55,16 +73,22 @@ class SubscriptionPackage {
       });
 
   SubscriptionPackage.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    name = json['name'];
-    price = double.tryParse(json['price'].toString());
-    duration = int.tryParse(json['duration'].toString());
-    isActive = int.tryParse(json['is_active'].toString());
-    description = json['description'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
-    featureList = json['feature_list'].cast<String>();
-    featureLimit = json['feature_limit'] !=null ? FeatureLimit.fromJson( json['feature_limit'])  : null;
+    id = json['id']?.toString();
+    name = json['name']?.toString();
+    price = double.tryParse(json['price']?.toString() ?? '');
+    duration = int.tryParse(json['duration']?.toString() ?? '');
+    isActive = int.tryParse(json['is_active']?.toString() ?? '');
+    description = json['description']?.toString();
+    createdAt = json['created_at']?.toString();
+    updatedAt = json['updated_at']?.toString();
+    featureList = _packageFeatureList(json['feature_list']);
+    if (json['feature_limit'] is Map) {
+      try {
+        featureLimit = FeatureLimit.fromJson(
+          Map<String, dynamic>.from(json['feature_limit'] as Map),
+        );
+      } catch (_) {}
+    }
   }
 
   Map<String, dynamic> toJson() {

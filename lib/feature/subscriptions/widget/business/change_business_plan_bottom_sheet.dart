@@ -13,26 +13,45 @@ class ChangeBusinessPlanBottomSheet extends StatefulWidget {
 class _ChangeBusinessPlanBottomSheetState extends State<ChangeBusinessPlanBottomSheet> {
 
   AutoScrollController? scrollController;
-  List<SubscriptionPackage>? subscriptionPackagesList;
+  List<SubscriptionPackage> subscriptionPackagesList = [];
   int ? commissionStatus;
+
+  void _reloadPackagesFromController() {
+    subscriptionPackagesList = List<SubscriptionPackage>.from(
+      Get.find<BusinessSubscriptionController>().packageSubscriptionModel?.subscriptionPackages ?? [],
+    );
+    _decoratePackageList();
+  }
+
+  void _decoratePackageList() {
+    final isCommissionBaseActive = Get.find<SplashController>().configModel.content?.commissionBasePlan;
+    subscriptionPackagesList.removeWhere((element) => element.id == "0");
+    if (isCommissionBaseActive == 1 && widget.showCommissionCard &&
+        (subscriptionPackagesList.isEmpty || subscriptionPackagesList.first.id != "0")) {
+      subscriptionPackagesList.insert(0, SubscriptionPackage(
+        id: "0",
+        name: "commission_base",
+        price: commissionStatus == 1
+            ? Get.find<UserProfileController>().providerModel?.content?.providerInfo?.commissionPercentage
+            : double.tryParse(Get.find<SplashController>().configModel.content?.defaultCommission ?? "0"),
+        description: "${'provider_will_pay'.tr} ${Get.find<SplashController>().configModel.content?.defaultCommission ?? ""}% ${'commission_to'.tr} ${Get.find<SplashController>().configModel.content?.businessName} ${'from_each_order_You_will_get_access_of_all'.tr}",
+      ));
+    }
+  }
+
   @override
   void initState() {
 
     commissionStatus = Get.find<UserProfileController>().providerModel?.content?.providerInfo?.commissionStatus;
 
-    subscriptionPackagesList = Get.find<BusinessSubscriptionController>().packageSubscriptionModel?.subscriptionPackages ?? [] ;
-     int ? isCommissionBaseActive = Get.find<SplashController>().configModel.content?.commissionBasePlan;
-
-    subscriptionPackagesList?.removeWhere((element) => element.id == "0");
-
-     if(isCommissionBaseActive == 1 && subscriptionPackagesList!.isNotEmpty && (subscriptionPackagesList?.first.id != "0" && widget.showCommissionCard) || (subscriptionPackagesList!.isEmpty && widget.showCommissionCard)){
-       subscriptionPackagesList!.insert(0, SubscriptionPackage(
-           id: "0",
-           name: "commission_base",
-           price: commissionStatus == 1 ?Get.find<UserProfileController>().providerModel?.content?.providerInfo?.commissionPercentage : double.tryParse(Get.find<SplashController>().configModel.content?.defaultCommission ?? "0"),
-           description: "${'provider_will_pay'.tr} ${Get.find<SplashController>().configModel.content?.defaultCommission??""}% ${'commission_to'.tr} ${Get.find<SplashController>().configModel.content?.businessName} ${'from_each_order_You_will_get_access_of_all'.tr}"
-       ));
-     }
+    _reloadPackagesFromController();
+    if (subscriptionPackagesList.isEmpty) {
+      Future.microtask(() async {
+        await Get.find<BusinessSubscriptionController>().getSubscriptionPackageList(reload: true);
+        if (!mounted) return;
+        setState(_reloadPackagesFromController);
+      });
+    }
 
     scrollController = AutoScrollController(
       viewportBoundaryGetter: () => Rect.fromLTRB(0, 0, 0, MediaQuery.of(context).padding.bottom),

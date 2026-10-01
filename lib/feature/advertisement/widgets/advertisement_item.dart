@@ -10,8 +10,12 @@ class AdvertisementItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<AdvertisementController>(builder: (advertisementController){
 
-      String adsStatus = advertisementController.getAdvertisementStatus(advertisementData.status, advertisementData.startDate!, advertisementData.endDate!);
-      bool isExpired = advertisementController.isAdvertisementExpired(advertisementData.endDate!);
+      final startDate = advertisementData.startDate ?? '';
+      final endDate = advertisementData.endDate ?? '';
+      String adsStatus = startDate.isNotEmpty && endDate.isNotEmpty
+          ? advertisementController.getAdvertisementStatus(advertisementData.status, startDate, endDate)
+          : (advertisementData.status ?? '');
+      bool isExpired = endDate.isNotEmpty && advertisementController.isAdvertisementExpired(endDate);
 
       return Container(
         decoration: BoxDecoration(

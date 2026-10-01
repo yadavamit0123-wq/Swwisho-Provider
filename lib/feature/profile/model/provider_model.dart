@@ -80,13 +80,21 @@ class Content {
         );
       } catch (_) {}
     }
-    if (json['subscription_info'] != null) {
+    final rawSubscription = json['subscription_info'] ?? json['subscription'];
+    if (rawSubscription != null) {
       try {
-        subscriptionInfo = SubscriptionInfo.fromJson(_asMap(json['subscription_info']));
+        subscriptionInfo = SubscriptionInfo.fromJson(_asMap(rawSubscription));
       } catch (_) {}
     }
+    subscriptionInfo ??= SubscriptionInfo.fromJson({
+      'status': json['subscription_status'] ?? json['business_plan'] ?? 'commission_base',
+      'total_subscription': json['total_subscription'] ?? 0,
+    });
     providerCharge = json['provider_charge']?.toString() ?? '0';
   }
+
+  SubscriptionInfo get effectiveSubscriptionInfo =>
+      subscriptionInfo ?? SubscriptionInfo(status: 'commission_base', totalSubscription: 0);
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
@@ -475,11 +483,24 @@ class SubscriptionInfo {
   SubscriptionInfo({this.totalSubscription, this.status, this.subscribedPackageDetails, this.renewalPackageDetails, this.applicableVat});
 
   SubscriptionInfo.fromJson(Map<String, dynamic> json) {
-    totalSubscription = json['total_subscription'];
-    status = json['status'];
-    subscribedPackageDetails = json['subscribed_package_details'] !=null ? SubscribedPackageDetails.fromJson(json['subscribed_package_details']) : null;
-    renewalPackageDetails = json['renewal_package_details'] !=null ? RenewalPackageDetails.fromJson(json['renewal_package_details']) : null;
-    applicableVat = double.tryParse(json['applicable_vat'].toString());
+    totalSubscription = int.tryParse(json['total_subscription']?.toString() ?? '');
+    status = json['status']?.toString() ?? json['business_plan']?.toString();
+    if (json['subscribed_package_details'] != null) {
+      try {
+        subscribedPackageDetails = SubscribedPackageDetails.fromJson(
+          _asMap(json['subscribed_package_details']),
+        );
+      } catch (_) {}
+    }
+    if (json['renewal_package_details'] != null) {
+      try {
+        renewalPackageDetails = RenewalPackageDetails.fromJson(
+          _asMap(json['renewal_package_details']),
+        );
+      } catch (_) {}
+    }
+    applicableVat = double.tryParse(json['applicable_vat']?.toString() ?? '');
+    status ??= subscribedPackageDetails != null ? 'subscription_base' : 'commission_base';
   }
 
   Map<String, dynamic> toJson() {
@@ -541,8 +562,8 @@ class SubscribedPackageDetails {
       });
 
   SubscribedPackageDetails.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    providerId = json['provider_id'];
+    id = json['id']?.toString();
+    providerId = json['provider_id']?.toString();
     subscriptionPackageId = json['subscription_package_id'];
     packageSubscriberLogId = json['package_subscriber_log_id'];
     packagePrice = double.tryParse(json['package_price'].toString());

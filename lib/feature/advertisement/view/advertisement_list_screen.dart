@@ -16,12 +16,11 @@ class _AdvertisementListScreenState extends State<AdvertisementListScreen>{
   void initState() {
     super.initState();
     Get.find<AdvertisementController>().updateAdvertisementTabIndex(0, shouldUpdate: false);
+    Get.find<AdvertisementController>().getAdvertisementList('all', 1, reload: true, isFirst: true);
     if(!widget.isDataAvailable){
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showCustomDialog(child: const AddAdvertisementDialog(),);
       });
-    }else{
-      Get.find<AdvertisementController>().getAdvertisementList('all',1,reload: true, isFirst: true);
     }
   }
 
@@ -35,12 +34,22 @@ class _AdvertisementListScreenState extends State<AdvertisementListScreen>{
       body: GetBuilder<AdvertisementController>(
         builder:(advertisementController){
 
+          final list = advertisementController.advertisementDataList;
           if(!widget.isDataAvailable){
-            isDataAvailable = Get.find<AdvertisementController>().advertisementDataList != null &&  Get.find<AdvertisementController>().advertisementDataList!.isNotEmpty;
+            isDataAvailable = list != null && list.isNotEmpty;
           }else{
-            isDataAvailable = widget.isDataAvailable;
+            isDataAvailable = true;
           }
-          
+
+          if (list == null) {
+            return const Column(
+              children: [
+                AdvertisementMenuBar(),
+                Expanded(child: AdvertisementItemShimmer()),
+              ],
+            );
+          }
+
           return isDataAvailable != null && !isDataAvailable! ? Center(
             child: SizedBox(height: Get.height * 0.7,
               child: NoDataScreen(
