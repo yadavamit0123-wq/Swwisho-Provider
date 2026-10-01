@@ -20,7 +20,9 @@ class BottomNavScreen extends StatefulWidget {
     }
 
     // Subscribe FCM topics only after zone/profile is available.
-    await Get.find<AuthController>().updateToken();
+    try {
+      await Get.find<AuthController>().updateToken();
+    } catch (_) {}
 
     Future.microtask(() {
       userController.refreshProviderInfoIfStale();

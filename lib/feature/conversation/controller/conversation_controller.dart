@@ -329,7 +329,7 @@ class ConversationController extends GetxController with GetSingleTickerProvider
      if(response.statusCode == 200){
        _isLoading = false;
        if(userType != 'super-admin'){
-         Get.toNamed(RouteHelper.getChatScreenRoute(response.body['content']['id'],name!,image!,phone!,userType));
+         Get.toNamed(RouteHelper.getChatScreenRoute(response.body['content']['id']?.toString() ?? '',name ?? '',image ?? '',phone ?? '',userType));
        }
      }else{
        ApiChecker.checkApi(response);
@@ -345,16 +345,35 @@ class ConversationController extends GetxController with GetSingleTickerProvider
     }
 
    Response response = await conversationRepo.getConversation(channelID, offset);
-    if(response.statusCode == 200){
+    if(response.statusCode == 200 && response.body is Map){
       getChannelList(1, reload: true);
 
       if(!isFromPagination){
         _conversationList = [];
       }
-      response.body['content']['data'].forEach((conversation){_conversationList!.add(ConversationData.fromJson(conversation));
-      _messagePageSize =  response.body['content']['last_page'];
-      _channelId = _conversationList![0].channelId!;
-      });
+      _conversationList ??= [];
+      try {
+        dynamic list;
+        final content = response.body['content'];
+        if (content is Map) {
+          list = content['data'];
+          _messagePageSize = int.tryParse('${content['last_page']}') ?? _messagePageSize;
+        } else if (content is List) {
+          list = content;
+        }
+        if (list is List) {
+          for (final conversation in list) {
+            try {
+              if (conversation is Map) {
+                _conversationList!.add(ConversationData.fromJson(Map<String, dynamic>.from(conversation)));
+              }
+            } catch (_) {}
+          }
+        }
+        if (_conversationList!.isNotEmpty) {
+          _channelId = _conversationList![0].channelId ?? '';
+        }
+      } catch (_) {}
 
     }else{
 

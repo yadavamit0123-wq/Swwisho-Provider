@@ -52,7 +52,7 @@ class LocalizationController extends GetxController implements GetxService {
 
   void saveLanguage(Locale locale) async {
     sharedPreferences.setString(AppConstants.languageCode, locale.languageCode);
-    sharedPreferences.setString(AppConstants.countryCode, locale.countryCode!);
+    sharedPreferences.setString(AppConstants.countryCode, locale.countryCode ?? '');
   }
 
   int _selectedIndex = 0;

@@ -83,25 +83,30 @@ class PostController extends GetxController  with GetSingleTickerProviderStateMi
     }
 
     Response response = await postRepo.getCustomerPostList(offset,status);
-    if(response.statusCode==200){
-     _postModel = PostModel.fromJson(response.body);
-     _pageSize = _postModel!.content!.lastPage;
+    if(response.statusCode==200 && response.body is Map){
+     try {
+       _postModel = PostModel.fromJson(Map<String, dynamic>.from(response.body));
+     } catch (_) {
+       _postModel = null;
+     }
+     _pageSize = _postModel?.content?.lastPage;
 
-     if(_postModel?.content!= null){
+       if(_postModel?.content!= null){
+         final data = _postModel?.content?.data ?? [];
 
        if(offset==1){
          if(fromBid){
            bidPostList = [];
-           bidPostList!.addAll(_postModel!.content!.data!);
+           bidPostList!.addAll(data);
          }else{
            postList = [];
-           postList!.addAll(_postModel!.content!.data!);
+           postList!.addAll(data);
          }
        }else{
          if(fromBid){
-           bidPostList!.addAll(_postModel!.content!.data!);
+           bidPostList!.addAll(data);
          }else{
-           postList!.addAll(_postModel!.content!.data!);
+           postList!.addAll(data);
          }
        }
      }

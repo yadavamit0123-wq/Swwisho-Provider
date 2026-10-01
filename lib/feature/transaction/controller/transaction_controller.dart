@@ -112,7 +112,7 @@ class TransactionController extends GetxController implements GetxService{
     super.onInit();
     scrollController.addListener(() {
       if(scrollController.position.maxScrollExtent == scrollController.position.pixels) {
-        if(_offset < _pageSize! ) {
+        if(_offset < (_pageSize ?? 0) ) {
           getWithdrawRequestList(offset+1,true, shouldUpdate: false);
         }
       }
@@ -152,12 +152,28 @@ class TransactionController extends GetxController implements GetxService{
         _paginationLoading = true;
       }
     Response response = await transactionRepo.getTransactionsList(offset);
-    if(response.statusCode==200){
-      _pageSize =response.body['content']['withdraw_requests']['last_page'];
-     List<dynamic> transactionList = response.body['content']['withdraw_requests']['data'];
-     for (var element in transactionList) {
-         transactionsList!.add(TransactionData.fromJson(element));
-     }
+    if(response.statusCode==200 && response.body is Map){
+      try {
+        dynamic requests;
+        final content = response.body['content'];
+        if (content is Map) {
+          requests = content['withdraw_requests'];
+        }
+        List<dynamic> transactionList = const [];
+        if (requests is Map) {
+          _pageSize = int.tryParse('${requests['last_page']}') ?? _pageSize;
+          if (requests['data'] is List) transactionList = requests['data'];
+        } else if (requests is List) {
+          transactionList = requests;
+        }
+        for (var element in transactionList) {
+          try {
+            if (element is Map) {
+              transactionsList!.add(TransactionData.fromJson(Map<String, dynamic>.from(element)));
+            }
+          } catch (_) {}
+        }
+      } catch (_) {}
     }
     else if(response.statusCode == 401){
       ApiChecker.checkApi(response);

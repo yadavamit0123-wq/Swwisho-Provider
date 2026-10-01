@@ -188,21 +188,32 @@ class AdvertisementController extends GetxController with GetSingleTickerProvide
     }
 
     Response response = await advertisementRepo.getAdvertisementList(requestType: requestType.toLowerCase(), offset: offset);
-    if(response.statusCode == 200 && response.body['response_code'] == 'default_200'){
-      List<dynamic> advertisementList = response.body['content']['data'];
-      if(_offset == 1){
-        _advertisementDataList = [];
-
-        for(var item in advertisementList){
-          _advertisementDataList?.add (AdvertisementData.fromJson(item));
+    if(response.statusCode == 200 && response.body is Map && response.body['response_code'] == 'default_200'){
+      try {
+        dynamic advertisementList;
+        final content = response.body['content'];
+        if (content is Map) {
+          advertisementList = content['data'];
+          _pageSize = int.tryParse('${content['last_page']}') ?? _pageSize;
+        } else if (content is List) {
+          advertisementList = content;
         }
-
-      }else{
-        for(var item in advertisementList){
-          _advertisementDataList?.add (AdvertisementData.fromJson(item));
+        if(_offset == 1){
+          _advertisementDataList = [];
         }
+        _advertisementDataList ??= [];
+        if (advertisementList is List) {
+          for(var item in advertisementList){
+            try {
+              if (item is Map) {
+                _advertisementDataList?.add(AdvertisementData.fromJson(Map<String, dynamic>.from(item)));
+              }
+            } catch (_) {}
+          }
+        }
+      } catch (_) {
+        _advertisementDataList ??= [];
       }
-      _pageSize = response.body['content']['last_page'];
     }
     else{
      ApiChecker.checkApi(response);

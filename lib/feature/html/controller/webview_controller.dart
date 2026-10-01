@@ -24,8 +24,8 @@ class HtmlViewController extends GetxController implements GetxService{
     update();
     try {
       Response response = await htmlRepository.getPagesContent();
-      if(response.statusCode == 200){
-        _pagesContent = PagesContent.fromJson(response.body['content']);
+      if(response.statusCode == 200 && response.body is Map && response.body['content'] is Map){
+        _pagesContent = PagesContent.fromJson(Map<String, dynamic>.from(response.body['content']));
         _loadFailed = false;
       }else{
         _loadFailed = true;

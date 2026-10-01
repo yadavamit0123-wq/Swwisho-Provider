@@ -383,7 +383,9 @@ class AuthController extends GetxController implements GetxService {
   }
 
   Future<void> updateToken() async {
-    await authRepo.updateToken();
+    try {
+      await authRepo.updateToken();
+    } catch (_) {}
   }
 
   void unsubscribeToken() async {

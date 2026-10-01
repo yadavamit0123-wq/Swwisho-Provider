@@ -24,11 +24,11 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> with Single
     super.initState();
     controller = TabController(vsync: this, length: 2);
     var bookingDetailsController = Get.find<BookingDetailsController>();
-    bool isRegularBooking = widget.bookingId != null && widget.bookingId != "null";
+    bool isRegularBooking = widget.bookingId != null && widget.bookingId != "null" && widget.bookingId!.isNotEmpty;
     bookingDetailsController.resetBookingDetailsValue(resetBookingDetails: isRegularBooking);
     if(isRegularBooking){
       bookingDetailsController.getBookingDetails(widget.bookingId!);
-    }else{
+    }else if(widget.subBookingId != null && widget.subBookingId != "null" && widget.subBookingId!.isNotEmpty){
       bookingDetailsController.getBookingSubDetails(widget.subBookingId!);
     }
     Get.find<ServicemanSetupController>().getAllServicemanList(1,reload: false, status: 'active');
@@ -68,7 +68,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> with Single
                 expandableContent: bookingDetailsController.bottomSheetHeight == 0 ?
                 const SizedBox() : AssignServicemanScreen(
                   servicemanList: Get.find<ServicemanSetupController>().servicemanList ?? [],
-                  bookingId: widget.bookingId!,
+                  bookingId: widget.bookingId ?? widget.subBookingId ?? '',
                   isSubBooking: isSubBooking,
                   reAssignServiceman: isSubBooking ? subBookingDetails?.serviceman !=null : bookingDetails?.serviceman != null ,
                 ),

@@ -47,7 +47,7 @@ class BookingRequestController extends GetxController with GetSingleTickerProvid
     tabController = TabController(vsync: this, length: 6);
     scrollController.addListener(() {
       if(scrollController.position.maxScrollExtent == scrollController.position.pixels) {
-        if(_offset < _pageSize! ) {
+        if(_offset < (_pageSize ?? 0) ) {
           getBookingRequestList(bookingRequestStatusList[_selectedIndex],offset+1, paginationLoading: true);
         }
       }

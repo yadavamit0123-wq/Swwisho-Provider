@@ -42,20 +42,44 @@ class DateConverter {
     return DateFormat('yyyy-MM-dd HH:mm:ss').parse(dateTime);
   }
 
+  static DateTime _parseFlexible(String dateTime, {bool utc = false}) {
+    try {
+      return DateFormat('yyyy-MM-ddTHH:mm:ss.SSS').parse(dateTime, utc).toLocal();
+    } catch (_) {
+      try {
+        return DateFormat('yyyy-MM-ddTHH:mm:ss').parse(dateTime, utc).toLocal();
+      } catch (_) {
+        try {
+          return DateFormat('yyyy-MM-dd HH:mm:ss').parse(dateTime, utc).toLocal();
+        } catch (_) {
+          final parsed = DateTime.tryParse(dateTime);
+          if (parsed != null) {
+            return utc || parsed.isUtc ? parsed.toLocal() : parsed;
+          }
+          return DateTime.now();
+        }
+      }
+    }
+  }
+
   static DateTime isoStringToLocalDate(String dateTime) {
-    return DateFormat('yyyy-MM-ddTHH:mm:ss.SSS').parse(dateTime);
+    return _parseFlexible(dateTime);
   }
 
   static DateTime isoUtcStringToLocalDate(String dateTime) {
-    return DateFormat('yyyy-MM-ddTHH:mm:ss.SSS').parse(dateTime, true).toLocal();
+    return _parseFlexible(dateTime, utc: true);
   }
 
   static DateTime isoUtcStringToLocalDateOnly(String dateTime) {
-    return DateFormat('yyyy-MM-dd').parse(dateTime, true).toLocal();
+    try {
+      return DateFormat('yyyy-MM-dd').parse(dateTime, true).toLocal();
+    } catch (_) {
+      return _parseFlexible(dateTime, utc: true);
+    }
   }
 
   static DateTime isoUtcStringToLocalTimeOnly(String dateTime) {
-    return DateFormat('yyyy-MM-ddTHH:mm:ss.SSS').parse(dateTime, true).toLocal();
+    return _parseFlexible(dateTime, utc: true);
   }
 
   static String isoStringToLocalDateAndTime(String dateTime) {
@@ -82,7 +106,7 @@ class DateConverter {
 
 
   static String dateMonthYearTime(DateTime ? dateTime) {
-    return _localDateFormatter('d MMM, y ${_timeFormatter()}').format(dateTime!);
+    return _localDateFormatter('d MMM, y ${_timeFormatter()}').format(dateTime ?? DateTime.now());
   }
 
   static String dateStringMonthYear(DateTime ? dateTime, {String format = "d MMM, y"}) {

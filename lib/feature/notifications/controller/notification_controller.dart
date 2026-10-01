@@ -40,7 +40,7 @@ class NotificationController extends GetxController implements GetxService{
     super.onInit();
     scrollController.addListener(() {
       if(scrollController.position.maxScrollExtent/2 < scrollController.position.pixels) {
-        if(_offset < _pageSize! ) {
+        if(_offset < (_pageSize ?? 1) ) {
           getNotifications(offset+1, reload: false);
         }
       }

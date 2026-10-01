@@ -168,10 +168,12 @@ class BookingRequestItem extends StatelessWidget {
         ],),
         Positioned.fill(child: CustomInkWell(
           onTap: (){
+            final id = booking.id;
+            if (id == null || id.isEmpty) return;
             if(booking.isRepeatBooking == 1){
-              Get.toNamed(RouteHelper.getRepeatBookingDetailsRoute(bookingId : booking.id!));
+              Get.toNamed(RouteHelper.getRepeatBookingDetailsRoute(bookingId : id));
             }else{
-              Get.toNamed(RouteHelper.getBookingDetailsRoute(bookingId : booking.id!));
+              Get.toNamed(RouteHelper.getBookingDetailsRoute(bookingId : id));
             }
           }
 

@@ -47,25 +47,24 @@ class PagesContent {
   });
 
   PagesContent.fromJson(Map<String, dynamic> json) {
-    aboutUs = json['about_us'] != null
-        ? AboutUs.fromJson(json['about_us'])
+    aboutUs = _parseAbout(json['about_us']);
+    termsAndConditions = _parseAbout(json['terms_and_conditions']);
+    privacyPolicy = _parseAbout(json['privacy_policy']);
+    refundPolicy = _parseAbout(json['refund_policy']);
+    returnPolicy = _parseAbout(json['return_policy']);
+    cancellationPolicy = _parseAbout(json['cancellation_policy']);
+    images  = json['images'] is Map
+        ? PageImages.fromJson(Map<String, dynamic>.from(json['images']))
         : null;
-    termsAndConditions = json['terms_and_conditions'] != null
-        ? AboutUs.fromJson(json['terms_and_conditions'])
-        : null;
-    privacyPolicy = json['privacy_policy'] != null
-        ? AboutUs.fromJson(json['privacy_policy'])
-        : null;
-    refundPolicy = json['refund_policy'] != null
-        ? AboutUs.fromJson(json['refund_policy'])
-        : null;
-    returnPolicy = json['return_policy'];
-    cancellationPolicy = json['cancellation_policy'] != null
-        ? AboutUs.fromJson(json['cancellation_policy'])
-        : null;
-    images  = json['images'] != null
-        ? PageImages.fromJson(json['images'])
-        : null;
+  }
+
+  static AboutUs? _parseAbout(dynamic value) {
+    if (value is! Map) return null;
+    try {
+      return AboutUs.fromJson(Map<String, dynamic>.from(value));
+    } catch (_) {
+      return null;
+    }
   }
 
   Map<String, dynamic> toJson() {

@@ -113,11 +113,17 @@ class AuthRepo {
       zoneId = userProfileController.myZoneId?.trim() ?? '';
     } catch (_) {}
 
-    FirebaseMessaging.instance.subscribeToTopic(AppConstants.topic);
-    if (zoneId.isNotEmpty) {
-      FirebaseMessaging.instance.subscribeToTopic('${AppConstants.topic}-$zoneId');
+    try {
+      FirebaseMessaging.instance.subscribeToTopic(AppConstants.topic);
+      if (zoneId.isNotEmpty) {
+        FirebaseMessaging.instance.subscribeToTopic('${AppConstants.topic}-$zoneId');
+      }
+    } catch (_) {}
+    try {
+      return await apiClient.postData(AppConstants.tokenUrl, {"_method": "put", "fcm_token": deviceToken});
+    } catch (_) {
+      return null;
     }
-    return await apiClient.postData(AppConstants.tokenUrl, {"_method": "put", "fcm_token": deviceToken});
   }
 
   Future<String?> _saveDeviceToken() async {

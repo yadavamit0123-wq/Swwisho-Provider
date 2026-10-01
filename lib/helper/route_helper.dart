@@ -87,7 +87,7 @@ class RouteHelper {
   static String getRepeatBookingDetailsRoute({String? bookingId,  String? fromPage, String? subBookingId}) =>
       '$repeatBookingDetails?booking_id=$bookingId&sub_booking_id=$subBookingId&fromPage=$fromPage';
   static String getChatScreenRoute(String channelId,String name,String image,String phone,String userType, {String? fromNotification}) =>
-      '$chatScreen?channelID=$channelId&name=$name&image=$image&phone=$phone&userType=$userType&fromNotification=$fromNotification';
+      '$chatScreen?channelID=${Uri.encodeComponent(channelId)}&name=${Uri.encodeComponent(name)}&image=${Uri.encodeComponent(image)}&phone=${Uri.encodeComponent(phone)}&userType=${Uri.encodeComponent(userType)}&fromNotification=${Uri.encodeComponent(fromNotification ?? '')}';
 
   static String getInboxScreenRoute({String? fromNotification}) => '$chatInbox?fromNotification=$fromNotification';
   static String getNotificationRoute({String? fromPage}) => '$notification?page=$fromPage';
@@ -142,6 +142,13 @@ class RouteHelper {
     GetPage(name: notification, page: () => NotificationScreen(
         fromNotificationPage: Get.parameters['fromPage'].toString()
     )),
+    GetPage(name: serviceDetails, page: () {
+      final serviceId = Get.parameters['service_id'] ?? '';
+      return ServiceDetailsScreen(
+        serviceId: serviceId,
+        discount: Discount(discountAmount: 0, discountAmountType: 'percent'),
+      );
+    }),
     GetPage( name: mySubscription, page: () => const SubscriptionScreen()),
     GetPage(transition: Transition.fadeIn, name: signIn, page: () => const SignInScreen(exitFromApp: false,)),
     GetPage(binding: SignupBinding(),name: signUp, page: () => const SignUpScreen()),
@@ -158,11 +165,11 @@ class RouteHelper {
 
     ),
     GetPage( name: chatScreen, page: () => getRoute(ConversationDetailsScreen(
-      channelID: Get.parameters['channelID']!,
-      name: Get.parameters['name']!,
-      phone: Get.parameters['phone']!,
-      image: Get.parameters['image']!,
-      userType: Get.parameters['userType']!,
+      channelID: Get.parameters['channelID'] ?? '',
+      name: Get.parameters['name'] ?? '',
+      phone: Get.parameters['phone'] ?? '',
+      image: Get.parameters['image'] ?? '',
+      userType: Get.parameters['userType'] ?? '',
       formNotification: Get.parameters['fromNotification'] ?? "",
     ))),
 
