@@ -225,7 +225,7 @@ class BookingDetailsRepo{
   }
 
   Future<Response> removeCartServiceFromServer({CartModel? cart , String? bookingId, String? zoneId}){
-    return await apiClient.postData(AppConstants.removeCartServiceFromServer, {
+    return apiClient.postData(AppConstants.removeCartServiceFromServer, {
       "_method" : "put",
       "booking_id" : bookingId,
       "zone_id" : zoneId,
