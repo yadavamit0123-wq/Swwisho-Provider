@@ -49,8 +49,21 @@ class BookingRequestModel {
     this.serviceAddress,
   });
 
+  /// Primary id for accept/ignore APIs (UUID preferred, readable id fallback).
+  String get requestBookingId {
+    final primary = id?.trim();
+    if (primary != null && primary.isNotEmpty && primary != 'null') {
+      return primary;
+    }
+    final readable = readableId?.trim();
+    if (readable != null && readable.isNotEmpty && readable != 'null') {
+      return readable;
+    }
+    return '';
+  }
+
   BookingRequestModel.fromJson(Map<String, dynamic> json) {
-    id = json['id']?.toString();
+    id = json['id']?.toString() ?? json['booking_id']?.toString();
     readableId = json['readable_id']?.toString();
     zoneId = json['zone_id']?.toString();
     bookingStatus = json['booking_status']?.toString();

@@ -234,7 +234,13 @@ class ServiceCategoryController extends GetxController implements GetxService{
       }
   }
 
-  Future<void> getServiceListBasedOnSubcategory({required String subCategoryId, bool shouldUpdate = false}) async {
+  Future<void> getServiceListBasedOnSubcategory({
+    required String subCategoryId,
+    bool shouldUpdate = false,
+    List<ServiceModel>? embeddedServices,
+  }) async {
+
+    final resolvedSubCategoryId = subCategoryId.trim();
 
     _serviceList = null;
     _searchServiceList = null;
@@ -242,27 +248,53 @@ class ServiceCategoryController extends GetxController implements GetxService{
       update();
     }
 
+    if (embeddedServices != null && embeddedServices.isNotEmpty) {
+      _serviceList = List<ServiceModel>.from(embeddedServices);
+    }
+
+    if (resolvedSubCategoryId.isEmpty) {
+      _serviceList ??= [];
+      update();
+      return;
+    }
+
     try {
-      Response response = await serviceRepo.getServiceListBasedOnSubcategory(subCategoryId);
+      Response response = await serviceRepo.getServiceListBasedOnSubcategory(resolvedSubCategoryId);
       if(response.statusCode == 200){
-        _serviceList = [];
-        final list = _extractServiceRows(response.body);
-        if (list != null) {
-          for (var service in list) {
+        final parsed = <ServiceModel>[];
+        final body = response.body;
+        if (body is Map && body['content'] is Map && body['content']['data'] is List) {
+          for (final service in body['content']['data'] as List) {
             try {
               if (service is Map) {
-                _serviceList?.add(ServiceModel.fromJson(Map<String, dynamic>.from(service)));
+                parsed.add(ServiceModel.fromJson(Map<String, dynamic>.from(service)));
               }
             } catch (_) {}
           }
+        } else {
+          final list = _extractServiceRows(response.body);
+          if (list != null) {
+            for (var service in list) {
+              try {
+                if (service is Map) {
+                  parsed.add(ServiceModel.fromJson(Map<String, dynamic>.from(service)));
+                }
+              } catch (_) {}
+            }
+          }
+        }
+        if (parsed.isNotEmpty) {
+          _serviceList = parsed;
+        } else {
+          _serviceList ??= [];
         }
       }
       else {
-        _serviceList = [];
+        _serviceList ??= [];
         ApiChecker.checkApi(response);
       }
     } catch (_) {
-      _serviceList = [];
+      _serviceList ??= [];
     }
 
     update();
@@ -315,6 +347,18 @@ class ServiceCategoryController extends GetxController implements GetxService{
     update();
   }
 
+
+  int subscribeTargetCategoryIndex() {
+    if (_selectedSubsCategoryIndex <= 0) return 0;
+    return _selectedSubsCategoryIndex - 1;
+  }
+
+  void openSubscribeCategoryPicker() {
+    final index = subscribeTargetCategoryIndex().clamp(0, (serviceCategoryList?.length ?? 1) - 1);
+    _selectedCategoryIndex = index;
+    getSubCategoryList(offset: 1, isFromPagination: false);
+    update();
+  }
 
   void changeCategory(int categoryIndex, {bool isUpdate = true}){
     _selectedCategoryIndex = categoryIndex;

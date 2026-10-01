@@ -129,11 +129,15 @@ class BookingDetailsController extends GetxController implements GetxService{
     update();
   }
 
-  Future<void> acceptBookingRequest(String bookingId) async {
+  Future<void> acceptBookingRequest(String bookingId, {String? alternateBookingId}) async {
     _isAcceptButtonLoading = true;
     update();
     try {
-      final id = bookingId.toString();
+      final id = bookingId.toString().trim();
+      if (id.isEmpty) {
+        showCustomSnackBar('something_went_wrong'.tr, type: ToasterMessageType.error);
+        return;
+      }
       final walletBalance = userProfile?.walletBalance ?? 0;
       final providerCharge = double.tryParse(userProfile?.providerCharge ?? '0') ?? 0;
 
@@ -154,31 +158,33 @@ class BookingDetailsController extends GetxController implements GetxService{
       if (requiredWallet > walletBalance) {
         showCustomSnackBar('Your wallet balance is low. Recharge wallet to accept booking', type: ToasterMessageType.error);
       } else {
-        Response response = await bookingDetailsRepo.acceptBookingRequest(id);
-        final code = response.body is Map ? response.body['response_code']?.toString() ?? '' : '';
-        final accepted = response.statusCode == 200 &&
-            response.body is Map &&
-            (code == "status_update_success_200" ||
-                code == "default_200" ||
-                code.contains("success") ||
-                code.endsWith('_200'));
-        if (accepted) {
+        Response response = await bookingDetailsRepo.acceptBookingRequest(
+          id,
+          alternateId: alternateBookingId,
+        );
+        if (BookingDetailsRepo.isActionSuccess(response)) {
           BookingSoundService.stopAlert(bookingId: id);
           showCustomSnackBar(
-            response.body is Map ? (response.body["message"] ?? "Booking accepted") : "Booking accepted",
+            response.body is Map
+                ? (response.body['message']?.toString() ?? 'successfully_updated'.tr)
+                : 'successfully_updated'.tr,
             type: ToasterMessageType.success,
           );
-          Get.find<BookingRequestController>().removeBookingItemFromList(
-            id,
-            bookingStatus: 'accepted',
-            shouldUpdate: true,
-          );
-          getBookingDetails(id, reload: false);
-          Get.find<BookingRequestController>().getBookingRequestList(
-            Get.find<BookingRequestController>().bookingStatus,
-            1,
-            reload: true,
-          );
+          if (Get.isRegistered<BookingRequestController>()) {
+            Get.find<BookingRequestController>().removeBookingItemFromList(
+              id,
+              bookingStatus: 'accepted',
+              shouldUpdate: true,
+            );
+            Get.find<BookingRequestController>().getBookingRequestList(
+              Get.find<BookingRequestController>().bookingStatus,
+              1,
+              reload: true,
+            );
+          }
+          if (Get.isRegistered<BookingDetailsController>()) {
+            getBookingDetails(id, reload: false, initEditBooking: false);
+          }
           if (Get.isRegistered<DashboardController>()) {
             Get.find<DashboardController>().getDashboardData();
           }
@@ -194,27 +200,37 @@ class BookingDetailsController extends GetxController implements GetxService{
     }
   }
 
-  Future<void> ignoreBookingRequest(String bookingId) async {
+  Future<void> ignoreBookingRequest(String bookingId, {String? alternateBookingId}) async {
     _isIgnoreButtonLoading = true;
     update();
     try {
-      final id = bookingId.toString();
-      Response response = await bookingDetailsRepo.ignoreBookingRequest(id);
-      final ignored = response.statusCode == 200 && response.body is Map;
-      if (ignored) {
+      final id = bookingId.toString().trim();
+      if (id.isEmpty) {
+        showCustomSnackBar('something_went_wrong'.tr, type: ToasterMessageType.error);
+        return;
+      }
+      Response response = await bookingDetailsRepo.ignoreBookingRequest(
+        id,
+        alternateId: alternateBookingId,
+      );
+      if (BookingDetailsRepo.isActionSuccess(response)) {
         BookingSoundService.stopAlert(bookingId: id);
-        final message = response.body["message"]?.toString() ?? 'successfully_updated'.tr;
+        final message = response.body is Map
+            ? (response.body['message']?.toString() ?? 'successfully_updated'.tr)
+            : 'successfully_updated'.tr;
         showCustomSnackBar(message, type: ToasterMessageType.success);
-        Get.find<BookingRequestController>().removeBookingItemFromList(
-          id,
-          bookingStatus: 'canceled',
-          shouldUpdate: true,
-        );
-        Get.find<BookingRequestController>().getBookingRequestList(
-          Get.find<BookingRequestController>().bookingStatus,
-          1,
-          reload: true,
-        );
+        if (Get.isRegistered<BookingRequestController>()) {
+          Get.find<BookingRequestController>().removeBookingItemFromList(
+            id,
+            bookingStatus: 'canceled',
+            shouldUpdate: true,
+          );
+          Get.find<BookingRequestController>().getBookingRequestList(
+            Get.find<BookingRequestController>().bookingStatus,
+            1,
+            reload: true,
+          );
+        }
         if (Get.isRegistered<DashboardController>()) {
           Get.find<DashboardController>().getDashboardData();
         }

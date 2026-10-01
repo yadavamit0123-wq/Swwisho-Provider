@@ -12,6 +12,8 @@ class BookingSoundService {
   static AudioPlayer? _player;
   static final Set<String> _activeBookingIds = {};
   static Timer? _pollTimer;
+  static DateTime? _lastImmediateSoundAt;
+  static final Map<String, DateTime> _recentAlertByBookingId = {};
 
   static bool get isPlaying => _activeBookingIds.isNotEmpty;
 
@@ -34,40 +36,69 @@ class BookingSoundService {
     });
   }
 
+  /// Start loop sound immediately (FCM path). Does not wait on API sync.
+  static Future<void> startLoopSoundNow() async {
+    if (!_isNotificationSoundEnabled()) return;
+    _lastImmediateSoundAt = DateTime.now();
+    try {
+      _player ??= AudioPlayer();
+      unawaited(_player!.stop());
+      await _player!.setReleaseMode(ReleaseMode.loop);
+      await _player!.setVolume(1.0);
+      await _player!.play(AssetSource(AppAudios.requestSound));
+    } catch (e) {
+      try {
+        await AudioPlayer().play(AssetSource(AppAudios.requestSound));
+      } catch (_) {
+        if (kDebugMode) {
+          print('BookingSoundService.startLoopSoundNow: $e');
+        }
+      }
+    }
+  }
+
+  static void _markRecentAlert(String bookingId) {
+    if (bookingId.isEmpty) return;
+    _recentAlertByBookingId[bookingId] = DateTime.now();
+  }
+
+  static bool _wasRecentlyAlerted(String bookingId) {
+    final at = _recentAlertByBookingId[bookingId];
+    if (at == null) return false;
+    return DateTime.now().difference(at) < const Duration(seconds: 45);
+  }
+
   static Future<void> playBookingAlert(String bookingId) async {
     if (bookingId.isEmpty) {
       return;
     }
 
     _activeBookingIds.add(bookingId);
+    _markRecentAlert(bookingId);
 
     try {
-      if (_isNotificationSoundEnabled()) {
-        _player ??= AudioPlayer();
-        await _player!.setReleaseMode(ReleaseMode.loop);
-        await _player!.setVolume(1.0);
-        await _player!.stop();
-        await _player!.play(AssetSource(AppAudios.requestSound));
-      } else {
+      await startLoopSoundNow();
+      if (!_isNotificationSoundEnabled()) {
         try {
           await _player?.stop();
         } catch (_) {}
       }
       startWatchingPending();
-      try {
-        if (Get.isRegistered<BookingRequestController>()) {
-          Get.find<BookingRequestController>().syncPendingAlerts();
-        }
-      } catch (_) {}
-      try {
-        await LocalNotificationInbox.addSimple(
-          id: 'booking_$bookingId',
-          title: 'New booking',
-          body: 'You have a new booking request',
-        );
-      } catch (_) {}
+      unawaited(Future.microtask(() async {
+        try {
+          if (Get.isRegistered<BookingRequestController>()) {
+            await Get.find<BookingRequestController>().syncPendingAlerts();
+          }
+        } catch (_) {}
+        try {
+          await LocalNotificationInbox.addSimple(
+            id: 'booking_$bookingId',
+            title: 'New booking',
+            body: 'You have a new booking request',
+          );
+        } catch (_) {}
+      }));
     } catch (e) {
-      // Fallback to a one-shot player if loop player fails.
       try {
         if (_isNotificationSoundEnabled()) {
           await AudioPlayer().play(AssetSource(AppAudios.requestSound));
@@ -103,6 +134,16 @@ class BookingSoundService {
     if (_pendingSnapshotReady) {
       final newIds = incoming.difference(_knownPendingIds);
       for (final id in newIds) {
+        if (_wasRecentlyAlerted(id)) {
+          _activeBookingIds.add(id);
+          continue;
+        }
+        if (_lastImmediateSoundAt != null &&
+            DateTime.now().difference(_lastImmediateSoundAt!) <
+                const Duration(seconds: 40)) {
+          _activeBookingIds.add(id);
+          continue;
+        }
         playBookingAlert(id);
       }
       // Stop only when a booking leaves the pending set (accept/ignore/etc.),
@@ -132,6 +173,29 @@ class BookingSoundService {
         normalized == 'provider_booking';
   }
 
+  static Map<String, dynamic> mergedPayload(Map<String, dynamic> data, {String? title, String? body}) {
+    final merged = Map<String, dynamic>.from(data);
+    if (title != null && title.isNotEmpty) {
+      merged.putIfAbsent('title', () => title);
+    }
+    if (body != null && body.isNotEmpty) {
+      merged.putIfAbsent('body', () => body);
+    }
+    return merged;
+  }
+
+  static bool looksLikeBookingMessage(Map<String, dynamic> data) {
+    if (isBookingNotification(data['type']?.toString())) return true;
+    if ((extractBookingId(data) ?? '').isNotEmpty) return true;
+    final text =
+        '${data['title'] ?? ''} ${data['body'] ?? ''} ${data['message'] ?? ''}'
+            .toLowerCase();
+    return text.contains('booking') ||
+        text.contains('service request') ||
+        text.contains('new request') ||
+        text.contains('order request');
+  }
+
   static String? extractBookingId(Map<String, dynamic> data) {
     for (final key in const [
       'booking_id',
@@ -157,18 +221,8 @@ class BookingSoundService {
       await playBookingAlert(bookingId);
       return;
     }
-    if (!_isNotificationSoundEnabled()) return;
-    try {
-      _player ??= AudioPlayer();
-      await _player!.setReleaseMode(ReleaseMode.loop);
-      await _player!.setVolume(1.0);
-      await _player!.stop();
-      await _player!.play(AssetSource(AppAudios.requestSound));
-      startWatchingPending();
-    } catch (_) {
-      try {
-        await AudioPlayer().play(AssetSource(AppAudios.requestSound));
-      } catch (_) {}
-    }
+    _lastImmediateSoundAt = DateTime.now();
+    await startLoopSoundNow();
+    startWatchingPending();
   }
 }

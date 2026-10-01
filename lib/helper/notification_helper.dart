@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
@@ -182,9 +183,19 @@ class NotificationHelper {
           Get.dialog(const DemoResetDialogWidget(), barrierDismissible: false);
         }
       }
-      else if(BookingSoundService.isBookingNotification(message.data['type']?.toString()) ||
-          (BookingSoundService.extractBookingId(message.data) ?? '').isNotEmpty) {
-        await BookingSoundService.playBookingAlertFromMessage(message.data);
+      else if(BookingSoundService.looksLikeBookingMessage(
+        BookingSoundService.mergedPayload(
+          message.data,
+          title: message.notification?.title,
+          body: message.notification?.body,
+        ),
+      )) {
+        final payload = BookingSoundService.mergedPayload(
+          message.data,
+          title: message.notification?.title,
+          body: message.notification?.body,
+        );
+        unawaited(BookingSoundService.playBookingAlertFromMessage(payload));
         if (pushEnabled) {
           NotificationHelper.showNotification(message, false, flutterLocalNotificationsPlugin);
         }

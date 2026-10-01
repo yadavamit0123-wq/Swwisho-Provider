@@ -22,12 +22,35 @@ class ServicesScreen extends StatefulWidget {
 class _ServicesScreenState extends State<ServicesScreen> {
 
 
+  List<ServiceModel>? _embeddedServices() {
+    final fromSubcategory = widget.subcategoryModel?.services;
+    if (fromSubcategory != null && fromSubcategory.isNotEmpty) {
+      return fromSubcategory;
+    }
+    final fromSubscription = widget.subscriptionModelData?.subCategory?.services;
+    if (fromSubscription != null && fromSubscription.isNotEmpty) {
+      return fromSubscription;
+    }
+    return null;
+  }
+
+  String _resolvedSubCategoryId() {
+    final fromModel = widget.subcategoryModel?.id?.trim();
+    if (fromModel != null && fromModel.isNotEmpty) return fromModel;
+    final fromSubscription = widget.subscriptionModelData?.subCategoryId?.trim();
+    if (fromSubscription != null && fromSubscription.isNotEmpty) return fromSubscription;
+    final nested = widget.subscriptionModelData?.subCategory?.id?.trim();
+    if (nested != null && nested.isNotEmpty) return nested;
+    return '';
+  }
+
   @override
   void initState() {
     super.initState();
     ServiceCategoryController serviceCategoryController = Get.find();
     serviceCategoryController.getServiceListBasedOnSubcategory(
-      subCategoryId: widget.subcategoryModel?.id ?? widget.subscriptionModelData?.subCategoryId ??"",
+      subCategoryId: _resolvedSubCategoryId(),
+      embeddedServices: _embeddedServices(),
     );
     serviceCategoryController.clearSearchController(shouldUpdate: false);
 

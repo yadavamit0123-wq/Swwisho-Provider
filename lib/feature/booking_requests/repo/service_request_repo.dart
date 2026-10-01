@@ -12,10 +12,8 @@ class BookingRequestRepo{
       'limit': limit,
       'offset': offset,
       'booking_status': requestType,
+      'service_type': serviceType.name,
     };
-    if (serviceType != ServiceType.all) {
-      body['service_type'] = serviceType.name;
-    }
     return await apiClient.postData(AppConstants.bookingListUrl, body);
   }
 }

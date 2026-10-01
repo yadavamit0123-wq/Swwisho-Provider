@@ -61,7 +61,7 @@ class NoSubscriptionWidget extends StatelessWidget {
 
               if(!fromAll)  GestureDetector(
                 onTap: (){
-                  Get.find<ServiceCategoryController>().changeCategory(Get.find<ServiceCategoryController>(). selectedSubsCategoryIndex -1);
+                  Get.find<ServiceCategoryController>().openSubscribeCategoryPicker();
                   Get.offAllNamed(RouteHelper.getInitialRoute(pageIndex: 2));
                   },
                 child: Text("+ ${"subscribe_subcategory".tr}",
@@ -92,6 +92,7 @@ class NoSubscriptionWidget extends StatelessWidget {
 
                       InkWell(
                         onTap: () {
+                          Get.find<ServiceCategoryController>().openSubscribeCategoryPicker();
                           Get.offAllNamed(RouteHelper.getInitialRoute(pageIndex: 2));
                         },
                         child: Container(

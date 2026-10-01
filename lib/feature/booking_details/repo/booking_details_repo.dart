@@ -16,61 +16,106 @@ class BookingDetailsRepo{
     return await apiClient.getData("${AppConstants.subBookingDetailsUrl}$bookingID");
   }
 
-  Future<Response> acceptBookingRequest(String bookingID) async {
-    final id = bookingID.toString();
+  static bool isActionSuccess(Response response) {
+    if (response.statusCode != 200) return false;
+    if (response.body is! Map) return true;
+    final body = Map<String, dynamic>.from(response.body as Map);
+    final code = body['response_code']?.toString() ?? '';
+    final errors = body['errors'];
+    if (errors is List && errors.isNotEmpty) return false;
+    if (code.isEmpty) return true;
+    return code.contains('success') ||
+        code == 'default_200' ||
+        code == 'status_update_success_200' ||
+        code.endsWith('_200');
+  }
+
+  List<String> _distinctBookingIds(String bookingID, {String? alternateId}) {
+    final ids = <String>[];
+    void add(String? raw) {
+      final value = raw?.toString().trim() ?? '';
+      if (value.isEmpty || value == 'null' || ids.contains(value)) return;
+      ids.add(value);
+    }
+    add(bookingID);
+    add(alternateId);
+    return ids;
+  }
+
+  Future<Response> acceptBookingRequest(String bookingID, {String? alternateId}) async {
+    final ids = _distinctBookingIds(bookingID, alternateId: alternateId);
+    Response last = Response(statusCode: 0, statusText: 'No booking id');
+    for (final id in ids) {
+      last = await _acceptBookingOnce(id);
+      if (isActionSuccess(last)) return last;
+    }
+    return last;
+  }
+
+  Future<Response> _acceptBookingOnce(String id) async {
     Response response = await apiClient.putData(
       "${AppConstants.acceptBookingRequestUrl}/$id",
       {'method': 'put'},
     );
-    if (_isSuccess(response)) return response;
+    if (isActionSuccess(response)) return response;
+
+    response = await apiClient.putData(
+      "${AppConstants.acceptBookingRequestUrl}/$id",
+      {},
+    );
+    if (isActionSuccess(response)) return response;
+
     response = await apiClient.putData(
       "${AppConstants.acceptBookingRequestUrl}/$id",
       {'_method': 'put'},
     );
-    if (_isSuccess(response)) return response;
+    if (isActionSuccess(response)) return response;
+
     response = await apiClient.postData(
       "${AppConstants.acceptBookingRequestUrl}/$id",
       {'_method': 'put'},
     );
-    if (_isSuccess(response)) return response;
+    if (isActionSuccess(response)) return response;
+
     return await apiClient.postData(AppConstants.acceptBookingRequestUrl, {
       '_method': 'put',
       'booking_id': id,
     });
   }
 
-  Future<Response> ignoreBookingRequest(String bookingID) async {
-    final id = bookingID.toString();
+  Future<Response> ignoreBookingRequest(String bookingID, {String? alternateId}) async {
+    final ids = _distinctBookingIds(bookingID, alternateId: alternateId);
+    Response last = Response(statusCode: 0, statusText: 'No booking id');
+    for (final id in ids) {
+      last = await _ignoreBookingOnce(id);
+      if (isActionSuccess(last)) return last;
+    }
+    return last;
+  }
+
+  Future<Response> _ignoreBookingOnce(String id) async {
     Response response = await apiClient.postData(
       "${AppConstants.ignoreBookingRequestUrl}/$id",
       {},
     );
-    if (response.statusCode == 200) return response;
+    if (isActionSuccess(response)) return response;
+
     response = await apiClient.putData(
       "${AppConstants.ignoreBookingRequestUrl}/$id",
       {'method': 'put'},
     );
-    if (response.statusCode == 200) return response;
+    if (isActionSuccess(response)) return response;
+
     response = await apiClient.putData(
       "${AppConstants.ignoreBookingRequestUrl}/$id",
       {'_method': 'put'},
     );
-    if (response.statusCode == 200) return response;
+    if (isActionSuccess(response)) return response;
+
     return await apiClient.postData(AppConstants.ignoreBookingRequestUrl, {
       '_method': 'put',
       'booking_id': id,
     });
-  }
-
-  bool _isSuccess(Response response) {
-    if (response.statusCode != 200 || response.body is! Map) return false;
-    final code = response.body['response_code']?.toString() ?? '';
-    final errors = response.body['errors'];
-    if (errors is List && errors.isNotEmpty) return false;
-    return code.contains('success') ||
-        code == 'default_200' ||
-        code == 'status_update_success_200' ||
-        code.endsWith('_200');
   }
 
   Future<Response> cancelSubBooking(String subBookingId) async {

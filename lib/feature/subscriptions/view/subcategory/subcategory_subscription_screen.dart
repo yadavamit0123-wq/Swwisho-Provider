@@ -109,7 +109,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                      padding: const EdgeInsets.only(bottom: 20, top: 20),
                      child: GestureDetector(
                         onTap: () {
-                          Get.find<ServiceCategoryController>().changeCategory(Get.find<ServiceCategoryController>(). selectedSubsCategoryIndex -1);
+                          Get.find<ServiceCategoryController>().openSubscribeCategoryPicker();
                           Get.offAllNamed(RouteHelper.getInitialRoute(pageIndex: 2,));
                         },
                         child: Text("+ ${"subscribe_subcategory".tr}",

@@ -217,12 +217,20 @@ class BookingRequestItem extends StatelessWidget {
                               address: BookingContactHelper.resolveCustomerAddressFromRequest(booking),
                             ),
                             onYesPressed: (){
-                              final bookingId = booking.id?.toString() ?? '';
+                              final bookingId = booking.requestBookingId;
                               if (bookingId.isEmpty) {
                                 showCustomSnackBar('something_went_wrong'.tr, type: ToasterMessageType.error);
                                 return;
                               }
-                              Get.find<BookingDetailsController>().acceptBookingRequest(bookingId);
+                              final alternateId = booking.readableId != null &&
+                                      booking.readableId!.isNotEmpty &&
+                                      booking.readableId != bookingId
+                                  ? booking.readableId
+                                  : null;
+                              Get.find<BookingDetailsController>().acceptBookingRequest(
+                                bookingId,
+                                alternateBookingId: alternateId,
+                              );
                               Get.back();
                             },
                             onNoPressed: () => Get.back(),
@@ -239,13 +247,20 @@ class BookingRequestItem extends StatelessWidget {
                           icon: Images.warning,
                           noButtonText: "cancel",
                           onYesPressed: () {
-                            final bookingId = booking.id?.toString() ?? '';
+                            final bookingId = booking.requestBookingId;
                             if (bookingId.isEmpty) {
                               showCustomSnackBar('something_went_wrong'.tr, type: ToasterMessageType.error);
                               return;
                             }
-                            Get.find<BookingDetailsController>().ignoreBookingRequest(bookingId);
-                            Get.back();
+                            final alternateId = booking.readableId != null &&
+                                    booking.readableId!.isNotEmpty &&
+                                    booking.readableId != bookingId
+                                ? booking.readableId
+                                : null;
+                            Get.find<BookingDetailsController>().ignoreBookingRequest(
+                              bookingId,
+                              alternateBookingId: alternateId,
+                            );
                             Get.back();
                           },
 

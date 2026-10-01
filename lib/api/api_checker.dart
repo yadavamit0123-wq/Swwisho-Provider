@@ -11,12 +11,32 @@ class ApiChecker {
       }
     } else if (response.statusCode == 500) {
       showCustomSnackBar("${response.statusCode!}".tr, showDefaultSnackBar: showDefaultToaster);
-    } else if (response.statusCode == 400 && response.body['errors'] != null) {
-      showCustomSnackBar("${response.body['errors'][0]['message']}", showDefaultSnackBar: showDefaultToaster);
+    } else if (response.statusCode == 400 && response.body is Map && response.body['errors'] != null) {
+      final errors = response.body['errors'];
+      if (errors is List && errors.isNotEmpty && errors.first is Map) {
+        showCustomSnackBar('${errors.first['message']}', showDefaultSnackBar: showDefaultToaster);
+      } else {
+        showCustomSnackBar(_messageFromBody(response.body) ?? 'something_went_wrong'.tr, showDefaultSnackBar: showDefaultToaster);
+      }
     } else if (response.statusCode == 429) {
       showCustomSnackBar("too_many_request".tr, showDefaultSnackBar: showDefaultToaster);
     } else {
-      showCustomSnackBar("${response.body['message']}", showDefaultSnackBar: showDefaultToaster);
+      showCustomSnackBar(
+        _messageFromBody(response.body) ?? response.statusText ?? 'something_went_wrong'.tr,
+        showDefaultSnackBar: showDefaultToaster,
+      );
     }
+  }
+
+  static String? _messageFromBody(dynamic body) {
+    if (body is Map) {
+      final message = body['message'];
+      if (message != null && message.toString().isNotEmpty) {
+        return message.toString();
+      }
+    } else if (body is String && body.trim().isNotEmpty) {
+      return body.trim();
+    }
+    return null;
   }
 }

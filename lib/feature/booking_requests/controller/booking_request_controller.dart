@@ -114,6 +114,9 @@ class BookingRequestController extends GetxController with GetSingleTickerProvid
     }
     else{
      ApiChecker.checkApi(response);
+     if (_offset == 1) {
+       _bookingRequestList = [];
+     }
     }
     _apiHitCount--;
     _isLoading = false;
@@ -158,7 +161,12 @@ class BookingRequestController extends GetxController with GetSingleTickerProvid
 
   removeBookingItemFromList(String bookingId,  {bool shouldUpdate = false, required String bookingStatus}){
 
-    _bookingRequestList?.removeWhere((element) => element.id?.toString() == bookingId.toString());
+    final target = bookingId.toString();
+    _bookingRequestList?.removeWhere((element) {
+      return element.id?.toString() == target ||
+          element.readableId?.toString() == target ||
+          element.requestBookingId == target;
+    });
     if(shouldUpdate){
       update();
     }
