@@ -118,12 +118,17 @@ class BookingDetailsRepo{
   }
 
   Future<Response> _acceptBookingOnce(String id) async {
-    // RC / Play Store path first.
-    Response response = await apiClient.putData(
-      "${AppConstants.acceptBookingRequestUrl}/$id",
-      {'method': 'put'},
-    );
-    if (isActionSuccess(response)) return response;
+    // Demandium versions use either request-accept or request/accept. PUT is the RC method.
+    Response response = Response(statusCode: 0, statusText: 'accept failed');
+    for (final path in <String>[
+      '/api/v1/provider/booking/request-accept/$id',
+      '${AppConstants.acceptBookingRequestUrl}/$id',
+    ]) {
+      response = await apiClient.putData(path, {'method': 'put'});
+      if (isActionSuccess(response)) return response;
+      response = await apiClient.postData(path, {'_method': 'put'});
+      if (isActionSuccess(response)) return response;
+    }
 
     response = await _postBookingStatus(id, 'accepted');
     if (isActionSuccess(response)) return response;
@@ -162,11 +167,14 @@ class BookingDetailsRepo{
   }
 
   Future<Response> _ignoreBookingOnce(String id) async {
-    Response response = await apiClient.postData(
-      "${AppConstants.ignoreBookingRequestUrl}/$id",
-      {},
-    );
-    if (isActionSuccess(response)) return response;
+    Response response = Response(statusCode: 0, statusText: 'ignore failed');
+    for (final path in <String>[
+      '/api/v1/provider/booking/request-ignore/$id',
+      '${AppConstants.ignoreBookingRequestUrl}/$id',
+    ]) {
+      response = await apiClient.postData(path, {});
+      if (isActionSuccess(response)) return response;
+    }
 
     response = await apiClient.postDataWithoutBody(
       "${AppConstants.ignoreBookingRequestUrl}/$id",

@@ -3,15 +3,18 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:demandium_provider/common/widgets/demo_reset_dialog_widget.dart';
+import 'package:demandium_provider/firebase_options.dart';
 import 'package:demandium_provider/helper/booking_sound_service.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:demandium_provider/feature/notifications/repository/local_notification_inbox.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 class NotificationHelper {
-  /// Fresh sound channel so old silent/broken channels from previous APKs are not reused.
-  static const String soundChannelId = 'demandium_sound_v3';
+  /// New id so Android does not reuse an old channel created without sound.
+  /// Killed-app booking alerts use this channel (system tray), not the in-app player.
+  static const String soundChannelId = 'demandium_sound_v4';
   static const String silentChannelId = 'demandiumWithoutsound';
 
   static Future<void> initialize(FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
@@ -476,7 +479,11 @@ Future<dynamic> myBackgroundMessageHandler(RemoteMessage message) async {
     WidgetsFlutterBinding.ensureInitialized();
   } catch (_) {}
 
-  // Same proven approach as pre-live APK: play alert sound immediately.
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  } catch (_) {}
+
+  // App minimized or fully closed: play booking sound with the tray notification.
   try {
     await AudioPlayer().play(AssetSource(AppAudios.requestSound));
   } catch (_) {}
