@@ -111,7 +111,7 @@ class _OtpVerificationBottomSheetState extends State<OtpVerificationBottomSheet>
                },
             ),
 
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            if (widget.targetStatus != 'ongoing') Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Text(
                 'did_not_get_any_OTP'.tr,
                 style: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeDefault),

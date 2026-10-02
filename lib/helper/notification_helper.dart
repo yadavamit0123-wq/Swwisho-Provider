@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:demandium_provider/common/widgets/demo_reset_dialog_widget.dart';
@@ -300,7 +301,7 @@ class NotificationHelper {
   }
 
   static Future<void> _ensureAndroidChannels(FlutterLocalNotificationsPlugin fln) async {
-    if (!GetPlatform.isAndroid) return;
+    if (kIsWeb || !Platform.isAndroid) return;
     final androidPlugin = fln.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlugin == null) return;
@@ -479,53 +480,50 @@ Future<dynamic> myBackgroundMessageHandler(RemoteMessage message) async {
     WidgetsFlutterBinding.ensureInitialized();
   } catch (_) {}
 
+  final title = message.data['title']?.toString()
+      ?? message.notification?.title
+      ?? AppConstants.appName;
+  final body = message.data['body']?.toString()
+      ?? message.notification?.body
+      ?? '';
+
+  // Sound and the local booking notification start with the FCM tray alerts.
+  // Firebase init used to run first and pushed this alert until the first two were dismissed.
+  try {
+    await Future.wait([
+      AudioPlayer().play(AssetSource(AppAudios.requestSound)),
+      _showBackgroundBookingNotification(message, title, body),
+      BookingSoundService.playBookingAlertFromMessage(message.data),
+    ]);
+  } catch (_) {}
+
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } catch (_) {}
 
-  // App minimized or fully closed: play booking sound with the tray notification.
   try {
-    await AudioPlayer().play(AssetSource(AppAudios.requestSound));
+    await LocalNotificationInbox.saveFromRemote(message);
   } catch (_) {}
-
-  // Also show a local tray notification with sound (helps when FCM uses silent channel).
-  try {
-    final FlutterLocalNotificationsPlugin fln = FlutterLocalNotificationsPlugin();
-    await fln.initialize(
-      const InitializationSettings(
-        android: AndroidInitializationSettings('notification_icon'),
-        iOS: DarwinInitializationSettings(),
-      ),
-    );
-    await NotificationHelper._ensureAndroidChannels(fln);
-
-    final title = message.data['title']?.toString()
-        ?? message.notification?.title
-        ?? AppConstants.appName;
-    final body = message.data['body']?.toString()
-        ?? message.notification?.body
-        ?? '';
-
-    await NotificationHelper.showBigTextNotification(
-      title: title,
-      body: body,
-      payload: jsonEncode(message.data.isNotEmpty ? message.data : {'title': title, 'body': body}),
-      fln: fln,
-      forceSound: true,
-    );
-
-    try {
-      await LocalNotificationInbox.saveFromRemote(message);
-    } catch (_) {}
-
-    await BookingSoundService.playBookingAlertFromMessage(message.data);
-  } catch (e) {
-    if (kDebugMode) {
-      print('myBackgroundMessageHandler local notification error: $e');
-    }
-  }
 
   if (kDebugMode) {
     print("----------------> onBackground: ${message.notification?.title}/${message.notification?.body}/${message.notification?.titleLocKey}");
   }
+}
+
+Future<void> _showBackgroundBookingNotification(RemoteMessage message, String title, String body) async {
+  final FlutterLocalNotificationsPlugin fln = FlutterLocalNotificationsPlugin();
+  await fln.initialize(
+    const InitializationSettings(
+      android: AndroidInitializationSettings('notification_icon'),
+      iOS: DarwinInitializationSettings(),
+    ),
+  );
+  await NotificationHelper._ensureAndroidChannels(fln);
+  await NotificationHelper.showBigTextNotification(
+    title: title,
+    body: body,
+    payload: jsonEncode(message.data.isNotEmpty ? message.data : {'title': title, 'body': body}),
+    fln: fln,
+    forceSound: true,
+  );
 }

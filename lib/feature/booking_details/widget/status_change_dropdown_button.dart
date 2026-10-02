@@ -108,7 +108,6 @@ class ChangeStatusDropdownButton extends StatelessWidget {
               : dropdownStatus == "ongoing" && bookingDetails.bookingStatus == 'accepted'?
           CustomButton(btnTxt: "request_for_otp".tr, onPressed: () {
             bookingDetailsController.setOtp('');
-            bookingDetailsController.sendBookingOTPNotification(bookingId, shouldUpdate: false);
             showCustomBottomSheet(child: OtpVerificationBottomSheet(
               bookingId: bookingId,
               isSubBooking: isSubBooking,
