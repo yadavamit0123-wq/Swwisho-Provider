@@ -15,7 +15,7 @@ import 'package:http/http.dart' as http;
 class NotificationHelper {
   /// New id so Android does not reuse an old channel created without sound.
   /// Killed-app booking alerts use this channel (system tray), not the in-app player.
-  static const String soundChannelId = 'demandium_sound_v4';
+  static const String soundChannelId = 'demandium_sound_v5';
   static const String silentChannelId = 'demandiumWithoutsound';
 
   static Future<void> initialize(FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
@@ -487,14 +487,13 @@ Future<dynamic> myBackgroundMessageHandler(RemoteMessage message) async {
       ?? message.notification?.body
       ?? '';
 
-  // Sound and the local booking notification start with the FCM tray alerts.
-  // Firebase init used to run first and pushed this alert until the first two were dismissed.
+  // Show the booking tray alert with channel sound first. Do not wait on
+  // Firebase or the loop player — those were delaying this notification.
   try {
-    await Future.wait([
-      AudioPlayer().play(AssetSource(AppAudios.requestSound)),
-      _showBackgroundBookingNotification(message, title, body),
-      BookingSoundService.playBookingAlertFromMessage(message.data),
-    ]);
+    await _showBackgroundBookingNotification(message, title, body);
+  } catch (_) {}
+  try {
+    await AudioPlayer().play(AssetSource(AppAudios.requestSound));
   } catch (_) {}
 
   try {

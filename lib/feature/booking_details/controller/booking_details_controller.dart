@@ -280,30 +280,37 @@ class BookingDetailsController extends GetxController implements GetxService{
   }
 
 
-   Future<void> changeBookingStatus(String bookingId,{String? bookingStatus, bool isBack = false, required  bool isSubBooking}) async {
+   Future<void> changeBookingStatus(String bookingId,{String? bookingStatus, String? forcedNextStatus, String? otpCode, bool isBack = false, required  bool isSubBooking}) async {
+    if (otpCode != null) {
+      _otp = otpCode.trim();
+    }
     _isStatusUpdateLoading = true;
     update();
 
+    try {
     List<MultipartBody> multiParts = [];
     for(XFile file in _photoEvidence) {
       multiParts.add(MultipartBody('evidence_photos[]', file));
     }
-    if(bookingStatus != null && bookingStatus == "accepted"  && (isSubBooking ? subBookingDropDownValue : dropDownValue) == 'completed'){
+    final nextStatus = (forcedNextStatus != null && forcedNextStatus.isNotEmpty)
+        ? forcedNextStatus
+        : (isSubBooking ? subBookingDropDownValue : dropDownValue);
+    if(bookingStatus != null && bookingStatus == "accepted"  && nextStatus == 'completed'){
       showCustomSnackBar('first complete ongoing'.tr, type : ToasterMessageType.info);
-    }else if(bookingStatus != null && bookingStatus == 'ongoing' && (isSubBooking ? subBookingDropDownValue : dropDownValue) == 'canceled'){
+    }else if(bookingStatus != null && bookingStatus == 'ongoing' && nextStatus == 'canceled'){
       showCustomSnackBar('service_ongoing_can_not_cancel_booking'.tr, type : ToasterMessageType.info);
-    }else if(bookingStatus != null && bookingStatus == 'ongoing' && (isSubBooking ? subBookingDropDownValue : dropDownValue) == 'accepted'){
+    }else if(bookingStatus != null && bookingStatus == 'ongoing' && nextStatus == 'accepted'){
       showCustomSnackBar('service_is_already_ongoing'.tr, type : ToasterMessageType.info);
     }else {
-      final targetStatus = isSubBooking ? subBookingDropDownValue : dropDownValue;
-      final requiresOtp = (targetStatus == 'ongoing' && bookingStatus == 'accepted')
-          || (targetStatus == 'completed' && bookingStatus == 'ongoing');
+      final requiresOtp = (nextStatus == 'ongoing' && bookingStatus == 'accepted')
+          || (nextStatus == 'completed' && bookingStatus == 'ongoing');
 
-      if (requiresOtp && otp.isEmpty) {
+      if (requiresOtp && otp.trim().isEmpty) {
         showCustomSnackBar('OTP is required'.tr, type : ToasterMessageType.info);
       } else {
-      Response response = await bookingDetailsRepo.changeBookingStatus( bookingId, isSubBooking ? subBookingDropDownValue : dropDownValue, otp ,multiParts, isSubBooking);
-      if(response.statusCode==200 && response.body["response_code"]=="status_update_success_200"){
+      Response response = await bookingDetailsRepo.changeBookingStatus( bookingId, nextStatus, otp.trim() ,multiParts, isSubBooking);
+      final code = response.body is Map ? response.body['response_code']?.toString() : '';
+      if(response.statusCode==200 && code=="status_update_success_200"){
         _otp = '';
 
         if(isSubBooking){
@@ -311,22 +318,30 @@ class BookingDetailsController extends GetxController implements GetxService{
          getBookingDetails(_bookingDetails?.content?.id ?? "",reload: false);
         }else{
           await getBookingDetails(bookingId,reload: false);
-          Get.find<BookingRequestController>().getBookingRequestList(Get.find<BookingRequestController>().bookingStatus, 1);
+          if (Get.isRegistered<BookingRequestController>()) {
+            Get.find<BookingRequestController>().getBookingRequestList(Get.find<BookingRequestController>().bookingStatus, 1);
+          }
         }
 
         if(isBack){
           Get.back();
         }
-        showCustomSnackBar(response.body['message'].toString().capitalizeFirst,  type: ToasterMessageType.success);
+        final message = response.body is Map ? response.body['message']?.toString() : null;
+        showCustomSnackBar((message ?? 'successfully_updated'.tr).toString().capitalizeFirst,  type: ToasterMessageType.success);
       }
-      else if(response.statusCode==200 && response.body["response_code"] == "default_403"){
-        if((dropDownValue == "ongoing" || dropDownValue == "completed") && otp.isNotEmpty){
+      else if(response.statusCode==200 && code == "default_403"){
+        if((nextStatus == "ongoing" || nextStatus == "completed") && otp.isNotEmpty){
           _isWrongOtpSubmitted  = true;
+        } else {
+          ApiChecker.checkApi(response);
         }
       }else{
         ApiChecker.checkApi(response);
       }
       }
+    }
+    } catch (_) {
+      showCustomSnackBar('something_went_wrong'.tr, type: ToasterMessageType.error);
     }
     _isStatusUpdateLoading = false;
     update();

@@ -18,10 +18,18 @@ class OtpVerificationBottomSheet extends StatefulWidget {
 }
 
 class _OtpVerificationBottomSheetState extends State<OtpVerificationBottomSheet> {
+  final TextEditingController _pinController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
-   Get.find<BookingDetailsController>().setOtp('');
+    Get.find<BookingDetailsController>().setOtp('');
+  }
+
+  @override
+  void dispose() {
+    _pinController.dispose();
+    super.dispose();
   }
 
   @override
@@ -64,6 +72,7 @@ class _OtpVerificationBottomSheetState extends State<OtpVerificationBottomSheet>
                 child: PinCodeTextField(
                   length: 6,
                   appContext: context,
+                  controller: _pinController,
                   keyboardType: TextInputType.number,
                   animationType: AnimationType.slide,
                   pinTheme: PinTheme(
@@ -82,7 +91,7 @@ class _OtpVerificationBottomSheetState extends State<OtpVerificationBottomSheet>
                   animationDuration: const Duration(milliseconds: 300),
                   backgroundColor: Colors.transparent,
                   enableActiveFill: true,
-                  onChanged: (String text) => bookingDetailsController.setOtp(text),
+                  onChanged: (String text) => setState(() {}),
                   beforeTextPaste: (text) => true,
                 ),
               ),
@@ -100,11 +109,14 @@ class _OtpVerificationBottomSheetState extends State<OtpVerificationBottomSheet>
               btnTxt:  'submit'.tr, radius: Dimensions.radiusDefault,
               isLoading: bookingDetailsController.isStatusUpdateLoading,
               margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
-              onPressed: (bookingDetailsController.otp.length != 6) ? null : () async {
+              onPressed: (_pinController.text.trim().length != 6) ? null : () async {
+                final code = _pinController.text.trim();
                 bookingDetailsController.resetWrongOtpValue();
                await bookingDetailsController.changeBookingStatus(
                  widget.bookingId ?? "",
                  bookingStatus: widget.targetStatus == 'completed' ? 'ongoing' : 'accepted',
+                 forcedNextStatus: widget.targetStatus,
+                 otpCode: code,
                  isBack: true,
                  isSubBooking: widget.isSubBooking,
                );
