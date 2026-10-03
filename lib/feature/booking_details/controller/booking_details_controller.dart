@@ -35,6 +35,8 @@ class BookingDetailsController extends GetxController implements GetxService{
 
   bool _isWrongOtpSubmitted = false;
   bool get isWrongOtpSubmitted => _isWrongOtpSubmitted;
+  String? _otpSheetMessage;
+  String? get otpSheetMessage => _otpSheetMessage;
 
   List<XFile> _photoEvidence = [];
   List<XFile> get pickedPhotoEvidence => _photoEvidence;
@@ -295,6 +297,8 @@ class BookingDetailsController extends GetxController implements GetxService{
     final nextStatus = (forcedNextStatus != null && forcedNextStatus.isNotEmpty)
         ? forcedNextStatus
         : (isSubBooking ? subBookingDropDownValue : dropDownValue);
+    final otpFlow = isBack && ((nextStatus == 'ongoing' && bookingStatus == 'accepted')
+        || (nextStatus == 'completed' && bookingStatus == 'ongoing'));
     if(bookingStatus != null && bookingStatus == "accepted"  && nextStatus == 'completed'){
       showCustomSnackBar('first complete ongoing'.tr, type : ToasterMessageType.info);
     }else if(bookingStatus != null && bookingStatus == 'ongoing' && nextStatus == 'canceled'){
@@ -306,12 +310,13 @@ class BookingDetailsController extends GetxController implements GetxService{
           || (nextStatus == 'completed' && bookingStatus == 'ongoing');
 
       if (requiresOtp && otp.trim().isEmpty) {
-        showCustomSnackBar('OTP is required'.tr, type : ToasterMessageType.info);
+        _otpSheetMessage = 'OTP is required'.tr;
+        _showOtpFeedback('OTP is required'.tr, type: ToasterMessageType.info, inSheet: otpFlow);
       } else {
-      Response response = await bookingDetailsRepo.changeBookingStatus( bookingId, nextStatus, otp.trim() ,multiParts, isSubBooking);
-      final code = response.body is Map ? response.body['response_code']?.toString() : '';
-      if(response.statusCode==200 && code=="status_update_success_200"){
+      Response response = await bookingDetailsRepo.changeBookingStatus( _statusBookingId(bookingId), nextStatus, otp.trim() ,multiParts, isSubBooking);
+      if(BookingDetailsRepo.isStatusUpdateSuccess(response)){
         _otp = '';
+        _otpSheetMessage = null;
 
         if(isSubBooking){
           await getBookingSubDetails(bookingId,reload: false);
@@ -327,21 +332,22 @@ class BookingDetailsController extends GetxController implements GetxService{
           Get.back();
         }
         final message = response.body is Map ? response.body['message']?.toString() : null;
-        showCustomSnackBar((message ?? 'successfully_updated'.tr).toString().capitalizeFirst,  type: ToasterMessageType.success);
+        showCustomSnackBar((message ?? 'successfully_updated'.tr).toString().capitalizeFirst,  type: ToasterMessageType.success, showDefaultSnackBar: !isBack);
       }
-      else if(response.statusCode==200 && code == "default_403"){
-        if((nextStatus == "ongoing" || nextStatus == "completed") && otp.isNotEmpty){
-          _isWrongOtpSubmitted  = true;
-        } else {
-          ApiChecker.checkApi(response);
-        }
+      else if(otpFlow && BookingDetailsRepo.isWrongOtpResponse(response)){
+        _isWrongOtpSubmitted = true;
+        _otpSheetMessage = 'wrong_otp_number'.tr;
+      }else if(otpFlow){
+        _otpSheetMessage = _safeApiMessage(response);
+        _showOtpFeedback(_otpSheetMessage, type: ToasterMessageType.error, inSheet: true);
       }else{
         ApiChecker.checkApi(response);
       }
       }
     }
     } catch (_) {
-      showCustomSnackBar('something_went_wrong'.tr, type: ToasterMessageType.error);
+      _otpSheetMessage = 'something_went_wrong'.tr;
+      _showOtpFeedback('something_went_wrong'.tr, type: ToasterMessageType.error, inSheet: isBack);
     }
     _isStatusUpdateLoading = false;
     update();
@@ -423,6 +429,22 @@ class BookingDetailsController extends GetxController implements GetxService{
     update();
   }
 
+  String _statusBookingId(String bookingId) {
+    final content = isSubBookingId(bookingId) ? _subBookingDetails?.content : _bookingDetails?.content;
+    final uuid = content?.id?.toString().trim() ?? '';
+    final readable = content?.readableId?.toString().trim() ?? '';
+    if (uuid.isNotEmpty && (bookingId == readable || bookingId == uuid || !bookingId.contains('-'))) {
+      return uuid;
+    }
+    return bookingId;
+  }
+
+  bool isSubBookingId(String bookingId) {
+    final subId = _subBookingDetails?.content?.id?.toString();
+    final subReadable = _subBookingDetails?.content?.readableId?.toString();
+    return bookingId.isNotEmpty && (bookingId == subId || bookingId == subReadable);
+  }
+
   void setOtp(String otp) {
     _otp = otp;
     resetWrongOtpValue(shouldUpdate: false);
@@ -433,10 +455,26 @@ class BookingDetailsController extends GetxController implements GetxService{
 
   void resetWrongOtpValue({bool shouldUpdate = true}){
     _isWrongOtpSubmitted = false;
+    _otpSheetMessage = null;
 
     if(shouldUpdate){
       update();
     }
+  }
+
+  void _showOtpFeedback(String? message, {required ToasterMessageType type, required bool inSheet}) {
+    showCustomSnackBar(message, type: type, showDefaultSnackBar: !inSheet);
+  }
+
+  String _safeApiMessage(Response response) {
+    if (response.body is Map) {
+      final message = response.body['message']?.toString().trim() ?? '';
+      final lower = message.toLowerCase();
+      if (message.isNotEmpty && !lower.contains('<html') && !lower.contains('<!doctype')) {
+        return message;
+      }
+    }
+    return 'something_went_wrong'.tr;
   }
 
   void resetBookingDetailsValue({bool shouldUpdate = false, bool resetBookingDetails = false}){

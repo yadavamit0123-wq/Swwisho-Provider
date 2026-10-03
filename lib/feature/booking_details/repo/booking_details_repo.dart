@@ -206,9 +206,54 @@ class BookingDetailsRepo{
   }
 
   Future<Response> changeBookingStatus(String bookingID,String status, String otp, List<MultipartBody>? photoEvidence, bool isSubBooking) async {
-    return await apiClient.postMultipartData(
-        "${isSubBooking ? AppConstants.changeSubBookingStatus : AppConstants.changeBookingStatus}/$bookingID",{'booking_status':status,'_method':'put', "booking_otp": otp}, photoEvidence,null
-    );
+    final fields = {
+      'booking_status': status,
+      '_method': 'put',
+      'booking_otp': otp,
+    };
+    final paths = <String>[
+      "${isSubBooking ? AppConstants.changeSubBookingStatus : AppConstants.changeBookingStatus}/$bookingID",
+      if (!isSubBooking) "/api/v1/provider/booking/status-update/$bookingID",
+    ];
+    Response? last;
+    for (final path in paths) {
+      last = await _attemptStatusUpdate(() => apiClient.postMultipartData(path, fields, photoEvidence, null));
+      if (last != null && (isStatusUpdateSuccess(last) || isWrongOtpResponse(last))) return last;
+      last = await _attemptStatusUpdate(() => apiClient.postData(path, fields));
+      if (last != null && (isStatusUpdateSuccess(last) || isWrongOtpResponse(last))) return last;
+      last = await _attemptStatusUpdate(() => apiClient.putData(path, fields));
+      if (last != null && (isStatusUpdateSuccess(last) || isWrongOtpResponse(last))) return last;
+    }
+    return last ?? Response(statusCode: 0, statusText: 'something_went_wrong');
+  }
+
+  static Future<Response?> _attemptStatusUpdate(Future<Response> Function() call) async {
+    try {
+      return await call();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static bool isStatusUpdateSuccess(Response response) {
+    if (!isActionSuccess(response) || response.body is! Map) return false;
+    final message = response.body['message']?.toString().toLowerCase() ?? '';
+    if (message.contains('wrong') || message.contains('invalid') || message.contains('incorrect') || message.contains('not match')) {
+      return false;
+    }
+    return true;
+  }
+
+  static bool isWrongOtpResponse(Response response) {
+    final code = response.body is Map ? response.body['response_code']?.toString().toLowerCase() ?? '' : '';
+    final message = response.body is Map ? response.body['message']?.toString().toLowerCase() ?? '' : '';
+    if (response.statusCode == 403 || code.contains('403')) return true;
+    if (!message.contains('otp')) return false;
+    return message.contains('wrong') ||
+        message.contains('invalid') ||
+        message.contains('incorrect') ||
+        message.contains('not match') ||
+        message.contains('mismatch');
   }
 
   Future<Response> sendBookingOTPNotification(String? bookingId) {

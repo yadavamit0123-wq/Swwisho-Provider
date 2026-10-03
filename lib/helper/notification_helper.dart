@@ -119,6 +119,25 @@ class NotificationHelper {
       if (Get.isRegistered<NotificationSetupController>()) {
         pushEnabled = Get.find<NotificationSetupController>().isPushEnabledFor(type);
       }
+      final bookingPayload = BookingSoundService.mergedPayload(
+        message.data,
+        title: message.notification?.title,
+        body: message.notification?.body,
+      );
+      final knownOtherType = type == 'bidding' ||
+          type == 'chatting' ||
+          type == 'general' ||
+          type == 'logout' ||
+          type == 'maintenance' ||
+          type == 'demo_reset';
+      final isBookingAlert = !knownOtherType &&
+          BookingSoundService.looksLikeBookingMessage(bookingPayload);
+      if (isBookingAlert) {
+        unawaited(BookingSoundService.playBookingAlertFromMessage(bookingPayload));
+        if (pushEnabled) {
+          unawaited(NotificationHelper.showNotification(message, false, flutterLocalNotificationsPlugin));
+        }
+      }
       try {
         await LocalNotificationInbox.saveFromRemote(message);
       } catch (_) {}
@@ -187,22 +206,7 @@ class NotificationHelper {
           Get.dialog(const DemoResetDialogWidget(), barrierDismissible: false);
         }
       }
-      else if(BookingSoundService.looksLikeBookingMessage(
-        BookingSoundService.mergedPayload(
-          message.data,
-          title: message.notification?.title,
-          body: message.notification?.body,
-        ),
-      )) {
-        final payload = BookingSoundService.mergedPayload(
-          message.data,
-          title: message.notification?.title,
-          body: message.notification?.body,
-        );
-        unawaited(BookingSoundService.playBookingAlertFromMessage(payload));
-        if (pushEnabled) {
-          NotificationHelper.showNotification(message, false, flutterLocalNotificationsPlugin);
-        }
+      else if(isBookingAlert) {
         if (Get.isRegistered<BookingRequestController>()) {
           Get.find<BookingRequestController>().getBookingRequestList('pending', 1, reload: true);
         }
@@ -487,13 +491,24 @@ Future<dynamic> myBackgroundMessageHandler(RemoteMessage message) async {
       ?? message.notification?.body
       ?? '';
 
-  // Show the booking tray alert with channel sound first. Do not wait on
-  // Firebase or the loop player — those were delaying this notification.
+  final payload = BookingSoundService.mergedPayload(
+    message.data,
+    title: message.notification?.title,
+    body: message.notification?.body,
+  );
+  final isBookingAlert = BookingSoundService.looksLikeBookingMessage(payload);
+
+  // System tray alerts already use this sound channel. The local alert and
+  // in-app sound start together, without waiting on Firebase.
   try {
-    await _showBackgroundBookingNotification(message, title, body);
-  } catch (_) {}
-  try {
-    await AudioPlayer().play(AssetSource(AppAudios.requestSound));
+    if (isBookingAlert) {
+      await Future.wait([
+        _showBackgroundBookingNotification(message, title, body, forceSound: true).catchError((_) {}),
+        AudioPlayer().play(AssetSource(AppAudios.requestSound)).catchError((_) {}),
+      ]);
+    } else {
+      await _showBackgroundBookingNotification(message, title, body, forceSound: false);
+    }
   } catch (_) {}
 
   try {
@@ -509,7 +524,7 @@ Future<dynamic> myBackgroundMessageHandler(RemoteMessage message) async {
   }
 }
 
-Future<void> _showBackgroundBookingNotification(RemoteMessage message, String title, String body) async {
+Future<void> _showBackgroundBookingNotification(RemoteMessage message, String title, String body, {required bool forceSound}) async {
   final FlutterLocalNotificationsPlugin fln = FlutterLocalNotificationsPlugin();
   await fln.initialize(
     const InitializationSettings(
@@ -523,6 +538,6 @@ Future<void> _showBackgroundBookingNotification(RemoteMessage message, String ti
     body: body,
     payload: jsonEncode(message.data.isNotEmpty ? message.data : {'title': title, 'body': body}),
     fln: fln,
-    forceSound: true,
+    forceSound: forceSound,
   );
 }

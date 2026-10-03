@@ -19,6 +19,8 @@ class OtpVerificationBottomSheet extends StatefulWidget {
 
 class _OtpVerificationBottomSheetState extends State<OtpVerificationBottomSheet> {
   final TextEditingController _pinController = TextEditingController();
+  String _otpText = '';
+  bool _canSubmit = false;
 
   @override
   void initState() {
@@ -91,15 +93,26 @@ class _OtpVerificationBottomSheetState extends State<OtpVerificationBottomSheet>
                   animationDuration: const Duration(milliseconds: 300),
                   backgroundColor: Colors.transparent,
                   enableActiveFill: true,
-                  onChanged: (String text) => setState(() {}),
+                  onChanged: (String text) {
+                    final next = text.trim();
+                    if (next.isEmpty && _otpText.length == 6) return;
+                    final wasReady = _canSubmit;
+                    _otpText = next;
+                    _canSubmit = _otpText.length == 6;
+                    if (wasReady != _canSubmit && mounted) setState(() {});
+                  },
                   beforeTextPaste: (text) => true,
                 ),
               ),
               const SizedBox(height: Dimensions.paddingSizeSmall),
 
-              bookingDetailsController.isWrongOtpSubmitted ?
-              Text('wrong_otp_number'.tr, style: robotoRegular.copyWith(color: Theme.of(context).colorScheme.error), textAlign: TextAlign.center) :
-              !bookingDetailsController.isWrongOtpSubmitted  && !bookingDetailsController.isStatusUpdateLoading ? Text('collect_otp_from_customer'.tr, style: robotoRegular, textAlign: TextAlign.center):
+              bookingDetailsController.isWrongOtpSubmitted || (bookingDetailsController.otpSheetMessage ?? '').isNotEmpty ?
+              Text(
+                bookingDetailsController.otpSheetMessage ?? 'wrong_otp_number'.tr,
+                style: robotoRegular.copyWith(color: Theme.of(context).colorScheme.error),
+                textAlign: TextAlign.center,
+              ) :
+              !bookingDetailsController.isStatusUpdateLoading ? Text('collect_otp_from_customer'.tr, style: robotoRegular, textAlign: TextAlign.center):
               const Text(""),
               const SizedBox(height: Dimensions.paddingSizeLarge),
 
@@ -109,9 +122,9 @@ class _OtpVerificationBottomSheetState extends State<OtpVerificationBottomSheet>
               btnTxt:  'submit'.tr, radius: Dimensions.radiusDefault,
               isLoading: bookingDetailsController.isStatusUpdateLoading,
               margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
-              onPressed: (_pinController.text.trim().length != 6) ? null : () async {
-                final code = _pinController.text.trim();
-                bookingDetailsController.resetWrongOtpValue();
+              onPressed: !_canSubmit ? null : () async {
+                final code = _otpText;
+                bookingDetailsController.resetWrongOtpValue(shouldUpdate: false);
                await bookingDetailsController.changeBookingStatus(
                  widget.bookingId ?? "",
                  bookingStatus: widget.targetStatus == 'completed' ? 'ongoing' : 'accepted',

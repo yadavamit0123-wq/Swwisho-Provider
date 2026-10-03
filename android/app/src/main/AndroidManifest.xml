@@ -58,10 +58,6 @@
                 android:resource="@drawable/launch_background"
                 />
 
-            <meta-data
-                android:name="com.google.firebase.messaging.default_notification_channel_id"
-                android:value="demandium_sound_v5" />
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -70,8 +66,18 @@
         </activity>
 
         <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="demandium_sound_v5" />
+
+        <meta-data
             android:name="com.google.firebase.messaging.default_notification_sound"
             android:resource="@raw/notification" />
+
+        <provider
+            android:name="com.pt.swwishoprovider.BookingSoundChannelProvider"
+            android:authorities="${applicationId}.booking_sound_channel"
+            android:exported="false"
+            android:initOrder="999" />
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
