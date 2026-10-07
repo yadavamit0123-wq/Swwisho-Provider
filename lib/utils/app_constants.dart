@@ -3,7 +3,7 @@ import 'package:demandium_provider/utils/images.dart';
 
 class AppConstants {
   static const String appName = 'Swwisho Provider';
-  static String appVersion = '1.0.8';
+  static String appVersion = '1.0.9';
   static const String appUser = 'provider';
   static const String baseUrl = 'https://swwisho.com';
   static const double minimumWalletRecharge = 1500;
