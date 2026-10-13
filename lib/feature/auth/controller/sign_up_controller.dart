@@ -101,6 +101,19 @@ class SignUpController extends GetxController {
 
   }
 
+  String? _registrationPaymentUrl(dynamic content) {
+    if (content is String && content.trim().startsWith('http')) {
+      return content.trim();
+    }
+    if (content is Map) {
+      for (final key in ['payment_url', 'redirect_url', 'redirect_link', 'url']) {
+        final value = content[key]?.toString().trim() ?? '';
+        if (value.startsWith('http')) return value;
+      }
+    }
+    return null;
+  }
+
   Future<void> registration(SignUpBody signUpBody) async {
     _isLoading = true;
     update();
@@ -109,10 +122,13 @@ class SignUpController extends GetxController {
     if (response!.statusCode == 200 && response.body['response_code'] == "provider_store_200") {
 
       var config = Get.find<SplashController>().configModel.content;
-      if(response.body['content'] != null){
+      final paymentUrl = _registrationPaymentUrl(response.body['content']);
+      if(paymentUrl != null){
         resetAllValue();
-        DigitalPaymentHelper.launchFromUrl(
-          paymentUrl: response.body['content'],
+        _isLoading = false;
+        update();
+        await DigitalPaymentHelper.launchFromUrl(
+          paymentUrl: paymentUrl,
           fromPage: 'signUp',
         );
       }

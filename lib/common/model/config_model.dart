@@ -132,6 +132,14 @@ class ConfigContent {
     this.languageList,
   });
 
+  static int? _configFlag(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final parsed = int.tryParse(json[key]?.toString() ?? '');
+      if (parsed != null) return parsed;
+    }
+    return null;
+  }
+
   ConfigContent.fromJson(Map<String, dynamic> json) {
     businessName = json['business_name'];
     logo = json['logo'];
@@ -155,9 +163,9 @@ class ConfigContent {
     providerSelfRegistration = int.tryParse(json['provider_self_registration']?.toString() ?? '');
     biddingStatus = int.tryParse(json['bidding_status']?.toString() ?? '');
     digitalPayment = int.tryParse(json['digital_payment']?.toString() ?? '');
-    commissionBasePlan = int.tryParse(json['commission_base_plan']?.toString() ?? '');
-    subscriptionBasePlan = int.tryParse(json['subscription_base_plan']?.toString() ?? '');
-    subscriptionFreeTrail = int.tryParse(json['subscription_free_trial']?.toString() ?? '');
+    commissionBasePlan = _configFlag(json, ['commission_base', 'commission_base_plan']);
+    subscriptionBasePlan = _configFlag(json, ['subscription_base', 'subscription_base_plan']);
+    subscriptionFreeTrail = _configFlag(json, ['free_trial_status', 'subscription_free_trial']);
     subscriptionDeadlineWarning = int.tryParse(json['subscription_deadline_warning']?.toString() ?? '');
     providerCanCancelBooking = int.tryParse(json['provider_can_cancel_booking']?.toString() ?? '');
     providerCanEditBooking = int.tryParse(json['provider_can_edit_booking']?.toString() ?? '');

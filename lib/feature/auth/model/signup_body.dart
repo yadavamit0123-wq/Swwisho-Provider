@@ -22,6 +22,7 @@ class SignUpBody {
   String? paymentMethod;
   String? freeTrialOrPayment;
   String? paymentPlatform;
+  String? callback;
   String? panNumber;
 
   SignUpBody({
@@ -48,6 +49,7 @@ class SignUpBody {
     this.paymentMethod,
     this.freeTrialOrPayment,
     this.paymentPlatform,
+    this.callback,
     this.panNumber
   });
 
@@ -74,6 +76,7 @@ class SignUpBody {
     data['payment_method'] = paymentMethod ?? "";
     data['free_trial_or_payment'] = freeTrialOrPayment ?? "";
     data['payment_platform'] = paymentPlatform ?? "";
+    data['callback'] = callback ?? "";
     data['pan_number'] = panNumber ?? "";
 
     return data;

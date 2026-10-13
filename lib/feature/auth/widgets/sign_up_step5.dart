@@ -2,24 +2,20 @@ import 'package:get/get.dart';
 import 'package:demandium_provider/utils/core_export.dart';
 
 class SignUpStep5 extends StatelessWidget {
-  const SignUpStep5({super.key});
+  final bool embedded;
+  const SignUpStep5({super.key, this.embedded = false});
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: GetBuilder<SplashController>(builder: (splashController) {
+    final content = GetBuilder<SplashController>(builder: (splashController) {
         final config = splashController.configModel.content;
         final paymentMethodList = config?.paymentMethodList ?? [];
         final showFreeTrial = config?.subscriptionFreeTrail == 1;
         final showDigitalPayment = config?.digitalPayment == 1 && paymentMethodList.isNotEmpty;
 
         return GetBuilder<SignUpController>(builder: (signUpController) {
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: ClampingScrollPhysics(),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+          final options = Padding(
+              padding: EdgeInsets.symmetric(horizontal: embedded ? 0 : Dimensions.paddingSizeDefault),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -116,10 +112,14 @@ class SignUpStep5 extends StatelessWidget {
                   const SizedBox(height: Dimensions.paddingSizeLarge),
                 ],
               ),
-            ),
+            );
+          if (embedded) return options;
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
+            child: options,
           );
         });
-      }),
-    );
+      });
+    return embedded ? content : Expanded(child: content);
   }
 }

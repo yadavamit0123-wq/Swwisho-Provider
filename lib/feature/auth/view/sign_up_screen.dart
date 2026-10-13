@@ -74,7 +74,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     CustomButton(
                       height: 40, width: 100, fontSize: Dimensions.fontSizeSmall, isLoading: signUpController.isLoading!,
                       btnTxt: (signUpController.currentStep == SignUpPageStep.step5 || (signUpController.currentStep == SignUpPageStep.step4
-                          && signUpController.selectedBusinessPlan == BusinessPlanType.commissionBase)) ? "confirm".tr : 'next'.tr,
+                          && signUpController.selectedBusinessPlan != null)) ? "confirm".tr : 'next'.tr,
                       onPressed: (signUpController.currentStep == SignUpPageStep.step5 && config?.digitalPayment == 0 && config?.subscriptionFreeTrail == 0) ? null : () {
                         if(signUpController.currentStep==SignUpPageStep.step1){
                           validateStep1(signUpController);
@@ -134,10 +134,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
     else if(signUpController.selectedBusinessPlan == BusinessPlanType.commissionBase){
       signUpController.registration(_getSignUpBody(signUpController));
-    } else if(signUpController.selectedBusinessPlan == BusinessPlanType.subscriptionBase && signUpController.selectedSubscriptionPackage == null){
+    } else if(signUpController.selectedSubscriptionPackage == null){
       showCustomSnackBar("no_subscription_plan_available_at_this_moment".tr, type: ToasterMessageType.info);
-    } else{
-      signUpController.updateRegistrationStep(SignUpPageStep.step5);
+    } else if(signUpController.selectedSubscriptionPaymentType == null){
+      showCustomSnackBar("free_trail_hint_text".tr, type: ToasterMessageType.info);
+    } else if(signUpController.selectedSubscriptionPaymentType == SubscriptionPaymentType.digital && signUpController.selectedDigitalPaymentMethodIndex == -1){
+      showCustomSnackBar("select_payment_method".tr, type: ToasterMessageType.info);
+    } else {
+      signUpController.registration(_getSignUpBody(signUpController));
     }
   }
 
@@ -189,11 +193,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
       zoneId: signUpController.selectedZoneId,
       lat: "${Get.find<LocationController>().pickPosition.latitude}",
       lon: "${Get.find<LocationController>().pickPosition.longitude}",
-      chooseBusinessPlan: signUpController.selectedBusinessPlan == BusinessPlanType.commissionBase ? "commission_base" : "subscription_base",
-      subscriptionPackageId: signUpController.selectedSubscriptionPackage?.id,
+      chooseBusinessPlan: signUpController.selectedBusinessPlan == BusinessPlanType.commissionBase ? "commision_base" : "subscription_base",
+      subscriptionPackageId: signUpController.selectedBusinessPlan == BusinessPlanType.subscriptionBase
+          ? signUpController.selectedSubscriptionPackage?.id
+          : "",
       paymentMethod: paymentMethod?.gateway,
-      freeTrialOrPayment: signUpController.selectedSubscriptionPaymentType == SubscriptionPaymentType.freeTrail ? "free_trial" : "payment",
+      freeTrialOrPayment: signUpController.selectedBusinessPlan == BusinessPlanType.subscriptionBase
+          ? (signUpController.selectedSubscriptionPaymentType == SubscriptionPaymentType.freeTrail ? "free_trial" : "payment")
+          : "",
       paymentPlatform: "app",
+      callback: signUpController.selectedBusinessPlan == BusinessPlanType.subscriptionBase &&
+              signUpController.selectedSubscriptionPaymentType == SubscriptionPaymentType.digital
+          ? AppConstants.baseUrl
+          : "",
       panNumber: signUpController.panNumberController.text
     );
     return signUpBody;

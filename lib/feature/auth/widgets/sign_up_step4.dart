@@ -49,8 +49,34 @@ class _SignUpStep4State extends State<SignUpStep4> {
           physics: const AlwaysScrollableScrollPhysics(
             parent: ClampingScrollPhysics()
           ),
-          child: GetBuilder<SplashController>(builder: (splashController){
+          child: GetBuilder<BusinessSubscriptionController>(builder: (packageController) {
+            subscriptionPackagesList = List<SubscriptionPackage>.from(
+              packageController.packageSubscriptionModel?.subscriptionPackages ?? [],
+            );
+            subscriptionPackagesList?.removeWhere((element) => element.id == "0");
+            return GetBuilder<SplashController>(builder: (splashController){
             return GetBuilder<SignUpController>(builder: (signUpController) {
+              final commissionOn = splashController.configModel.content?.commissionBasePlan == 1;
+              final subscriptionOn = splashController.configModel.content?.subscriptionBasePlan == 1;
+              if (subscriptionOn && !commissionOn && signUpController.selectedBusinessPlan == null) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (signUpController.selectedBusinessPlan == null) {
+                    signUpController.updateBusinessPlanType(BusinessPlanType.subscriptionBase);
+                  }
+                });
+              }
+              if (subscriptionOn &&
+                  signUpController.selectedBusinessPlan == BusinessPlanType.subscriptionBase &&
+                  signUpController.selectedSubscriptionPackage == null &&
+                  subscriptionPackagesList != null &&
+                  subscriptionPackagesList!.isNotEmpty) {
+                final firstPackage = subscriptionPackagesList!.first;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (signUpController.selectedSubscriptionPackage == null) {
+                    signUpController.updateSelectedSubscription(firstPackage);
+                  }
+                });
+              }
 
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
@@ -64,7 +90,7 @@ class _SignUpStep4State extends State<SignUpStep4> {
                     ),
                     const SizedBox(height: Dimensions.paddingSizeExtraLarge),
 
-                    (splashController.configModel.content?.commissionBasePlan == 1 ||  splashController.configModel.content?.subscriptionBasePlan == 0 )?
+                    commissionOn ?
                     BusinessPlanCard(
                       icon: Images.commissionIcon,
                       title: "commission_base",
@@ -79,9 +105,9 @@ class _SignUpStep4State extends State<SignUpStep4> {
                       },
                     ) : const SizedBox(),
 
-                    SizedBox(height:  splashController.configModel.content?.commissionBasePlan == 1 ? Dimensions.paddingSizeLarge : 0),
+                    SizedBox(height: commissionOn ? Dimensions.paddingSizeLarge : 0),
 
-                    splashController.configModel.content?.subscriptionBasePlan == 1 ? signUpController.selectedBusinessPlan == BusinessPlanType.subscriptionBase ?
+                    subscriptionOn ? signUpController.selectedBusinessPlan == BusinessPlanType.subscriptionBase ?
                     SelectedSubscriptionWidget(
                       scrollController: scrollController,
                       signUpController: signUpController,
@@ -97,6 +123,9 @@ class _SignUpStep4State extends State<SignUpStep4> {
                       },
                     ) : const SizedBox(),
 
+                    if (subscriptionOn && signUpController.selectedBusinessPlan == BusinessPlanType.subscriptionBase)
+                      const SignUpStep5(embedded: true),
+
                     const SizedBox(height: Dimensions.paddingSizeLarge,),
 
                   ],
@@ -104,6 +133,7 @@ class _SignUpStep4State extends State<SignUpStep4> {
               );
             },
             );
+          });
           }),
         ),
       ),
